@@ -23,8 +23,8 @@
       "output": "server",
       "favicon": "./assets/images/favicon.png"
     },
+    // AI-assisted: see docs/AI_LOG.md #19
     "plugins": [
-      "expo-router",
       [
         "expo-splash-screen",
         {
@@ -36,7 +36,6 @@
       "expo-status-bar"
     ],
     "experiments": {
-      "typedRoutes": true,
       "reactCompiler": true
     }
   }
