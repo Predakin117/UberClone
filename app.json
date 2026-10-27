@@ -20,10 +20,9 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "server",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
-    // AI-assisted: see docs/AI_LOG.md #19
     "plugins": [
       [
         "expo-splash-screen",

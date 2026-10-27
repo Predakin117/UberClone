@@ -36,3 +36,15 @@ Qué se usó / modificó / descartó: [Explica qué código copiaste tal cual, q
 Archivos y commit: [Rutas afectadas: src/contexts/RegistrationContext.js, src/navigation/AuthTabs.js, src/screens/auth/*.js] / [Hash del commit]
 Verificación: [Cómo comprobaste que funcionaba. Ej: Probé navegando entre pestañas, dejando campos vacíos para ver los mensajes rojos, y llenando todo para habilitar el botón y entrar a la app]
 Aprendizaje: [Qué entendiste de la solución dada y qué harías distinto]
+
+### Entrada #4
+
+Fecha: 2026-10-26
+Integrante: Tamiro Jose Solano Muriel
+Herramienta: Claude Code
+Objetivo: Revisar el proyecto completo y corregir los bugs y problemas de configuración encontrados.
+Prompt: "analiza el proyecto uberclone-driver y no modifiques nada" / "aplica esos cambios"
+Resumen de la respuesta: Se conectaron las pantallas reales en `TripStack` y `MainDrawer` (antes eran mocks). Se corrigió la llamada a `calculateFare` en `TripSummaryScreen` (recibía argumentos posicionales y leía `totalFare`, que no existe). `IncomingRequestScreen` ahora llama `acceptTrip` del `TripContext`. Se quitó un texto suelto `" "` dentro de un `<View>` en `DocumentsScreen` y se agregó la validación inline de la licencia. Se sacó el efecto secundario del updater de `setState` en `useTripRequests` y se corrigió la fuga de la suscripción en `useDriverLocation`, que ahora se usa en `HomeScreen`. La disponibilidad se guarda en AsyncStorage. Se eliminaron la plantilla de Expo Router y dependencias sin uso (`expo-router`, `dotenv`, `@expo/ui`, `expo-glass-effect`, `expo-symbols`). Se agregaron `app.config.js` (API key de Google Maps), `.env.example`, `src/config/env.js` con variables `EXPO_PUBLIC_*`, un botón de cerrar sesión, la validación de correo con regex y tests de `calculateFare`.
+Qué se usó / modificó / descartó: [Completar]
+Archivos y commit: src/navigation/*.js, src/screens/**/*.js, src/hooks/*.js, src/contexts/*.js, src/config/*.js, app.json, app.config.js, package.json, tsconfig.json, AGENTS.md, .env.example / [Hash del commit]
+Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar con la prueba en el emulador/dispositivo]

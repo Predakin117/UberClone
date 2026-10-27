@@ -1,7 +1,10 @@
-// AI-assisted: see docs/AI_LOG.md #2
+// AI-assisted: see docs/AI_LOG.md #2, #4
 // src/navigation/MainDrawer.js
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import { Text, View } from "react-native";
+import { useContext } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { AuthContext } from "../contexts/AuthContext";
+import EarningsScreen from "../screens/main/EarningsScreen";
 import { TripStack } from "./TripStack";
 
 const Drawer = createDrawerNavigator();
@@ -17,16 +20,18 @@ const HistoryScreen = () => (
     <Text>Historial de Carreras</Text>
   </View>
 );
-const EarningsScreen = () => (
-  <View>
-    <Text>Ganancias</Text>
-  </View>
-);
-const SettingsScreen = () => (
-  <View>
-    <Text>Configuración</Text>
-  </View>
-);
+const SettingsScreen = () => {
+  const { logout } = useContext(AuthContext);
+
+  return (
+    <View style={styles.container}>
+      <Text>Configuración</Text>
+      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+        <Text style={styles.logoutText}>Cerrar sesión</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 export const MainDrawer = () => {
   return (
@@ -59,3 +64,15 @@ export const MainDrawer = () => {
     </Drawer.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20 },
+  logoutButton: {
+    marginTop: 20,
+    backgroundColor: "#F44336",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  logoutText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+});

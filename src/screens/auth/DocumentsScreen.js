@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #3
+// AI-assisted: see docs/AI_LOG.md #3, #4
 import { useContext } from "react";
 import {
     StyleSheet,
@@ -10,19 +10,40 @@ import {
 import { RegistrationContext } from "../../contexts/RegistrationContext";
 
 export default function DocumentsScreen() {
-  const { formData, errors, handleChange, canSubmit, submitRegistration } =
-    useContext(RegistrationContext);
+  const {
+    formData,
+    errors,
+    setErrors,
+    handleChange,
+    canSubmit,
+    submitRegistration,
+  } = useContext(RegistrationContext);
+
+  const handleBlur = () => {
+    // Validación al perder el foco
+    if (formData.licenseNumber.trim() === "") {
+      setErrors((prev) => ({
+        ...prev,
+        licenseNumber: "El número de licencia es obligatorio",
+      }));
+    }
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Número de Licencia</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, errors.licenseNumber && styles.inputError]}
         value={formData.licenseNumber}
         onChangeText={(text) => handleChange("licenseNumber", text)}
+        onBlur={handleBlur}
         placeholder="Ej. 123456789"
       />
-      <View style={{ flex: 1 }} /> {/* Espaciador */}
+      {errors.licenseNumber && (
+        <Text style={styles.errorText}>{errors.licenseNumber}</Text>
+      )}
+      {/* Espaciador */}
+      <View style={{ flex: 1 }} />
       {/* Botón condicionado a canSubmit */}
       <TouchableOpacity
         style={[styles.button, !canSubmit && styles.buttonDisabled]}
@@ -45,8 +66,10 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     padding: 12,
-    marginBottom: 15,
+    marginBottom: 5,
   },
+  inputError: { borderColor: "red" },
+  errorText: { color: "red", fontSize: 12, marginBottom: 15 },
   button: {
     backgroundColor: "#000",
     padding: 15,

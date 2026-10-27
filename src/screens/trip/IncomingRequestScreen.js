@@ -1,11 +1,14 @@
+// AI-assisted: see docs/AI_LOG.md #4
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useCallback } from "react";
+import { useCallback, useContext } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { TripContext } from "../../contexts/TripContext";
 import { useTripRequests } from "../../hooks/useTripRequests";
 
 export default function IncomingRequestScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { acceptTrip } = useContext(TripContext);
 
   const incomingData = route.params?.requestData || {
     id: "trip_999",
@@ -28,7 +31,9 @@ export default function IncomingRequestScreen() {
 
   const handleAccept = () => {
     acceptRequest();
-    navigation.replace("ActiveTrip", { tripData: request });
+    // ActiveTripScreen lee el viaje desde el TripContext
+    acceptTrip({ ...request, status: "accepted" });
+    navigation.replace("ActiveTrip");
   };
 
   const handleManualReject = () => {
@@ -51,7 +56,8 @@ export default function IncomingRequestScreen() {
             🏁 Destino: {incomingData.dropoff}
           </Text>
           <Text style={styles.fareText}>
-            💵 Tarifa Est.: ${incomingData.estimatedFare} COP
+            💵 Tarifa Est.: $
+            {incomingData.estimatedFare.toLocaleString("es-CO")} COP
           </Text>
         </View>
 

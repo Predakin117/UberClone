@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #4
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useContext, useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -16,7 +17,11 @@ export default function TripSummaryScreen() {
   // Calculamos la tarifa usando nuestra regla de negocio (pura matemática)
   const fareDetails = useMemo(() => {
     if (!tripStats) return null;
-    return calculateFare(tripStats.distanceKm, tripStats.durationMin);
+    return calculateFare({
+      distanceKm: tripStats.distanceKm,
+      durationMin: tripStats.durationMin,
+      tip: tripStats.tip || 0,
+    });
   }, [tripStats]);
 
   const handleFinish = () => {
@@ -49,13 +54,15 @@ export default function TripSummaryScreen() {
 
       <View style={styles.receipt}>
         <Text style={styles.receiptText}>
-          Costo Total: ${fareDetails.totalFare}
+          Costo Total: ${fareDetails.fare.toLocaleString("es-CO")} COP
         </Text>
         <Text style={styles.receiptText}>
-          Comisión (20%): -${fareDetails.commission}
+          Comisión (20%): -$
+          {fareDetails.commission.toLocaleString("es-CO")} COP
         </Text>
         <Text style={styles.earnText}>
-          Tu Ganancia: ${fareDetails.driverEarnings}
+          Tu Ganancia: $
+          {fareDetails.driverEarnings.toLocaleString("es-CO")} COP
         </Text>
       </View>
 

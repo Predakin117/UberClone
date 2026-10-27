@@ -1,7 +1,10 @@
-// AI-assisted: see docs/AI_LOG.md #3
+// AI-assisted: see docs/AI_LOG.md #3, #4
 import { useContext } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
-import { RegistrationContext } from "../../contexts/RegistrationContext";
+import {
+  isValidEmail,
+  RegistrationContext,
+} from "../../contexts/RegistrationContext";
 
 export default function PersonalInfoScreen() {
   const { formData, errors, handleChange, setErrors } =
@@ -12,7 +15,7 @@ export default function PersonalInfoScreen() {
     if (field === "name" && formData.name.trim() === "") {
       setErrors((prev) => ({ ...prev, name: "El nombre es obligatorio" }));
     }
-    if (field === "email" && !formData.email.includes("@")) {
+    if (field === "email" && !isValidEmail(formData.email)) {
       setErrors((prev) => ({
         ...prev,
         email: "Ingresa un correo electrónico válido",

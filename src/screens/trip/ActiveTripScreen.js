@@ -1,9 +1,8 @@
-// AI-assisted: see docs/AI_LOG.md #31
+// AI-assisted: see docs/AI_LOG.md #31, #4
 // src/screens/trip/ActiveTripScreen.js
 import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
 import {
-    Dimensions,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -11,8 +10,6 @@ import {
 } from "react-native";
 import MapView from "react-native-maps";
 import { TripContext } from "../../contexts/TripContext";
-
-const { width, height } = Dimensions.get("window");
 
 export default function ActiveTripScreen() {
   const navigation = useNavigation();
@@ -48,7 +45,7 @@ export default function ActiveTripScreen() {
   return (
     <View style={styles.container}>
       <MapView
-        style={styles.map}
+        style={StyleSheet.absoluteFill}
         initialRegion={{
           latitude: 6.2442, // Coordenadas base (Medellín)
           longitude: -75.5812,
@@ -99,7 +96,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  map: { width: width, height: height, position: "absolute", top: 0, left: 0 },
   panel: {
     position: "absolute",
     bottom: 0,

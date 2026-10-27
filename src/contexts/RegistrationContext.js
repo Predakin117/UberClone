@@ -1,6 +1,10 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { AuthContext } from "./AuthContext";
 
+// Formato básico usuario@dominio.ext
+export const isValidEmail = (email) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
 export const RegistrationContext = createContext();
 
 export const RegistrationProvider = ({ children }) => {
@@ -26,7 +30,7 @@ export const RegistrationProvider = ({ children }) => {
 
   // Validaciones en tiempo real
   const isPersonalValid =
-    formData.name.trim() !== "" && formData.email.includes("@");
+    formData.name.trim() !== "" && isValidEmail(formData.email);
   const isVehicleValid =
     formData.vehicleMake.trim() !== "" && formData.plate.trim() !== "";
   const isDocsValid = formData.licenseNumber.trim() !== "";

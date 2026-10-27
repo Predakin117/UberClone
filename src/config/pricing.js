@@ -28,8 +28,9 @@ export const calculateFare = ({
   const commissionRate = 0.2;
   const commission = finalFare * commissionRate;
 
-  // 5. Regla estricta: Propinas 100% al conductor
-  const driverEarnings = finalFare - commission + tip;
+  // 5. Regla estricta: Propinas 100% al conductor (nunca negativas)
+  const safeTip = Math.max(0, tip);
+  const driverEarnings = finalFare - commission + safeTip;
 
   // Retornamos el objeto exacto pedido en los requerimientos
   return {
@@ -37,6 +38,6 @@ export const calculateFare = ({
     commission,
     commissionRate, // Lo devolvemos porque la regla dice: "Se debe guardar el commissionRate por cada viaje en la BD"
     driverEarnings,
-    tip,
+    tip: safeTip,
   };
 };

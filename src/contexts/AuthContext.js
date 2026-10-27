@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
       // Mock de login exitoso. Nunca guardar info bancaria aquí.
       await AsyncStorage.setItem(
         "@driver_session",
-        JSON.stringify({ id: data.id, name: data.name }),
+        JSON.stringify({ id: data.id, name: data.name, status: data.status }),
       );
       setDriverData(data);
       setIsAuthenticated(true);
