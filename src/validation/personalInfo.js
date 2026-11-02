@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #6
+// AI-assisted: see docs/AI_LOG.md #7
 // Base de la pestaña 1: las demás reglas se agregan en la rama tamiro/pestana-1.
 export const PERSONAL_FIELDS = ["name", "email"];
 

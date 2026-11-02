@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #6
+// AI-assisted: see docs/AI_LOG.md #7
 import { StyleSheet } from "react-native";
 
 // Estilos compartidos por los campos del registro

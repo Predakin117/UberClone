@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #6
+// AI-assisted: see docs/AI_LOG.md #7
 // Versión temporal para que la base funcione. La reemplaza la de la rama ximena/pestana-2:
 // si Git marca conflicto en este archivo, se conserva la versión de esa rama.
 export const CATEGORY_OPTIONS = [];

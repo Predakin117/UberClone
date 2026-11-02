@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #5, #4
+// AI-assisted: see docs/AI_LOG.md #6, #4
 // src/screens/trip/ActiveTripScreen.js
 import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";

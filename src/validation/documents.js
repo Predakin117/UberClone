@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #6
+// AI-assisted: see docs/AI_LOG.md #7
 export const DOCUMENT_FIELDS = ["licenseNumber"];
 
 export const validateDocuments = (data) => {
