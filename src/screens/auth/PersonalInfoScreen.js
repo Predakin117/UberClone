@@ -1,65 +1,38 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4
+// AI-assisted: see docs/AI_LOG.md #3, #4, #6
 import { useContext } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
-import {
-  isValidEmail,
-  RegistrationContext,
-} from "../../contexts/RegistrationContext";
+import { StyleSheet, View } from "react-native";
+import FormField from "../../components/FormField";
+import { RegistrationContext } from "../../contexts/RegistrationContext";
 
 export default function PersonalInfoScreen() {
-  const { formData, errors, handleChange, setErrors } =
+  const { formData, errors, handleChange, touchField } =
     useContext(RegistrationContext);
-
-  const handleBlur = (field) => {
-    // Validación al perder el foco
-    if (field === "name" && formData.name.trim() === "") {
-      setErrors((prev) => ({ ...prev, name: "El nombre es obligatorio" }));
-    }
-    if (field === "email" && !isValidEmail(formData.email)) {
-      setErrors((prev) => ({
-        ...prev,
-        email: "Ingresa un correo electrónico válido",
-      }));
-    }
-  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Nombre Completo</Text>
-      <TextInput
-        style={[styles.input, errors.name && styles.inputError]}
+      <FormField
+        label="Nombre Completo"
         value={formData.name}
         onChangeText={(text) => handleChange("name", text)}
-        onBlur={() => handleBlur("name")}
+        onBlur={() => touchField("name")}
+        error={errors.name}
         placeholder="Ej. Tamiro Solano"
       />
-      {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
-      <Text style={styles.label}>Correo Electrónico</Text>
-      <TextInput
-        style={[styles.input, errors.email && styles.inputError]}
+      <FormField
+        label="Correo Electrónico"
         value={formData.email}
         onChangeText={(text) => handleChange("email", text)}
-        onBlur={() => handleBlur("email")}
+        onBlur={() => touchField("email")}
+        error={errors.email}
         placeholder="correo@ejemplo.com"
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  label: { fontSize: 16, marginBottom: 5, fontWeight: "bold" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 5,
-  },
-  inputError: { borderColor: "red" },
-  errorText: { color: "red", fontSize: 12, marginBottom: 15 },
 });

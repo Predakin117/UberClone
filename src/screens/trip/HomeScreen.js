@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #33, #4
+// AI-assisted: see docs/AI_LOG.md #5, #4
 // src/screens/trip/HomeScreen.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
