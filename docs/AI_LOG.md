@@ -113,3 +113,16 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Archivos y commit: `src/validation/vehicle.js`, `src/validation/vehicle.test.js`, `src/screens/auth/VehicleScreen.js`, `docs/AI_LOG.md` — 7af215d (código), a3aa039 (bitácora) y el commit siguiente (correcciones)
 - Verificación: `npx jest` pasa 17 tests (9 nuevos en `vehicle.test.js`), `npx tsc --noEmit` no da errores y `npx expo lint` no reporta errores en los archivos de la pestaña. [Pendiente la prueba en el emulador: errores al tocar Siguiente con todo vacío, XL con capacidad 4, abc123 se ve como ABC123, foto con cámara y galería, teclado sin tapar campos y datos que se conservan al cambiar de pestaña]
 - Aprendizaje: 
+
+### Entrada #51
+
+- Fecha: 2026-11-03
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Reescribir el `README.md`, que seguía siendo la plantilla de Expo, con lo que pide el enunciado para la entrega.
+- Prompt: "si, dejemos todo losto pprfavor"
+- Resumen de la respuesta: Se trajo `main` a la rama `ximena/readme` y se reescribió el `README.md` con la descripción de la app, el alcance del avance, las tecnologías, la instalación, las variables de entorno según `.env.example` (sin valores), los scripts, la estructura de carpetas, el flujo de ramas y la sección "Uso de IA" con el enlace a la bitácora.
+- Qué se usó / modificó / descartó: [Completar]
+- Archivos y commit: `README.md`, `docs/AI_LOG.md` — e1b6d60 (README) y el commit siguiente (bitácora)
+- Verificación: Se comprobó que las variables coinciden con `.env.example`, que los scripts existen en `package.json` y que las carpetas de la estructura existen en `main`. [Pendiente: revisar cómo se ve el README en GitHub]
+- Aprendizaje: 
