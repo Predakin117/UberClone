@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #7
+// AI-assisted: see docs/AI_LOG.md #7, #9
 import { useState } from "react";
 import {
   FlatList,
@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../contexts/LanguageContext";
 import { formStyles } from "./formStyles";
 
 export default function SelectField({
@@ -17,8 +18,9 @@ export default function SelectField({
   options,
   onChange,
   error,
-  placeholder = "Selecciona una opción",
+  placeholder,
 }) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
 
   const selected = options.find((option) => option.value === value);
@@ -38,7 +40,7 @@ export default function SelectField({
         accessibilityLabel={label}
       >
         <Text style={!selected && styles.placeholder}>
-          {selected ? selected.label : placeholder}
+          {selected ? selected.label : (placeholder ?? t("select.placeholder"))}
         </Text>
       </TouchableOpacity>
       {error && <Text style={formStyles.errorText}>{error}</Text>}
@@ -61,9 +63,7 @@ export default function SelectField({
                   style={styles.option}
                   onPress={() => handleSelect(item.value)}
                 >
-                  <Text
-                    style={item.value === value && styles.optionSelected}
-                  >
+                  <Text style={item.value === value && styles.optionSelected}>
                     {item.label}
                   </Text>
                 </TouchableOpacity>
