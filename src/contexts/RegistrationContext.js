@@ -1,50 +1,92 @@
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7
 import { createContext, useContext, useMemo, useState } from "react";
+import { validateDocuments } from "../validation/documents";
+import { validatePersonalInfo } from "../validation/personalInfo";
+import { validateVehicle } from "../validation/vehicle";
 import { AuthContext } from "./AuthContext";
 
-// Formato básico usuario@dominio.ext
-export const isValidEmail = (email) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-
 export const RegistrationContext = createContext();
+
+const isEmpty = (fieldErrors) => Object.keys(fieldErrors).length === 0;
 
 export const RegistrationProvider = ({ children }) => {
   const { login } = useContext(AuthContext); // Para simular el login al finalizar
 
   const [formData, setFormData] = useState({
+    // Pestaña 1: Datos personales
+    profilePhoto: "",
     name: "",
+    documentId: "",
+    phone: "",
+    birthDate: "",
+    gender: "",
     email: "",
-    vehicleMake: "",
+    language: "",
+    // Pestaña 2: Vehículo
+    category: "",
     plate: "",
+    vehicleMake: "",
+    vehicleModel: "",
+    year: "",
+    color: "",
+    capacity: "",
+    vehiclePhoto: "",
+    // Pestaña 3: Documentos
     licenseNumber: "",
   });
 
-  const [errors, setErrors] = useState({});
+  // Campos que el conductor ya visitó: solo esos muestran su error
+  const [touched, setTouched] = useState({});
 
-  // Manejador genérico de cambios que limpia el error al escribir
+  // Las reglas viven en src/validation; aquí solo se calculan a partir de los datos
+  const personalErrors = useMemo(
+    () => validatePersonalInfo(formData),
+    [formData],
+  );
+  const vehicleErrors = useMemo(() => validateVehicle(formData), [formData]);
+  const documentErrors = useMemo(
+    () => validateDocuments(formData),
+    [formData],
+  );
+
+  const errors = useMemo(() => {
+    const allErrors = {
+      ...personalErrors,
+      ...vehicleErrors,
+      ...documentErrors,
+    };
+    return Object.fromEntries(
+      Object.entries(allErrors).filter(([field]) => touched[field]),
+    );
+  }, [personalErrors, vehicleErrors, documentErrors, touched]);
+
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: null }));
-    }
   };
 
-  // Validaciones en tiempo real
-  const isPersonalValid =
-    formData.name.trim() !== "" && isValidEmail(formData.email);
-  const isVehicleValid =
-    formData.vehicleMake.trim() !== "" && formData.plate.trim() !== "";
-  const isDocsValid = formData.licenseNumber.trim() !== "";
+  const touchField = (field) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  // Para el botón Siguiente: muestra de una vez los errores de toda la pestaña
+  const touchFields = (fields) => {
+    setTouched((prev) => ({
+      ...prev,
+      ...Object.fromEntries(fields.map((field) => [field, true])),
+    }));
+  };
+
+  const isPersonalValid = isEmpty(personalErrors);
+  const isVehicleValid = isEmpty(vehicleErrors);
+  const isDocsValid = isEmpty(documentErrors);
 
   // Regla de negocio: El botón final solo se habilita si las 3 pestañas son válidas
-  const canSubmit = useMemo(() => {
-    return isPersonalValid && isVehicleValid && isDocsValid;
-  }, [isPersonalValid, isVehicleValid, isDocsValid]);
+  const canSubmit = isPersonalValid && isVehicleValid && isDocsValid;
 
   const submitRegistration = () => {
     if (!canSubmit) return;
 
     // Regla de negocio: Pasa a "Pendiente de aprobación"
-    console.log("Enviando a BD...", formData);
     alert("Registro enviado. Estado: Pendiente de aprobación.");
 
     // Simulamos que tras la aprobación, el usuario entra a la app:
@@ -56,8 +98,11 @@ export const RegistrationProvider = ({ children }) => {
       value={{
         formData,
         errors,
-        setErrors,
         handleChange,
+        touchField,
+        touchFields,
+        isPersonalValid,
+        isVehicleValid,
         canSubmit,
         submitRegistration,
       }}

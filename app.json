@@ -32,7 +32,15 @@
           "imageWidth": 76
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "UberClone Conductor usa tus fotos para el registro del conductor.",
+          "cameraPermission": "UberClone Conductor usa la cámara para tomar las fotos del registro."
+        }
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "reactCompiler": true

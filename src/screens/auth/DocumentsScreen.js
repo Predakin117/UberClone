@@ -1,47 +1,29 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7
 import { useContext } from "react";
-import {
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import FormField from "../../components/FormField";
 import { RegistrationContext } from "../../contexts/RegistrationContext";
 
 export default function DocumentsScreen() {
   const {
     formData,
     errors,
-    setErrors,
     handleChange,
+    touchField,
     canSubmit,
     submitRegistration,
   } = useContext(RegistrationContext);
 
-  const handleBlur = () => {
-    // Validación al perder el foco
-    if (formData.licenseNumber.trim() === "") {
-      setErrors((prev) => ({
-        ...prev,
-        licenseNumber: "El número de licencia es obligatorio",
-      }));
-    }
-  };
-
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Número de Licencia</Text>
-      <TextInput
-        style={[styles.input, errors.licenseNumber && styles.inputError]}
+      <FormField
+        label="Número de Licencia"
         value={formData.licenseNumber}
         onChangeText={(text) => handleChange("licenseNumber", text)}
-        onBlur={handleBlur}
+        onBlur={() => touchField("licenseNumber")}
+        error={errors.licenseNumber}
         placeholder="Ej. 123456789"
       />
-      {errors.licenseNumber && (
-        <Text style={styles.errorText}>{errors.licenseNumber}</Text>
-      )}
       {/* Espaciador */}
       <View style={{ flex: 1 }} />
       {/* Botón condicionado a canSubmit */}
@@ -60,16 +42,6 @@ export default function DocumentsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  label: { fontSize: 16, marginBottom: 5, fontWeight: "bold" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 5,
-  },
-  inputError: { borderColor: "red" },
-  errorText: { color: "red", fontSize: 12, marginBottom: 15 },
   button: {
     backgroundColor: "#000",
     padding: 15,
