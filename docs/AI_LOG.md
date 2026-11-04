@@ -109,10 +109,19 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Objetivo: Completar la pestaña 2 del registro (Vehículo) con todos los campos y validaciones del enunciado.
 - Prompt: "voy a empezar hacer la pestaña 2"
 - Resumen de la respuesta: Se basó la rama `ximena/pestana-2` en `tamiro/registro-base` (fast-forward). Se reemplazó la versión temporal de `src/validation/vehicle.js` por las reglas completas: categoría (Económico, XL, Premium), placa `ABC123` convertida a mayúsculas, marca y modelo de máximo 30 caracteres, año de 4 dígitos no mayor al actual, color, capacidad (mínimo 6 para XL) y foto obligatoria. `VehicleScreen` usa `FormField`, `SelectField` y `PhotoField`, y tiene un botón Siguiente que muestra los errores pendientes antes de pasar a Documentos.
-- Qué se usó / modificó / descartó: [Completar]
+- Qué se usó / modificó / descartó: Librerías y herramientas de desarrollo: Jest para pruebas unitarias (vehicle.test.js), npx tsc --noEmit para verificación de tipos y npx expo lint para control de calidad de código. Componentes de interfaz reutilizables: FormField, SelectField y PhotoField dentro de VehicleScreen.js. Control de versiones: Rama ximena/pestana-2 basada en tamiro/registro-base. Se modificó:
+
+-src/validation/vehicle.js: Reemplazo del prototipo temporal por las reglas de negocio definitivas (categorías Económico, XL, Premium; transformación automática de placa a mayúsculas con formato ABC123; restricciones de caracteres en marca y modelo; validación de año de 4 dígitos; capacidad mínima de 6 pasajeros para categoría XL; y obligatoriedad de la foto).
+
+-src/validation/vehicle.test.js: Incorporación de 9 nuevos casos de prueba unitaria.
+
+-src/screens/auth/VehicleScreen.js: Integración de los campos de entrada, lógica de manejo de errores pendientes al presionar "Siguiente" y manejo del estado de la foto (cámara/galería).
+
+Se descartó: La versión mock o preliminar de validación de vehículos que se encontraba inicialmente en el repositorio base.
+
 - Archivos y commit: `src/validation/vehicle.js`, `src/validation/vehicle.test.js`, `src/screens/auth/VehicleScreen.js`, `docs/AI_LOG.md` — 7af215d (código), a3aa039 (bitácora) y el commit siguiente (correcciones)
 - Verificación: `npx jest` pasa 17 tests (9 nuevos en `vehicle.test.js`), `npx tsc --noEmit` no da errores y `npx expo lint` no reporta errores en los archivos de la pestaña. [Pendiente la prueba en el emulador: errores al tocar Siguiente con todo vacío, XL con capacidad 4, abc123 se ve como ABC123, foto con cámara y galería, teclado sin tapar campos y datos que se conservan al cambiar de pestaña]
-- Aprendizaje: 
+- Aprendizaje: Mantener la lógica de negocio y las reglas estrictas de validación aisladas en un archivo dedicado (vehicle.js) junto con su respectiva suite de pruebas unitarias facilita detectar fallos lógicos antes de tocar la interfaz visual. 
 
 ### Entrada #51
 
@@ -122,7 +131,22 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Objetivo: Reescribir el `README.md`, que seguía siendo la plantilla de Expo, con lo que pide el enunciado para la entrega.
 - Prompt: "si, dejemos todo losto pprfavor"
 - Resumen de la respuesta: Se trajo `main` a la rama `ximena/readme` y se reescribió el `README.md` con la descripción de la app, el alcance del avance, las tecnologías, la instalación, las variables de entorno según `.env.example` (sin valores), los scripts, la estructura de carpetas, el flujo de ramas y la sección "Uso de IA" con el enlace a la bitácora.
-- Qué se usó / modificó / descartó: [Completar]
+- Qué se usó / modificó / descartó: Se usó:
+
+Estándares de documentación técnica y lineamientos del enunciado de la entrega para estructurar la información del proyecto de manera clara y profesional.
+
+Referencia directa del archivo .env.example y el package.json para documentar con exactitud las variables de entorno y los scripts de ejecución.
+
+Control de versiones: Rama ximena/readme con sincronización previa de main.
+
+Se modificó:
+
+README.md: Reemplazo completo de la plantilla predeterminada de Expo por la documentación oficial del proyecto (descripción, tecnologías, instalación, configuración de entorno, scripts, estructura, flujo de ramas y bitácora de IA).
+
+docs/AI_LOG.md: Registro de la bitácora correspondiente a la sesión de trabajo.
+
+Se descartó: La plantilla genérica inicial de Expo que venía por defecto en el repositorio al clonar o inicializar la aplicación.
+
 - Archivos y commit: `README.md`, `docs/AI_LOG.md` — e1b6d60 (README) y el commit siguiente (bitácora)
 - Verificación: Se comprobó que las variables coinciden con `.env.example`, que los scripts existen en `package.json` y que las carpetas de la estructura existen en `main`. [Pendiente: revisar cómo se ve el README en GitHub]
-- Aprendizaje: 
+- Aprendizaje: Importancia de la documentación desde el inicio: Mantener el README.md actualizado y alineado con la realidad técnica del repositorio (scripts reales, variables de entorno precisas y estructura de carpetas correcta) es clave no solo para cumplir con los requisitos académicos, sino también para facilitar el onboarding de cualquier colaborador en el equipo de desarrollo.
