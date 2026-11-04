@@ -100,3 +100,16 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Archivos y commit: `docs/AI_LOG.md`, marcas `AI-assisted` en `src/components/*`, `src/contexts/RegistrationContext.js`, `src/validation/*`, `src/screens/auth/*.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js` — db54e73 y el commit siguiente de esta rama.
 - Verificación: Se comparó la entrada #4 con la versión de `main` y se revisó que cada marca del código apunte a una entrada existente.
 - Aprendizaje: [Completar]
+
+### Entrada #9
+
+- Fecha: 2026-11-03
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Completar la pestaña 2 del registro (Vehículo) con todos los campos y validaciones del enunciado.
+- Prompt: "voy a empezar hacer la pestaña 2"
+- Resumen de la respuesta: Se basó la rama `ximena/pestana-2` en `tamiro/registro-base` (fast-forward). Se reemplazó la versión temporal de `src/validation/vehicle.js` por las reglas completas: categoría (Económico, XL, Premium), placa `ABC123` convertida a mayúsculas, marca y modelo de máximo 30 caracteres, año de 4 dígitos no mayor al actual, color, capacidad (mínimo 6 para XL) y foto obligatoria. `VehicleScreen` usa `FormField`, `SelectField` y `PhotoField`, y tiene un botón Siguiente que muestra los errores pendientes antes de pasar a Documentos.
+- Qué se usó / modificó / descartó: [Completar]
+- Archivos y commit: `src/validation/vehicle.js`, `src/validation/vehicle.test.js`, `src/screens/auth/VehicleScreen.js`, `docs/AI_LOG.md` — 7af215d (código) y el commit siguiente (bitácora)
+- Verificación: `npx jest` pasa 17 tests (9 nuevos en `vehicle.test.js`) y ESLint no reporta errores en los archivos de la pestaña. [Completar con la prueba en el emulador: foto con cámara y galería, y botón Enviar de la pestaña 3]
+- Aprendizaje: 
