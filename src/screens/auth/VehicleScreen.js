@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9
+// AI-assisted: see docs/AI_LOG.md #50
 import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9
+// AI-assisted: see docs/AI_LOG.md #50
 // Las mismas categorías que elige el pasajero (valores en inglés, como en la colección trips)
 export const CATEGORY_OPTIONS = [
   { value: "economy", label: "Económico" },
@@ -13,8 +13,6 @@ export const COLOR_OPTIONS = [
   { value: "silver", label: "Plata" },
   { value: "red", label: "Rojo" },
   { value: "blue", label: "Azul" },
-  { value: "green", label: "Verde" },
-  { value: "yellow", label: "Amarillo" },
   { value: "other", label: "Otro" },
 ];
 
@@ -35,8 +33,8 @@ const XL_MIN_CAPACITY = 6;
 // Placa de carro en Colombia: tres letras y tres números (ABC123)
 const PLATE_REGEX = /^[A-Z]{3}\d{3}$/;
 
-// Mayúsculas antes de validar; también quita espacios y guiones (ABC-123 → ABC123)
-export const normalizePlate = (text) => text.toUpperCase().replace(/[\s-]/g, "");
+// Mayúsculas antes de validar; los guiones no se quitan, así que ABC-123 es inválida
+export const normalizePlate = (text) => text.trim().toUpperCase();
 
 const isOption = (options, value) =>
   options.some((option) => option.value === value);
@@ -49,9 +47,9 @@ const validateName = (value, label) => {
   return null;
 };
 
-// currentYear es parámetro para poder probar el límite del año
-export const validateVehicle = (data, currentYear = new Date().getFullYear()) => {
+export const validateVehicle = (data) => {
   const errors = {};
+  const currentYear = new Date().getFullYear();
 
   if (!isOption(CATEGORY_OPTIONS, data.category)) {
     errors.category = "Selecciona la categoría";

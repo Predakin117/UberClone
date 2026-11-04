@@ -101,7 +101,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Verificación: Se comparó la entrada #4 con la versión de `main` y se revisó que cada marca del código apunte a una entrada existente.
 - Aprendizaje: [Completar]
 
-### Entrada #9
+### Entrada #50
 
 - Fecha: 2026-11-03
 - Integrante: Ximena Rosales Lopez
@@ -110,6 +110,6 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Prompt: "voy a empezar hacer la pestaña 2"
 - Resumen de la respuesta: Se basó la rama `ximena/pestana-2` en `tamiro/registro-base` (fast-forward). Se reemplazó la versión temporal de `src/validation/vehicle.js` por las reglas completas: categoría (Económico, XL, Premium), placa `ABC123` convertida a mayúsculas, marca y modelo de máximo 30 caracteres, año de 4 dígitos no mayor al actual, color, capacidad (mínimo 6 para XL) y foto obligatoria. `VehicleScreen` usa `FormField`, `SelectField` y `PhotoField`, y tiene un botón Siguiente que muestra los errores pendientes antes de pasar a Documentos.
 - Qué se usó / modificó / descartó: [Completar]
-- Archivos y commit: `src/validation/vehicle.js`, `src/validation/vehicle.test.js`, `src/screens/auth/VehicleScreen.js`, `docs/AI_LOG.md` — 7af215d (código) y el commit siguiente (bitácora)
-- Verificación: `npx jest` pasa 17 tests (9 nuevos en `vehicle.test.js`) y ESLint no reporta errores en los archivos de la pestaña. [Completar con la prueba en el emulador: foto con cámara y galería, y botón Enviar de la pestaña 3]
+- Archivos y commit: `src/validation/vehicle.js`, `src/validation/vehicle.test.js`, `src/screens/auth/VehicleScreen.js`, `docs/AI_LOG.md` — 7af215d (código), a3aa039 (bitácora) y el commit siguiente (correcciones)
+- Verificación: `npx jest` pasa 17 tests (9 nuevos en `vehicle.test.js`), `npx tsc --noEmit` no da errores y `npx expo lint` no reporta errores en los archivos de la pestaña. [Pendiente la prueba en el emulador: errores al tocar Siguiente con todo vacío, XL con capacidad 4, abc123 se ve como ABC123, foto con cámara y galería, teclado sin tapar campos y datos que se conservan al cambiar de pestaña]
 - Aprendizaje: 
