@@ -121,7 +121,7 @@ Se descartó: La versión mock o preliminar de validación de vehículos que se 
 
 - Archivos y commit: `src/validation/vehicle.js`, `src/validation/vehicle.test.js`, `src/screens/auth/VehicleScreen.js`, `docs/AI_LOG.md` — 7af215d (código), a3aa039 (bitácora) y el commit siguiente (correcciones)
 - Verificación: `npx jest` pasa 17 tests (9 nuevos en `vehicle.test.js`), `npx tsc --noEmit` no da errores y `npx expo lint` no reporta errores en los archivos de la pestaña. [Pendiente la prueba en el emulador: errores al tocar Siguiente con todo vacío, XL con capacidad 4, abc123 se ve como ABC123, foto con cámara y galería, teclado sin tapar campos y datos que se conservan al cambiar de pestaña]
-- Aprendizaje: Mantener la lógica de negocio y las reglas estrictas de validación aisladas en un archivo dedicado (vehicle.js) junto con su respectiva suite de pruebas unitarias facilita detectar fallos lógicos antes de tocar la interfaz visual. 
+- Aprendizaje: Mantener la lógica de negocio y las reglas estrictas de validación aisladas en un archivo dedicado (vehicle.js) junto con su respectiva suite de pruebas unitarias facilita detectar fallos lógicos antes de tocar la interfaz visual.
 
 ### Entrada #51
 
