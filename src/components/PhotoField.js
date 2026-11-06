@@ -1,11 +1,14 @@
-// AI-assisted: see docs/AI_LOG.md #7
+// AI-assisted: see docs/AI_LOG.md #7, #9
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useLanguage } from "../contexts/LanguageContext";
 import { formStyles } from "./formStyles";
 
 export default function PhotoField({ label, uri, onChange, error }) {
+  const { t } = useLanguage();
+  // Guarda la clave del error para que cambie si se cambia el idioma
   const [pickerError, setPickerError] = useState(null);
 
   const pickFrom = async (requestPermission, launchPicker) => {
@@ -13,7 +16,7 @@ export default function PhotoField({ label, uri, onChange, error }) {
     try {
       const { granted } = await requestPermission();
       if (!granted) {
-        setPickerError("Debes conceder el permiso para agregar la foto.");
+        setPickerError("photo.permissionDenied");
         return;
       }
 
@@ -23,11 +26,11 @@ export default function PhotoField({ label, uri, onChange, error }) {
       }
     } catch (pickError) {
       console.error("Error seleccionando la foto:", pickError);
-      setPickerError("No se pudo obtener la foto. Inténtalo de nuevo.");
+      setPickerError("photo.pickError");
     }
   };
 
-  const message = pickerError || error;
+  const message = t(pickerError) || error;
 
   return (
     <View style={formStyles.field}>
@@ -45,7 +48,7 @@ export default function PhotoField({ label, uri, onChange, error }) {
             )
           }
         >
-          <Text>Tomar foto</Text>
+          <Text>{t("photo.takePhoto")}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.button, message && formStyles.inputError]}
@@ -56,7 +59,7 @@ export default function PhotoField({ label, uri, onChange, error }) {
             )
           }
         >
-          <Text>Elegir de galería</Text>
+          <Text>{t("photo.chooseFromGallery")}</Text>
         </TouchableOpacity>
       </View>
       {message && <Text style={formStyles.errorText}>{message}</Text>}

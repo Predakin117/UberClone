@@ -101,6 +101,28 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Verificación: Se comparó la entrada #4 con la versión de `main` y se revisó que cada marca del código apunte a una entrada existente.
 - Aprendizaje: [Completar]
 
+### Entrada #9
+
+- Fecha: 2026-11-04
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Completar la pestaña 1 del registro (Datos personales) con todos los campos y validaciones del enunciado, y hacer que el selector de idioma funcione.
+- Prompt: "no lo documentes en la bitacora, centremonos en la pestaña 1 en todo lo que debe tener" / "hagamos la pensataña 1 como se indica" / Opción elegida en la pregunta de Claude sobre qué faltaba: "Hacer funcional el idioma (Recomendado)"
+- Resumen de la respuesta: Se completaron los 8 campos de la pestaña 1 (foto de perfil, nombre, documento, celular, fecha de nacimiento, género, correo e idioma) con errores debajo de cada campo y un botón Siguiente. Se creó `DateField`, un campo de fecha reutilizable para la pestaña 3. Se agregó un `LanguageContext` que guarda el idioma en AsyncStorage y traduce los textos del registro entre español e inglés.
+- Qué se usó / modificó / descartó:
+  - Se usó: las reglas de `src/validation/personalInfo.js` (nombre de máximo 50 caracteres con solo letras y espacios, documento de 6 a 10 dígitos, celular de 10 dígitos, mayor de 18 años, correo con @ y dominio). También se usaron `FormField`, `SelectField` y `PhotoField` de la base común (entrada #7), `src/validation/dates.js` para guardar las fechas como `AAAA-MM-DD` en hora local y los textos en `src/i18n/strings.js`.
+  - Se modificó: los validadores de la pestaña 1 ahora devuelven claves de traducción en lugar de textos fijos. `PhotoField`, `SelectField` y los títulos de las pestañas (`AuthTabs`) usan `t()`.
+  - Se descartó: las librerías `i18n-js` y `expo-localization`, que se reemplazaron por una función propia sin dependencias nuevas. También se descartó el `onChange` del selector de fecha, que está obsoleto en la versión 9.2.1, y se usaron `onValueChange` y `onDismiss`. Los nombres con guion (Ana-María) se rechazan porque el enunciado pide solo letras y espacios. La pestaña 2 no se tradujo porque es de Ximena.
+- Archivos y commit:
+  - `src/validation/dates.js` y `src/validation/dates.test.js` — 0ee3f95
+  - `App.js`, `src/components/DateField.js`, `src/components/PhotoField.js`, `src/components/SelectField.js`, `src/contexts/LanguageContext.js`, `src/i18n/strings.js`, `src/i18n/strings.test.js`, `src/navigation/AuthTabs.js`, `src/screens/auth/PersonalInfoScreen.js`, `src/validation/personalInfo.js` y `src/validation/personalInfo.test.js` — 7fbfbd4
+  - `docs/AI_LOG.md` — el commit siguiente
+- Verificación:
+  - En `tamiro/pestana-1`: `npx jest` pasa 29 tests, entre ellos la mayoría de edad (quien cumple 18 hoy pasa y quien los cumple mañana no) y que cada error tenga traducción en los dos idiomas. `npx tsc --noEmit` no da errores, `npx expo export --platform android` genera el bundle y ESLint solo reporta los 2 errores previos de `AuthContext.js` y `useTripRequests.js`.
+  - Junto con `ximena/pestana-2`: las dos ramas se mezclan sin conflictos de código y pasan 38 tests.
+  - [Pendiente: la prueba en el celular de los errores al tocar Siguiente con todo vacío, la cámara y la galería, el calendario que no deja elegir menores y el idioma guardado al cerrar y abrir la app]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
