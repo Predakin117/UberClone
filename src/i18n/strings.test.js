@@ -1,5 +1,22 @@
+import { DOCUMENT_FIELDS, validateDocuments } from "../validation/documents";
 import { validatePersonalInfo } from "../validation/personalInfo";
 import { strings, translate } from "./strings";
+
+// Vehículo de 2018: con la fecha fija necesita revisión técnico-mecánica
+const TODAY = new Date(2026, 10, 5);
+const emptyDocuments = {
+  ...Object.fromEntries(DOCUMENT_FIELDS.map((field) => [field, ""])),
+  year: "2018",
+  acceptedTerms: false,
+};
+const invalidDocuments = {
+  ...emptyDocuments,
+  licenseNumber: "12A",
+  licenseExpiry: "2026-11-05",
+  soatExpiry: "2026-01-01",
+  techReviewExpiry: "2027-02-30",
+  mercadoPagoEmail: "ana@",
+};
 
 const emptyPersonalInfo = {
   profilePhoto: "",
@@ -34,6 +51,19 @@ describe("strings", () => {
       ...Object.values(validatePersonalInfo(emptyPersonalInfo)),
       ...Object.values(validatePersonalInfo(invalidPersonalInfo)),
     ];
+    for (const code of codes) {
+      expect(strings.es[code]).toBeDefined();
+      expect(strings.en[code]).toBeDefined();
+    }
+  });
+
+  it("traduce cada error de la pestaña 3 en los dos idiomas", () => {
+    const codes = [
+      ...Object.values(validateDocuments(emptyDocuments, TODAY)),
+      ...Object.values(validateDocuments(invalidDocuments, TODAY)),
+    ];
+    expect(codes).toContain("errors.techReviewExpiryRequired");
+    expect(codes).toContain("errors.expiryInvalid");
     for (const code of codes) {
       expect(strings.es[code]).toBeDefined();
       expect(strings.en[code]).toBeDefined();

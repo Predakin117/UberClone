@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9
+// AI-assisted: see docs/AI_LOG.md #9, #12
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_NAME_LENGTH, MIN_DRIVER_AGE } from "../validation/personalInfo";
@@ -73,6 +73,58 @@ export const strings = {
     "errors.emailInvalid":
       "Ingresa un correo válido, por ejemplo nombre@dominio.com",
     "errors.languageRequired": "Selecciona el idioma",
+
+    // Pestaña 3: Documentos y pagos ({year}, {percent} y {tabs} los reemplaza
+    // DocumentsScreen)
+    "documents.licenseSection": "Licencia de conducción",
+    "documents.licenseNumber": "Número de licencia",
+    "documents.licenseNumberPlaceholder": "Ej. 1234567890",
+    "documents.licensePhoto": "Foto de la licencia",
+    "documents.licenseExpiry": "Vencimiento de la licencia",
+    "documents.soatSection": "SOAT",
+    "documents.soatPhoto": "Foto del SOAT",
+    "documents.soatExpiry": "Vencimiento del SOAT",
+    "documents.techReviewSection": "Revisión técnico-mecánica",
+    "documents.techReviewPhoto": "Foto del certificado",
+    "documents.techReviewExpiry": "Vencimiento de la revisión",
+    "documents.techReviewNotRequired":
+      "Tu vehículo es modelo {year}: todavía no necesita revisión técnico-mecánica.",
+    "documents.techReviewUnknownYear":
+      "Completa el año del vehículo en la pestaña 2 para saber si necesitas revisión técnico-mecánica.",
+    "documents.paymentsSection": "Pagos",
+    "documents.mercadoPagoEmail": "Correo de tu cuenta de Mercado Pago",
+    "documents.mercadoPagoEmailHint":
+      "Ahí recibirías tus pagos. La app no guarda cuentas bancarias ni tarjetas.",
+    "documents.terms":
+      "Acepto los términos y condiciones, incluida la comisión del {percent} % que cobra la plataforma por cada viaje.",
+    "documents.submit": "Enviar registro",
+    "documents.completeAllTabs": "Completa todas las pestañas",
+    "documents.pendingTabs": "Falta completar: {tabs}",
+    "documents.showPending": "Ver qué falta en esta pestaña",
+
+    "errors.licenseNumberRequired": "El número de licencia es obligatorio",
+    "errors.licenseNumberInvalid":
+      "El número de licencia solo puede tener dígitos",
+    "errors.licensePhotoRequired": "La foto de la licencia es obligatoria",
+    "errors.licenseExpiryRequired":
+      "La fecha de vencimiento de la licencia es obligatoria",
+    "errors.licenseExpired": "La licencia debe vencer después de hoy",
+    "errors.soatPhotoRequired": "La foto del SOAT es obligatoria",
+    "errors.soatExpiryRequired":
+      "La fecha de vencimiento del SOAT es obligatoria",
+    "errors.soatExpired": "El SOAT debe vencer después de hoy",
+    "errors.techReviewPhotoRequired":
+      "La foto de la revisión técnico-mecánica es obligatoria",
+    "errors.techReviewExpiryRequired":
+      "La fecha de vencimiento de la revisión es obligatoria",
+    "errors.techReviewExpired": "La revisión debe vencer después de hoy",
+    "errors.expiryInvalid": "La fecha no es válida",
+    "errors.mercadoPagoEmailRequired":
+      "El correo de Mercado Pago es obligatorio",
+    "errors.mercadoPagoEmailInvalid":
+      "Ingresa un correo válido, por ejemplo nombre@dominio.com",
+    "errors.termsRequired":
+      "Debes aceptar los términos para enviar el registro",
 
     // Guardado en Firestore
     "save.saving": "Guardando…",
@@ -149,6 +201,51 @@ export const strings = {
     "errors.emailInvalid": "Enter a valid email, for example name@domain.com",
     "errors.languageRequired": "Select your language",
 
+    "documents.licenseSection": "Driver's license",
+    "documents.licenseNumber": "License number",
+    "documents.licenseNumberPlaceholder": "E.g. 1234567890",
+    "documents.licensePhoto": "Photo of the license",
+    "documents.licenseExpiry": "License expiration date",
+    "documents.soatSection": "SOAT (mandatory insurance)",
+    "documents.soatPhoto": "Photo of the SOAT",
+    "documents.soatExpiry": "SOAT expiration date",
+    "documents.techReviewSection": "Vehicle inspection",
+    "documents.techReviewPhoto": "Photo of the certificate",
+    "documents.techReviewExpiry": "Inspection expiration date",
+    "documents.techReviewNotRequired":
+      "Your vehicle is a {year} model: it does not need an inspection yet.",
+    "documents.techReviewUnknownYear":
+      "Enter the vehicle year in tab 2 to know whether you need an inspection.",
+    "documents.paymentsSection": "Payments",
+    "documents.mercadoPagoEmail": "Your Mercado Pago account email",
+    "documents.mercadoPagoEmailHint":
+      "This is where you would receive your payments. The app does not store bank accounts or cards.",
+    "documents.terms":
+      "I accept the terms and conditions, including the {percent}% fee the platform charges per trip.",
+    "documents.submit": "Submit registration",
+    "documents.completeAllTabs": "Complete all tabs",
+    "documents.pendingTabs": "Still missing: {tabs}",
+    "documents.showPending": "Show what is missing in this tab",
+
+    "errors.licenseNumberRequired": "License number is required",
+    "errors.licenseNumberInvalid": "License number can only contain digits",
+    "errors.licensePhotoRequired": "A photo of the license is required",
+    "errors.licenseExpiryRequired": "License expiration date is required",
+    "errors.licenseExpired": "The license must expire after today",
+    "errors.soatPhotoRequired": "A photo of the SOAT is required",
+    "errors.soatExpiryRequired": "SOAT expiration date is required",
+    "errors.soatExpired": "The SOAT must expire after today",
+    "errors.techReviewPhotoRequired":
+      "A photo of the inspection certificate is required",
+    "errors.techReviewExpiryRequired":
+      "Inspection expiration date is required",
+    "errors.techReviewExpired": "The inspection must expire after today",
+    "errors.expiryInvalid": "The date is not valid",
+    "errors.mercadoPagoEmailRequired": "Mercado Pago email is required",
+    "errors.mercadoPagoEmailInvalid":
+      "Enter a valid email, for example name@domain.com",
+    "errors.termsRequired": "You must accept the terms to submit",
+
     "save.saving": "Saving…",
     "save.notConfigured":
       "Firebase or Cloudinary is not set up in the .env file.",
@@ -162,7 +259,7 @@ export const strings = {
 };
 
 // Si la clave no existe se devuelve tal cual. Así los mensajes que todavía están
-// escritos directamente en español (pestañas 2 y 3) se siguen mostrando.
+// escritos directamente en español (pestaña 2) se siguen mostrando.
 export const translate = (language, key) => {
   if (key == null) return key;
   return strings[language]?.[key] ?? strings[DEFAULT_LANGUAGE][key] ?? key;

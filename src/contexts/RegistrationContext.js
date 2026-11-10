@@ -1,6 +1,5 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12
 import { createContext, useContext, useMemo, useState } from "react";
-import { PHOTO_FIELD_BY_SECTION } from "../services/driverDocs";
 import { saveDriverSection } from "../services/driverRepository";
 import { validateDocuments } from "../validation/documents";
 import { validatePersonalInfo } from "../validation/personalInfo";
@@ -33,8 +32,16 @@ export const RegistrationProvider = ({ children }) => {
     color: "",
     capacity: "",
     vehiclePhoto: "",
-    // Pestaña 3: Documentos
+    // Pestaña 3: Documentos y pagos (fechas "AAAA-MM-DD", fotos como uri)
     licenseNumber: "",
+    licensePhoto: "",
+    licenseExpiry: "",
+    soatPhoto: "",
+    soatExpiry: "",
+    techReviewPhoto: "",
+    techReviewExpiry: "",
+    mercadoPagoEmail: "",
+    acceptedTerms: false,
   });
 
   // Estado del guardado en Firestore. saveError es { section, code }; code es una
@@ -95,13 +102,15 @@ export const RegistrationProvider = ({ children }) => {
     setIsSaving(true);
     setSaveError(null);
     try {
-      const { uid, photoUrl } = await saveDriverSection(
+      const { uid, photoUrls } = await saveDriverSection(
         section,
         formData,
         options,
       );
-      // La foto ya subida se guarda como URL para no subirla otra vez
-      if (photoUrl) handleChange(PHOTO_FIELD_BY_SECTION[section], photoUrl);
+      // Las fotos ya subidas se guardan como URL para no subirlas otra vez
+      for (const [field, url] of Object.entries(photoUrls)) {
+        handleChange(field, url);
+      }
       return uid;
     } catch (error) {
       console.error(
@@ -141,6 +150,7 @@ export const RegistrationProvider = ({ children }) => {
         touchFields,
         isPersonalValid,
         isVehicleValid,
+        isDocsValid,
         canSubmit,
         submitRegistration,
         saveSection,

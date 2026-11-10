@@ -1,10 +1,10 @@
-// AI-assisted: see docs/AI_LOG.md #10
+// AI-assisted: see docs/AI_LOG.md #10, #12
 // Guarda el registro del conductor en Firestore, en el documento drivers/{uid}.
 // Cada pestaña queda en su propio mapa: personal, vehicle y documents.
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db, ensureSignedIn, isFirebaseConfigured } from "../config/firebase";
 import { isCloudinaryConfigured, uploadImage } from "./cloudinary";
-import { DOC_BUILDERS, isUploaded, PHOTO_FIELD_BY_SECTION } from "./driverDocs";
+import { DOC_BUILDERS, photosToUpload } from "./driverDocs";
 
 // Sin conexión, setDoc espera indefinidamente la respuesta del servidor
 const SAVE_TIMEOUT_MS = 15000;
@@ -27,32 +27,39 @@ const withTimeout = (promise, ms) =>
   ]);
 
 /**
- * Sube la foto de la pestaña (si aún es local) y guarda la pestaña en Firestore.
- * Devuelve { uid, photoUrl } para que el formulario reemplace la ruta local por la URL
- * y no vuelva a subir la misma foto.
+ * Sube las fotos de la pestaña que aún son locales y guarda la pestaña en Firestore.
+ * Devuelve { uid, photoUrls } (campo → URL) para que el formulario reemplace las rutas
+ * locales por las URL y no vuelva a subir las mismas fotos.
  */
 export const saveDriverSection = async (
   section,
   formData,
   { submit = false } = {},
 ) => {
-  const photoField = PHOTO_FIELD_BY_SECTION[section];
-  const needsUpload = photoField && !isUploaded(formData[photoField]);
+  const fieldsToUpload = photosToUpload(section, formData);
 
-  if (!isFirebaseConfigured || (needsUpload && !isCloudinaryConfigured)) {
+  if (
+    !isFirebaseConfigured ||
+    (fieldsToUpload.length > 0 && !isCloudinaryConfigured)
+  ) {
     throw new SaveError("save.notConfigured");
   }
 
-  let data = formData;
-  let photoUrl = null;
-  if (needsUpload) {
+  // La pestaña 3 tiene hasta tres fotos: se suben a la vez
+  let photoUrls = {};
+  if (fieldsToUpload.length > 0) {
     try {
-      photoUrl = await uploadImage(formData[photoField]);
+      const urls = await Promise.all(
+        fieldsToUpload.map((field) => uploadImage(formData[field])),
+      );
+      photoUrls = Object.fromEntries(
+        fieldsToUpload.map((field, index) => [field, urls[index]]),
+      );
     } catch (error) {
       throw new SaveError("save.photoFailed", error);
     }
-    data = { ...formData, [photoField]: photoUrl };
   }
+  const data = { ...formData, ...photoUrls };
 
   try {
     const user = await ensureSignedIn();
@@ -70,7 +77,7 @@ export const saveDriverSection = async (
       setDoc(doc(db, "drivers", user.uid), payload, { merge: true }),
       SAVE_TIMEOUT_MS,
     );
-    return { uid: user.uid, photoUrl };
+    return { uid: user.uid, photoUrls };
   } catch (error) {
     const code =
       error.code === "permission-denied"
