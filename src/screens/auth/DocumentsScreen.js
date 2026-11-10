@@ -1,4 +1,5 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12, #13
+import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
 import CheckboxField from "../../components/CheckboxField";
@@ -16,6 +17,7 @@ import {
 } from "../../validation/documents";
 
 export default function DocumentsScreen() {
+  const navigation = useNavigation();
   const { t } = useLanguage();
   const {
     formData,
@@ -27,7 +29,6 @@ export default function DocumentsScreen() {
     isVehicleValid,
     isDocsValid,
     canSubmit,
-    submitRegistration,
     isSaving,
     saveError,
   } = useContext(RegistrationContext);
@@ -156,13 +157,13 @@ export default function DocumentsScreen() {
         error={t(errors.acceptedTerms)}
       />
 
-      {/* Botón condicionado a canSubmit. Al enviar se guardan las 3 pestañas,
-          así que aquí se muestra el error de cualquiera de ellas */}
+      {/* Botón condicionado a canSubmit. Antes de guardar se confirma el correo con
+          un código (VerifyEmailScreen), que es la que envía el registro */}
       <NextButton
         label={
           canSubmit ? t("documents.submit") : t("documents.completeAllTabs")
         }
-        onPress={submitRegistration}
+        onPress={() => navigation.navigate("VerifyEmail")}
         disabled={!canSubmit}
         isSaving={isSaving}
         error={saveError && t(saveError.code)}
