@@ -1,0 +1,34 @@
+// AI-assisted: see docs/AI_LOG.md #10
+// Reglas de Firestore. Se copian en la consola: Firestore Database → Reglas → Publicar.
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Cada conductor (sesión anónima de Firebase Auth) solo ve y escribe su documento
+    match /drivers/{driverId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == driverId;
+      }
+
+      function statusOf(data) {
+        return data.get('status', null);
+      }
+
+      allow read: if isOwner();
+
+      // Al crear el documento solo puede quedar sin estado (borrador) o "pending"
+      allow create: if isOwner()
+        && statusOf(request.resource.data) in [null, 'pending'];
+
+      // El estado no lo cambia el conductor, salvo de borrador a "pending" al enviar.
+      // "approved" solo se pone desde la consola de Firebase, como pide el enunciado.
+      allow update: if isOwner()
+        && (statusOf(request.resource.data) == statusOf(resource.data)
+          || (statusOf(resource.data) == null
+            && statusOf(request.resource.data) == 'pending'));
+
+      allow delete: if false;
+    }
+  }
+}

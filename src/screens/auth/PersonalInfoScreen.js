@@ -1,9 +1,10 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #9
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #9, #10
 import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import DateField from "../../components/DateField";
 import FormField from "../../components/FormField";
+import NextButton from "../../components/NextButton";
 import PhotoField from "../../components/PhotoField";
 import SelectField from "../../components/SelectField";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -30,6 +31,9 @@ export default function PersonalInfoScreen() {
     touchField,
     touchFields,
     isPersonalValid,
+    saveSection,
+    isSaving,
+    saveError,
   } = useContext(RegistrationContext);
 
   const genderOptions = GENDER_VALUES.map((value) => ({
@@ -49,9 +53,11 @@ export default function PersonalInfoScreen() {
     setLanguage(value);
   };
 
-  const handleNext = () => {
+  // Si la pestaña es válida se guarda en Firestore y solo entonces se avanza
+  const handleNext = async () => {
     touchFields(PERSONAL_FIELDS);
-    if (isPersonalValid) navigation.navigate("Vehicle");
+    if (!isPersonalValid) return;
+    if (await saveSection("personal")) navigation.navigate("Vehicle");
   };
 
   return (
@@ -141,9 +147,12 @@ export default function PersonalInfoScreen() {
         error={t(errors.language)}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleNext}>
-        <Text style={styles.buttonText}>{t("common.next")}</Text>
-      </TouchableOpacity>
+      <NextButton
+        label={t("common.next")}
+        onPress={handleNext}
+        isSaving={isSaving}
+        error={saveError?.section === "personal" && t(saveError.code)}
+      />
     </ScrollView>
   );
 }
@@ -151,12 +160,4 @@ export default function PersonalInfoScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   content: { padding: 20 },
-  button: {
-    backgroundColor: "#000",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });
