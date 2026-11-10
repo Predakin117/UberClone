@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tu código de verificación - UberClone</title>
+</head>
+<!-- Plantilla del correo de verificación. Las {{VARIABLES}} las llena src/mailer.js.
+     Tablas y estilos en línea para que se vea bien en Gmail y Outlook. -->
+<body style="margin:0;padding:0;background-color:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f2f2f2;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="background-color:#000000;padding:24px 32px;">
+              <span style="font-size:26px;font-weight:bold;color:#ffffff;letter-spacing:1px;">Uber<span style="color:#1fbad6;">Clone</span></span>
+              <span style="font-size:13px;color:#bbbbbb;padding-left:8px;">Conductor</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 32px 8px 32px;">
+              <h1 style="margin:0 0 12px 0;font-size:20px;line-height:28px;color:#111111;">Hola {{NOMBRE}}, {{TITULO}}</h1>
+              <p style="margin:0;font-size:15px;line-height:22px;color:#444444;">{{INTRO}}</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:24px 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:#f6f6f6;border-radius:10px;">
+                <tr>
+                  <td style="padding:18px 36px;font-size:36px;font-weight:bold;letter-spacing:10px;color:#000000;font-family:'Courier New',Courier,monospace;">{{CODIGO}}</td>
+                </tr>
+              </table>
+              <p style="margin:12px 0 0 0;font-size:13px;color:#777777;">El código vence en <strong>{{MINUTOS}} minutos</strong>. No lo compartas con nadie.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 32px 28px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fafafa;border:1px solid #eeeeee;border-radius:10px;">
+                <tr>
+                  <td style="padding:16px 20px;font-size:14px;line-height:24px;color:#333333;">
+                    <strong style="display:block;margin-bottom:6px;">{{DETALLES}}</strong>
+                    &bull; Dispositivo: {{DISPOSITIVO}}<br>
+                    &bull; Dirección IP: {{IP}}<br>
+                    &bull; Fecha y hora: {{FECHA}}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px;border-top:1px solid #eeeeee;font-size:12px;line-height:18px;color:#999999;">
+              Si no fuiste vos, ignorá este correo: sin el código nadie puede entrar a tu cuenta. El equipo de UberClone nunca te va a pedir este código por llamada ni por chat.<br><br>
+              Este es un correo automático de un proyecto académico, por favor no respondás.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
