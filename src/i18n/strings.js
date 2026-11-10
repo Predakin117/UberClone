@@ -57,6 +57,17 @@ export const strings = {
     "errors.emailInvalid":
       "Ingresa un correo válido, por ejemplo nombre@dominio.com",
     "errors.languageRequired": "Selecciona el idioma",
+
+    // Guardado en Firestore
+    "save.saving": "Guardando…",
+    "save.notConfigured":
+      "Falta configurar Firebase o Cloudinary en el archivo .env.",
+    "save.photoFailed":
+      "No se pudo subir la foto. Revisa tu conexión e inténtalo de nuevo.",
+    "save.permissionDenied":
+      "La base de datos rechazó el guardado. Revisa las reglas de Firestore.",
+    "save.failed":
+      "No se pudieron guardar los datos. Revisa tu conexión e inténtalo de nuevo.",
   },
 
   en: {
@@ -106,6 +117,16 @@ export const strings = {
     "errors.emailRequired": "Email is required",
     "errors.emailInvalid": "Enter a valid email, for example name@domain.com",
     "errors.languageRequired": "Select your language",
+
+    "save.saving": "Saving…",
+    "save.notConfigured":
+      "Firebase or Cloudinary is not set up in the .env file.",
+    "save.photoFailed":
+      "The photo could not be uploaded. Check your connection and try again.",
+    "save.permissionDenied":
+      "The database rejected the save. Check the Firestore rules.",
+    "save.failed":
+      "The data could not be saved. Check your connection and try again.",
   },
 };
 

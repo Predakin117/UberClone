@@ -1,10 +1,13 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10
 import { useContext } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import FormField from "../../components/FormField";
+import NextButton from "../../components/NextButton";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { RegistrationContext } from "../../contexts/RegistrationContext";
 
 export default function DocumentsScreen() {
+  const { t } = useLanguage();
   const {
     formData,
     errors,
@@ -12,6 +15,8 @@ export default function DocumentsScreen() {
     touchField,
     canSubmit,
     submitRegistration,
+    isSaving,
+    saveError,
   } = useContext(RegistrationContext);
 
   return (
@@ -26,28 +31,19 @@ export default function DocumentsScreen() {
       />
       {/* Espaciador */}
       <View style={{ flex: 1 }} />
-      {/* Botón condicionado a canSubmit */}
-      <TouchableOpacity
-        style={[styles.button, !canSubmit && styles.buttonDisabled]}
-        disabled={!canSubmit}
+      {/* Botón condicionado a canSubmit. Al enviar se guardan las 3 pestañas,
+          así que aquí se muestra el error de cualquiera de ellas */}
+      <NextButton
+        label={canSubmit ? "Enviar Registro" : "Completa todas las pestañas"}
         onPress={submitRegistration}
-      >
-        <Text style={styles.buttonText}>
-          {canSubmit ? "Enviar Registro" : "Completa todas las pestañas"}
-        </Text>
-      </TouchableOpacity>
+        disabled={!canSubmit}
+        isSaving={isSaving}
+        error={saveError && t(saveError.code)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  button: {
-    backgroundColor: "#000",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonDisabled: { backgroundColor: "#ccc" },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });
