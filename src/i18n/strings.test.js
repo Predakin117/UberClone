@@ -1,3 +1,4 @@
+import { KNOWN_VERIFICATION_ERRORS } from "../services/verificationErrors";
 import { DOCUMENT_FIELDS, validateDocuments } from "../validation/documents";
 import { validatePersonalInfo } from "../validation/personalInfo";
 import { strings, translate } from "./strings";
@@ -67,6 +68,13 @@ describe("strings", () => {
     for (const code of codes) {
       expect(strings.es[code]).toBeDefined();
       expect(strings.en[code]).toBeDefined();
+    }
+  });
+
+  it("traduce cada error del código de verificación en los dos idiomas", () => {
+    for (const code of [...KNOWN_VERIFICATION_ERRORS, "generico"]) {
+      expect(strings.es[`verify.error.${code}`]).toBeDefined();
+      expect(strings.en[`verify.error.${code}`]).toBeDefined();
     }
   });
 

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_NAME_LENGTH, MIN_DRIVER_AGE } from "../validation/personalInfo";
@@ -126,6 +126,40 @@ export const strings = {
     "errors.termsRequired":
       "Debes aceptar los términos para enviar el registro",
 
+    // Confirmación del correo con código ({email}, {minutes}, {seconds} y
+    // {attempts} los reemplaza VerifyEmailScreen)
+    "verify.title": "Confirmar correo",
+    "verify.heading": "Confirma tu correo electrónico",
+    "verify.willSendTo":
+      "Para terminar el registro te enviaremos un código de 6 dígitos a {email}.",
+    "verify.sentTo": "Enviamos un código de 6 dígitos a {email}.",
+    "verify.expiresIn": "Vence en {minutes} minutos.",
+    "verify.sendCode": "Enviar código",
+    "verify.sending": "Enviando…",
+    "verify.code": "Código de verificación",
+    "verify.confirm": "Confirmar y enviar registro",
+    "verify.verifying": "Verificando…",
+    "verify.resend": "Reenviar código",
+    "verify.resendIn": "Reenviar código en {seconds} s",
+    "verify.changeEmail": "Cambiar el correo",
+    "verify.error.email_invalido": "El correo de la pestaña 1 no es válido",
+    "verify.error.espera":
+      "Espera {seconds} segundos antes de pedir otro código",
+    "verify.error.sin_codigo": "Primero pide un código",
+    "verify.error.vencido": "El código venció. Pide uno nuevo",
+    "verify.error.demasiados_intentos":
+      "Demasiados intentos. Pide un código nuevo",
+    "verify.error.codigo_incorrecto":
+      "El código es incorrecto. Te quedan {attempts} intentos",
+    "verify.error.codigo_invalido": "El código debe tener 6 dígitos",
+    "verify.error.correo_no_enviado":
+      "No se pudo enviar el correo. Inténtalo de nuevo",
+    "verify.error.sin_backend":
+      "Falta configurar el servidor del código en el .env (EXPO_PUBLIC_BACKEND_API_URL)",
+    "verify.error.sin_conexion":
+      "No se pudo conectar con el servidor. Revisa que esté encendido y en la misma red Wi-Fi",
+    "verify.error.generico": "Ocurrió un error. Inténtalo de nuevo",
+
     // Guardado en Firestore
     "save.saving": "Guardando…",
     "save.notConfigured":
@@ -245,6 +279,38 @@ export const strings = {
     "errors.mercadoPagoEmailInvalid":
       "Enter a valid email, for example name@domain.com",
     "errors.termsRequired": "You must accept the terms to submit",
+
+    "verify.title": "Confirm email",
+    "verify.heading": "Confirm your email",
+    "verify.willSendTo":
+      "To finish your registration we will send a 6-digit code to {email}.",
+    "verify.sentTo": "We sent a 6-digit code to {email}.",
+    "verify.expiresIn": "It expires in {minutes} minutes.",
+    "verify.sendCode": "Send code",
+    "verify.sending": "Sending…",
+    "verify.code": "Verification code",
+    "verify.confirm": "Confirm and submit registration",
+    "verify.verifying": "Verifying…",
+    "verify.resend": "Resend code",
+    "verify.resendIn": "Resend code in {seconds} s",
+    "verify.changeEmail": "Change email",
+    "verify.error.email_invalido": "The email in tab 1 is not valid",
+    "verify.error.espera":
+      "Wait {seconds} seconds before requesting another code",
+    "verify.error.sin_codigo": "Request a code first",
+    "verify.error.vencido": "The code expired. Request a new one",
+    "verify.error.demasiados_intentos":
+      "Too many attempts. Request a new code",
+    "verify.error.codigo_incorrecto":
+      "The code is incorrect. You have {attempts} attempts left",
+    "verify.error.codigo_invalido": "The code must have 6 digits",
+    "verify.error.correo_no_enviado":
+      "The email could not be sent. Please try again",
+    "verify.error.sin_backend":
+      "The code server is not set up in the .env file (EXPO_PUBLIC_BACKEND_API_URL)",
+    "verify.error.sin_conexion":
+      "Could not reach the server. Check that it is running and on the same Wi-Fi network",
+    "verify.error.generico": "Something went wrong. Please try again",
 
     "save.saving": "Saving…",
     "save.notConfigured":
