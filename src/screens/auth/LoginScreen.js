@@ -1,103 +1,197 @@
-// AI-assisted: see docs/AI_LOG.md #52
+// AI-assisted: see docs/AI_LOG.md #52, #53
 import { useNavigation } from "@react-navigation/native";
 import { useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import CountryPicker from "../../components/CountryPicker";
-import { formStyles } from "../../components/formStyles";
+import FormField from "../../components/FormField";
+import PhoneField from "../../components/PhoneField";
+import PrimaryButton from "../../components/PrimaryButton";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { findAccount } from "../../services/accountService";
+import {
+  authErrorKey,
+  LOGIN_METHODS,
+  validateLoginIdentifier,
+} from "../../validation/account";
 import {
   DEFAULT_COUNTRY_CODE,
-  findCountry,
   toInternationalPhone,
-  validateLoginPhone,
 } from "../../validation/phone";
 
+// Step 1 of the login: phone or email. If the account exists it asks for the
+// password (LoginPasswordScreen); if not, it offers to create one.
 export default function LoginScreen() {
   const navigation = useNavigation();
   const { t } = useLanguage();
 
+  const [method, setMethod] = useState("phone");
   const [countryCode, setCountryCode] = useState(DEFAULT_COUNTRY_CODE);
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   // Errors show up after the first attempt to continue
   const [showErrors, setShowErrors] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+  // "notFound" or a translation key of a failed lookup
+  const [lookupResult, setLookupResult] = useState(null);
 
   const errors = useMemo(
-    () => validateLoginPhone({ countryCode, phone }),
-    [countryCode, phone],
+    () => validateLoginIdentifier({ method, email, countryCode, phone }),
+    [method, email, countryCode, phone],
   );
-  const country = findCountry(countryCode);
-  const phoneError = showErrors ? t(errors.phone) : null;
+  const fieldError = (field) => (showErrors ? t(errors[field]) : null);
 
-  const digitsHint =
-    country.minDigits === country.maxDigits
-      ? t("login.digitsExact").replace("{count}", country.minDigits)
-      : t("login.digitsRange")
-          .replace("{min}", country.minDigits)
-          .replace("{max}", country.maxDigits);
+  // Any change makes the previous "not found" message out of date
+  const update = (setter) => (value) => {
+    setter(value);
+    setLookupResult(null);
+  };
 
-  const handleContinue = () => {
-    setShowErrors(true);
-    if (Object.keys(errors).length > 0) return;
+  const changeMethod = (next) => {
+    setMethod(next);
+    setShowErrors(false);
+    setLookupResult(null);
+  };
 
-    // There is no SMS verification yet: for now it opens the registration with
-    // the number in international format, ready for the next step
-    navigation.navigate("Register", {
-      phoneNumber: toInternationalPhone(countryCode, phone),
+  const goToCreateAccount = () =>
+    navigation.navigate("CreateAccount", {
+      // Fills in what the driver already typed
+      email: method === "email" ? email : "",
+      countryCode,
+      phone: method === "phone" ? phone : "",
     });
+
+  const handleContinue = async () => {
+    setShowErrors(true);
+    if (Object.keys(errors).length > 0 || isChecking) return;
+
+    const identifier =
+      method === "email" ? email : toInternationalPhone(countryCode, phone);
+
+    setIsChecking(true);
+    setLookupResult(null);
+    try {
+      const account = await findAccount(method, identifier);
+      if (!account) {
+        setLookupResult("notFound");
+        return;
+      }
+      navigation.navigate("LoginPassword", {
+        email: account.email,
+        // What the driver typed, shown on the password screen
+        identifier: method === "email" ? email.trim() : identifier,
+      });
+    } catch (error) {
+      console.error("Error looking up the account:", error.cause ?? error);
+      setLookupResult(authErrorKey(error.code));
+    } finally {
+      setIsChecking(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
-        style={styles.container}
+        style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View>
-          <Text style={styles.title}>{t("login.title")}</Text>
-          <Text style={styles.subtitle}>{t("login.subtitle")}</Text>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View>
+            <Text style={styles.title}>{t("login.title")}</Text>
+            <Text style={styles.subtitle}>{t("login.subtitle")}</Text>
 
-          <Text style={formStyles.label}>{t("login.phone")}</Text>
-          <View style={styles.phoneRow}>
-            <CountryPicker
-              countryCode={countryCode}
-              onChange={setCountryCode}
-              hasError={showErrors && Boolean(errors.countryCode)}
-            />
-            <TextInput
-              style={[
-                formStyles.input,
-                styles.phoneInput,
-                phoneError && formStyles.inputError,
-              ]}
-              value={phone}
-              onChangeText={setPhone}
-              placeholder={t("login.phonePlaceholder")}
-              keyboardType="phone-pad"
-              textContentType="telephoneNumber"
-              autoComplete="tel"
-              maxLength={country.maxDigits + 4}
-              accessibilityLabel={t("login.phone")}
-            />
+            {/* Phone | Email switch */}
+            <View style={styles.segment} accessibilityRole="tablist">
+              {LOGIN_METHODS.map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  style={[
+                    styles.segmentOption,
+                    method === option && styles.segmentSelected,
+                  ]}
+                  onPress={() => changeMethod(option)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: method === option }}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      method === option && styles.segmentTextSelected,
+                    ]}
+                  >
+                    {option === "phone"
+                      ? t("login.methodPhone")
+                      : t("login.methodEmail")}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {method === "phone" ? (
+              <PhoneField
+                countryCode={countryCode}
+                onCountryChange={update(setCountryCode)}
+                phone={phone}
+                onPhoneChange={update(setPhone)}
+                error={fieldError("phone")}
+                countryError={fieldError("countryCode")}
+              />
+            ) : (
+              <FormField
+                label={t("login.email")}
+                value={email}
+                onChangeText={update(setEmail)}
+                error={fieldError("email")}
+                placeholder={t("login.emailPlaceholder")}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="emailAddress"
+                autoComplete="email"
+              />
+            )}
+
+            {lookupResult === "notFound" && (
+              <View style={styles.notice}>
+                <Text style={styles.noticeText}>
+                  {method === "phone"
+                    ? t("login.notFoundPhone")
+                    : t("login.notFoundEmail")}
+                </Text>
+                <TouchableOpacity onPress={goToCreateAccount}>
+                  <Text style={styles.link}>{t("login.createAccount")}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            {lookupResult && lookupResult !== "notFound" && (
+              <Text style={styles.errorText}>{t(lookupResult)}</Text>
+            )}
           </View>
-          {phoneError ? (
-            <Text style={formStyles.errorText}>{phoneError}</Text>
-          ) : (
-            <Text style={styles.hint}>{digitsHint}</Text>
-          )}
-        </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleContinue}>
-          <Text style={styles.buttonText}>{t("login.continue")}</Text>
-        </TouchableOpacity>
+          <View>
+            <PrimaryButton
+              title={t("login.continue")}
+              onPress={handleContinue}
+              loading={isChecking}
+            />
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>{t("login.noAccount")} </Text>
+              <TouchableOpacity onPress={goToCreateAccount}>
+                <Text style={styles.link}>{t("login.createAccount")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -105,17 +199,40 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#fff" },
-  container: { flex: 1, padding: 20, justifyContent: "space-between" },
+  flex: { flex: 1 },
+  container: { flexGrow: 1, padding: 20, justifyContent: "space-between" },
   title: { fontSize: 28, fontWeight: "bold", marginTop: 20, marginBottom: 8 },
-  subtitle: { fontSize: 16, color: "#555", marginBottom: 30 },
-  phoneRow: { flexDirection: "row", alignItems: "center" },
-  phoneInput: { flex: 1, fontSize: 16 },
-  hint: { color: "#888", fontSize: 12, marginTop: 5 },
-  button: {
-    backgroundColor: "#000",
-    padding: 15,
-    borderRadius: 8,
+  subtitle: { fontSize: 16, color: "#555", marginBottom: 24 },
+  segment: {
+    flexDirection: "row",
+    backgroundColor: "#eee",
+    borderRadius: 25,
+    padding: 4,
+    marginBottom: 24,
+  },
+  segmentOption: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 21,
     alignItems: "center",
   },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  segmentSelected: { backgroundColor: "#000" },
+  segmentText: { fontSize: 15, fontWeight: "bold", color: "#555" },
+  segmentTextSelected: { color: "#fff" },
+  notice: {
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    padding: 15,
+    marginTop: 5,
+  },
+  noticeText: { fontSize: 15, marginBottom: 8 },
+  link: { fontWeight: "bold", textDecorationLine: "underline" },
+  errorText: { color: "red", fontSize: 14, marginTop: 5 },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 16,
+    marginBottom: 10,
+  },
+  footerText: { color: "#555" },
 });
