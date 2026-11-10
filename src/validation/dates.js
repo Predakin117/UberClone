@@ -39,6 +39,11 @@ export const yearsAgo = (years, today = new Date()) => {
   return date;
 };
 
+// AI-assisted: see docs/AI_LOG.md #12
+// Misma hora, N días después (o antes si days es negativo)
+export const addDays = (date, days) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+
 // Años cumplidos a la fecha de hoy
 export const getAge = (birthDate, today = new Date()) => {
   const age = today.getFullYear() - birthDate.getFullYear();

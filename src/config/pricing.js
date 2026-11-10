@@ -1,3 +1,7 @@
+// AI-assisted: see docs/AI_LOG.md #12
+// Comisión de la plataforma: la usa calculateFare y la muestra la pestaña 3
+export const COMMISSION_RATE = 0.2;
+
 export const calculateFare = ({
   distanceKm,
   durationMin,
@@ -25,7 +29,7 @@ export const calculateFare = ({
   if (finalFare < 5000) finalFare = 5000;
 
   // 4. Regla estricta: Comisión del 20% para la plataforma
-  const commissionRate = 0.2;
+  const commissionRate = COMMISSION_RATE;
   const commission = finalFare * commissionRate;
 
   // 5. Regla estricta: Propinas 100% al conductor (nunca negativas)

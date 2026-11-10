@@ -1,4 +1,5 @@
 import {
+  addDays,
   formatDisplayDate,
   getAge,
   parseISODate,
@@ -31,5 +32,10 @@ describe("dates", () => {
   it("resta años sin pasarse de mes en un 29 de febrero", () => {
     expect(toISODate(yearsAgo(18, new Date(2028, 1, 29)))).toBe("2010-02-28");
     expect(toISODate(yearsAgo(18, new Date(2026, 10, 5)))).toBe("2008-11-05");
+  });
+
+  it("suma días pasando de mes y de año", () => {
+    expect(toISODate(addDays(new Date(2026, 10, 30), 1))).toBe("2026-12-01");
+    expect(toISODate(addDays(new Date(2026, 11, 31), 1))).toBe("2027-01-01");
   });
 });
