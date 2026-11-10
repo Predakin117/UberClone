@@ -5,12 +5,12 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*'],
+    ignores: ['dist/*', 'backend/*'],
   },
   {
     files: ['**/*.test.js'],
     languageOptions: {
-      globals: { describe: 'readonly', it: 'readonly', expect: 'readonly' },
+      globals: { describe: 'readonly', it: 'readonly', expect: 'readonly', jest: 'readonly', beforeEach: 'readonly' },
     },
   },
 ]);

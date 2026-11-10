@@ -1,5 +1,6 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12
 import { createContext, useContext, useMemo, useState } from "react";
+import { saveDriverSection } from "../services/driverRepository";
 import { validateDocuments } from "../validation/documents";
 import { validatePersonalInfo } from "../validation/personalInfo";
 import { validateVehicle } from "../validation/vehicle";
@@ -31,9 +32,22 @@ export const RegistrationProvider = ({ children }) => {
     color: "",
     capacity: "",
     vehiclePhoto: "",
-    // Pestaña 3: Documentos
+    // Pestaña 3: Documentos y pagos (fechas "AAAA-MM-DD", fotos como uri)
     licenseNumber: "",
+    licensePhoto: "",
+    licenseExpiry: "",
+    soatPhoto: "",
+    soatExpiry: "",
+    techReviewPhoto: "",
+    techReviewExpiry: "",
+    mercadoPagoEmail: "",
+    acceptedTerms: false,
   });
+
+  // Estado del guardado en Firestore. saveError es { section, code }; code es una
+  // clave de src/i18n/strings.js y section dice en qué pestaña falló
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   // Campos que el conductor ya visitó: solo esos muestran su error
   const [touched, setTouched] = useState({});
@@ -44,10 +58,7 @@ export const RegistrationProvider = ({ children }) => {
     [formData],
   );
   const vehicleErrors = useMemo(() => validateVehicle(formData), [formData]);
-  const documentErrors = useMemo(
-    () => validateDocuments(formData),
-    [formData],
-  );
+  const documentErrors = useMemo(() => validateDocuments(formData), [formData]);
 
   const errors = useMemo(() => {
     const allErrors = {
@@ -83,14 +94,50 @@ export const RegistrationProvider = ({ children }) => {
   // Regla de negocio: El botón final solo se habilita si las 3 pestañas son válidas
   const canSubmit = isPersonalValid && isVehicleValid && isDocsValid;
 
-  const submitRegistration = () => {
-    if (!canSubmit) return;
+  /**
+   * Guarda una pestaña ("personal", "vehicle" o "documents") en Firestore.
+   * Devuelve el uid si se guardó, o null si falló (el motivo queda en saveError).
+   */
+  const saveSection = async (section, options) => {
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      const { uid, photoUrls } = await saveDriverSection(
+        section,
+        formData,
+        options,
+      );
+      // Las fotos ya subidas se guardan como URL para no subirlas otra vez
+      for (const [field, url] of Object.entries(photoUrls)) {
+        handleChange(field, url);
+      }
+      return uid;
+    } catch (error) {
+      console.error(
+        `Error guardando la pestaña ${section}:`,
+        error.cause ?? error,
+      );
+      setSaveError({ section, code: error.code ?? "save.failed" });
+      return null;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const submitRegistration = async () => {
+    if (!canSubmit || isSaving) return;
+
+    // Se guardan otra vez las pestañas 1 y 2 por si el conductor volvió a ellas
+    // con la barra de pestañas (sin tocar Siguiente) y cambió algo
+    if (!(await saveSection("personal"))) return;
+    if (!(await saveSection("vehicle"))) return;
 
     // Regla de negocio: Pasa a "Pendiente de aprobación"
-    alert("Registro enviado. Estado: Pendiente de aprobación.");
+    const uid = await saveSection("documents", { submit: true });
+    if (!uid) return;
 
-    // Simulamos que tras la aprobación, el usuario entra a la app:
-    login({ id: "driver_123", name: formData.name, status: "pending" });
+    alert("Registro enviado. Estado: Pendiente de aprobación.");
+    login({ id: uid, name: formData.name, status: "pending" });
   };
 
   return (
@@ -103,8 +150,12 @@ export const RegistrationProvider = ({ children }) => {
         touchFields,
         isPersonalValid,
         isVehicleValid,
+        isDocsValid,
         canSubmit,
         submitRegistration,
+        saveSection,
+        isSaving,
+        saveError,
       }}
     >
       {children}

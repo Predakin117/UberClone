@@ -1,5 +1,5 @@
-// AI-assisted: see docs/AI_LOG.md #9
-// Campo de fecha reutilizable: lo usa la fecha de nacimiento y servirá para los
+// AI-assisted: see docs/AI_LOG.md #9, #12
+// Campo de fecha reutilizable: lo usan la fecha de nacimiento y los
 // vencimientos de la pestaña 3. El valor es texto "AAAA-MM-DD" (ver validation/dates.js).
 import DateTimePicker, {
   DateTimePickerAndroid,
@@ -28,13 +28,16 @@ export default function DateField({
   error,
   minimumDate,
   maximumDate,
+  defaultDate,
   placeholder,
 }) {
   const { language, t } = useLanguage();
   const [isIOSPickerOpen, setIsIOSPickerOpen] = useState(false);
 
-  // Si aún no hay fecha, el selector abre en la fecha máxima permitida
-  const pickerDate = parseISODate(value) ?? maximumDate ?? new Date();
+  // Si aún no hay fecha, el selector abre en defaultDate o en la fecha máxima permitida
+  // (los vencimientos de la pestaña 3 abren en mañana y no tienen fecha máxima)
+  const pickerDate =
+    parseISODate(value) ?? defaultDate ?? maximumDate ?? new Date();
 
   const handleValueChange = (_event, date) => {
     onChange(toISODate(date));

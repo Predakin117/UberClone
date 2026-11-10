@@ -1,10 +1,12 @@
-// AI-assisted: see docs/AI_LOG.md #50
+// AI-assisted: see docs/AI_LOG.md #50, #10
 import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import FormField from "../../components/FormField";
+import NextButton from "../../components/NextButton";
 import PhotoField from "../../components/PhotoField";
 import SelectField from "../../components/SelectField";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { RegistrationContext } from "../../contexts/RegistrationContext";
 import {
   CATEGORY_OPTIONS,
@@ -15,6 +17,7 @@ import {
 
 export default function VehicleScreen() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const {
     formData,
     errors,
@@ -22,6 +25,9 @@ export default function VehicleScreen() {
     touchField,
     touchFields,
     isVehicleValid,
+    saveSection,
+    isSaving,
+    saveError,
   } = useContext(RegistrationContext);
 
   // Las listas y la foto no tienen onBlur: se marcan como visitadas al elegir
@@ -30,9 +36,11 @@ export default function VehicleScreen() {
     touchField(field);
   };
 
-  const handleNext = () => {
+  // Si la pestaña es válida se guarda en Firestore y solo entonces se avanza
+  const handleNext = async () => {
     touchFields(VEHICLE_FIELDS);
-    if (isVehicleValid) navigation.navigate("Documents");
+    if (!isVehicleValid) return;
+    if (await saveSection("vehicle")) navigation.navigate("Documents");
   };
 
   return (
@@ -118,9 +126,12 @@ export default function VehicleScreen() {
         error={errors.vehiclePhoto}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleNext}>
-        <Text style={styles.buttonText}>Siguiente</Text>
-      </TouchableOpacity>
+      <NextButton
+        label="Siguiente"
+        onPress={handleNext}
+        isSaving={isSaving}
+        error={saveError?.section === "vehicle" && t(saveError.code)}
+      />
     </ScrollView>
   );
 }
@@ -128,12 +139,4 @@ export default function VehicleScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   content: { padding: 20 },
-  button: {
-    backgroundColor: "#000",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });
