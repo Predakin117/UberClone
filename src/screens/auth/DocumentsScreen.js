@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12, #54
 import { useContext } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
 import CheckboxField from "../../components/CheckboxField";
@@ -12,8 +12,10 @@ import { RegistrationContext } from "../../contexts/RegistrationContext";
 import { addDays } from "../../validation/dates";
 import {
   DOCUMENT_FIELDS,
+  maxExpiryDate,
   requiresTechReview,
 } from "../../validation/documents";
+import { MAX_EMAIL_LENGTH } from "../../validation/personalInfo";
 
 export default function DocumentsScreen() {
   const { t } = useLanguage();
@@ -82,6 +84,7 @@ export default function DocumentsScreen() {
         onBlur={() => touchField("licenseExpiry")}
         error={t(errors.licenseExpiry)}
         minimumDate={tomorrow}
+        maximumDate={maxExpiryDate("license")}
         defaultDate={tomorrow}
       />
 
@@ -99,6 +102,7 @@ export default function DocumentsScreen() {
         onBlur={() => touchField("soatExpiry")}
         error={t(errors.soatExpiry)}
         minimumDate={tomorrow}
+        maximumDate={maxExpiryDate("soat")}
         defaultDate={tomorrow}
       />
 
@@ -120,6 +124,7 @@ export default function DocumentsScreen() {
             onBlur={() => touchField("techReviewExpiry")}
             error={t(errors.techReviewExpiry)}
             minimumDate={tomorrow}
+            maximumDate={maxExpiryDate("techReview")}
             defaultDate={tomorrow}
           />
         </>
@@ -146,6 +151,8 @@ export default function DocumentsScreen() {
         autoCapitalize="none"
         autoComplete="email"
         autoCorrect={false}
+        maxLength={MAX_EMAIL_LENGTH}
+        showLimit
       />
       <Text style={styles.hint}>{t("documents.mercadoPagoEmailHint")}</Text>
 

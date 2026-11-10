@@ -1,5 +1,5 @@
-// AI-assisted: see docs/AI_LOG.md #53
-import { useRoute } from "@react-navigation/native";
+// AI-assisted: see docs/AI_LOG.md #53, #54
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useContext, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import PasswordField from "../../components/PasswordField";
-import PrimaryButton from "../../components/PrimaryButton";
+import NextButton from "../../components/NextButton";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { resetPassword, signIn } from "../../services/accountService";
@@ -19,6 +19,7 @@ import { authErrorKey, validatePassword } from "../../validation/account";
 
 // Step 2 of the login: the account exists, now the password
 export default function LoginPasswordScreen() {
+  const navigation = useNavigation();
   const { params } = useRoute();
   const { login } = useContext(AuthContext);
   const { t } = useLanguage();
@@ -45,7 +46,16 @@ export default function LoginPasswordScreen() {
     setIsSigningIn(true);
     try {
       const driver = await signIn(params.email, password);
-      // Opens the app: AppNavigator switches to the main menu
+      if (!driver.status) {
+        // The account exists but the registration wasn't submitted: back to the
+        // tabs, with the email and phone of the account already filled in
+        navigation.replace("Register", {
+          account: { email: driver.email, phone: driver.phone },
+        });
+        return;
+      }
+      // Registration submitted (pending or approved): AppNavigator switches to
+      // the main menu
       await login({ id: driver.uid, name: driver.name, status: driver.status });
     } catch (signInError) {
       console.error("Error logging in:", signInError.cause ?? signInError);
@@ -99,10 +109,11 @@ export default function LoginPasswordScreen() {
           )}
         </View>
 
-        <PrimaryButton
-          title={t("password.signIn")}
+        <NextButton
+          label={t("password.signIn")}
           onPress={handleSignIn}
-          loading={isSigningIn}
+          isSaving={isSigningIn}
+          loadingLabel={t("password.signingIn")}
           style={styles.button}
         />
       </ScrollView>

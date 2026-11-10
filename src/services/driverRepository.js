@@ -1,10 +1,11 @@
-// AI-assisted: see docs/AI_LOG.md #10, #12
+// AI-assisted: see docs/AI_LOG.md #10, #12, #54
 // Guarda el registro del conductor en Firestore, en el documento drivers/{uid}.
 // Cada pestaña queda en su propio mapa: personal, vehicle y documents.
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db, ensureSignedIn, isFirebaseConfigured } from "../config/firebase";
 import { isCloudinaryConfigured, uploadImage } from "./cloudinary";
 import { DOC_BUILDERS, photosToUpload } from "./driverDocs";
+import { withTimeout } from "./withTimeout";
 
 // Sin conexión, setDoc espera indefinidamente la respuesta del servidor
 const SAVE_TIMEOUT_MS = 15000;
@@ -17,14 +18,6 @@ export class SaveError extends Error {
     this.cause = cause;
   }
 }
-
-const withTimeout = (promise, ms) =>
-  Promise.race([
-    promise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("timeout")), ms),
-    ),
-  ]);
 
 /**
  * Sube las fotos de la pestaña que aún son locales y guarda la pestaña en Firestore.

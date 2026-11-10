@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #53
+// AI-assisted: see docs/AI_LOG.md #53, #54
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useMemo, useState } from "react";
 import {
@@ -11,10 +11,11 @@ import {
 import FormField from "../../components/FormField";
 import PasswordField from "../../components/PasswordField";
 import PhoneField from "../../components/PhoneField";
-import PrimaryButton from "../../components/PrimaryButton";
+import NextButton from "../../components/NextButton";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { createAccount } from "../../services/accountService";
 import { authErrorKey, validateNewAccount } from "../../validation/account";
+import { MAX_EMAIL_LENGTH } from "../../validation/personalInfo";
 import { DEFAULT_COUNTRY_CODE } from "../../validation/phone";
 
 // Creates the login account (email, phone and password) and then opens the
@@ -51,10 +52,13 @@ export default function CreateAccountScreen() {
     setIsCreating(true);
     setSubmitError(null);
     try {
-      await createAccount(form);
-      // The account exists now: the next step is the driver registration.
-      // replace() so the back button doesn't return to this form.
-      navigation.replace("Register");
+      const account = await createAccount(form);
+      // The account exists now: the next step is the driver registration, with
+      // the email and phone already filled in. replace() so the back button
+      // doesn't return to this form.
+      navigation.replace("Register", {
+        account: { email: account.email, phone: account.phone },
+      });
     } catch (error) {
       console.error("Error creating the account:", error.cause ?? error);
       setSubmitError(authErrorKey(error.code));
@@ -85,6 +89,8 @@ export default function CreateAccountScreen() {
           autoCorrect={false}
           textContentType="emailAddress"
           autoComplete="email"
+          maxLength={MAX_EMAIL_LENGTH}
+          showLimit
         />
 
         <PhoneField
@@ -116,10 +122,11 @@ export default function CreateAccountScreen() {
 
         {submitError && <Text style={styles.errorText}>{t(submitError)}</Text>}
 
-        <PrimaryButton
-          title={t("signup.submit")}
+        <NextButton
+          label={t("signup.submit")}
           onPress={handleCreate}
-          loading={isCreating}
+          isSaving={isCreating}
+          loadingLabel={t("signup.creating")}
           style={styles.button}
         />
       </ScrollView>

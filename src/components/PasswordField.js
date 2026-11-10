@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #53
+// AI-assisted: see docs/AI_LOG.md #53, #54
 import { useState } from "react";
 import {
   StyleSheet,
@@ -8,6 +8,8 @@ import {
   View,
 } from "react-native";
 import { useLanguage } from "../contexts/LanguageContext";
+import { MAX_PASSWORD_LENGTH } from "../validation/account";
+import FieldMessage from "./FieldMessage";
 import { formStyles } from "./formStyles";
 
 // Password input with a Show/Hide button. error is already translated.
@@ -36,6 +38,7 @@ export default function PasswordField({
           autoCapitalize="none"
           autoCorrect={false}
           autoFocus={autoFocus}
+          maxLength={MAX_PASSWORD_LENGTH}
           // Lets the phone suggest a strong password or fill in a saved one
           textContentType={isNewPassword ? "newPassword" : "password"}
           autoComplete={isNewPassword ? "new-password" : "current-password"}
@@ -51,11 +54,13 @@ export default function PasswordField({
           </Text>
         </TouchableOpacity>
       </View>
-      {error ? (
-        <Text style={formStyles.errorText}>{error}</Text>
-      ) : hint ? (
-        <Text style={styles.hint}>{hint}</Text>
-      ) : null}
+      <FieldMessage
+        error={error}
+        hint={hint}
+        length={value.length}
+        maxLength={MAX_PASSWORD_LENGTH}
+        showLimit
+      />
     </View>
   );
 }
@@ -64,5 +69,4 @@ const styles = StyleSheet.create({
   box: { flexDirection: "row", alignItems: "center", paddingVertical: 0 },
   input: { flex: 1, fontSize: 16, paddingVertical: 12 },
   toggle: { fontWeight: "bold", marginLeft: 10 },
-  hint: { color: "#888", fontSize: 12, marginTop: 5 },
 });

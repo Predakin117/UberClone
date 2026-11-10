@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #2, #9
+// AI-assisted: see docs/AI_LOG.md #2, #9, #54
 // src/navigation/AuthTabs.js
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -10,11 +10,12 @@ import VehicleScreen from "../screens/auth/VehicleScreen";
 
 const Tab = createBottomTabNavigator();
 
-export const AuthTabs = () => {
+// route.params.account ({ email, phone }) comes from the sign-up or the login
+export const AuthTabs = ({ route }) => {
   const { t } = useLanguage();
 
   return (
-    <RegistrationProvider>
+    <RegistrationProvider account={route?.params?.account}>
       <Tab.Navigator screenOptions={{ headerShown: true }}>
         <Tab.Screen
           name="PersonalInfo"

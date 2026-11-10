@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #9, #10
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #9, #10, #54
 import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
 import { ScrollView, StyleSheet } from "react-native";
@@ -13,6 +13,7 @@ import { yearsAgo } from "../../validation/dates";
 import {
   GENDER_VALUES,
   LANGUAGE_OPTIONS,
+  MAX_EMAIL_LENGTH,
   MAX_NAME_LENGTH,
   MIN_DRIVER_AGE,
   PERSONAL_FIELDS,
@@ -30,11 +31,16 @@ export default function PersonalInfoScreen() {
     handleChange,
     touchField,
     touchFields,
+    lockedFields,
     isPersonalValid,
     saveSection,
     isSaving,
     saveError,
   } = useContext(RegistrationContext);
+
+  // AI-assisted: see docs/AI_LOG.md #54
+  // Email and phone of the account: shown filled in and grayed out
+  const isLocked = (field) => lockedFields.includes(field);
 
   const genderOptions = GENDER_VALUES.map((value) => ({
     value,
@@ -83,6 +89,7 @@ export default function PersonalInfoScreen() {
         autoCapitalize="words"
         autoComplete="name"
         maxLength={MAX_NAME_LENGTH}
+        showLimit
       />
 
       <FormField
@@ -105,7 +112,10 @@ export default function PersonalInfoScreen() {
         placeholder={t("personal.phonePlaceholder")}
         keyboardType="phone-pad"
         autoComplete="tel"
-        maxLength={10}
+        // The account number is international (+57…): no limit when locked
+        maxLength={isLocked("phone") ? undefined : 10}
+        editable={!isLocked("phone")}
+        hint={isLocked("phone") ? t("personal.fromAccount") : undefined}
       />
 
       <DateField
@@ -136,6 +146,10 @@ export default function PersonalInfoScreen() {
         keyboardType="email-address"
         autoCapitalize="none"
         autoComplete="email"
+        maxLength={MAX_EMAIL_LENGTH}
+        showLimit
+        editable={!isLocked("email")}
+        hint={isLocked("email") ? t("personal.fromAccount") : undefined}
         autoCorrect={false}
       />
 

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #52, #53
+// AI-assisted: see docs/AI_LOG.md #52, #53, #54
 import { useNavigation } from "@react-navigation/native";
 import { useMemo, useState } from "react";
 import {
@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import FormField from "../../components/FormField";
 import PhoneField from "../../components/PhoneField";
-import PrimaryButton from "../../components/PrimaryButton";
+import NextButton from "../../components/NextButton";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { findAccount } from "../../services/accountService";
 import {
@@ -25,6 +25,7 @@ import {
   DEFAULT_COUNTRY_CODE,
   toInternationalPhone,
 } from "../../validation/phone";
+import { MAX_EMAIL_LENGTH } from "../../validation/personalInfo";
 
 // Step 1 of the login: phone or email. If the account exists it asks for the
 // password (LoginPasswordScreen); if not, it offers to create one.
@@ -158,6 +159,8 @@ export default function LoginScreen() {
                 autoCorrect={false}
                 textContentType="emailAddress"
                 autoComplete="email"
+                maxLength={MAX_EMAIL_LENGTH}
+                showLimit
               />
             )}
 
@@ -179,10 +182,11 @@ export default function LoginScreen() {
           </View>
 
           <View>
-            <PrimaryButton
-              title={t("login.continue")}
+            <NextButton
+              label={t("login.continue")}
               onPress={handleContinue}
-              loading={isChecking}
+              isSaving={isChecking}
+              loadingLabel={t("login.checking")}
             />
             <View style={styles.footer}>
               <Text style={styles.footerText}>{t("login.noAccount")} </Text>
