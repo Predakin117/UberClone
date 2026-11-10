@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #52
+// AI-assisted: see docs/AI_LOG.md #52, #54
 import { strings } from "../i18n/strings";
 import {
   COUNTRIES,
@@ -65,6 +65,21 @@ describe("validateLoginPhone", () => {
       "errors.countryRequired",
     );
   });
+
+  // AI-assisted: see docs/AI_LOG.md #54
+  it("only accepts Colombian mobiles that start with 3", () => {
+    for (const phone of ["1234567899", "6011234567"]) {
+      expect(errorsFor(phone).phone).toBe("errors.loginPhoneNotMobile");
+    }
+    // The rule is only for Colombia
+    expect(errorsFor("1123456789", "AR")).toEqual({});
+  });
+
+  it("rejects numbers that repeat one digit", () => {
+    expect(errorsFor("3000000000").phone).toBe("errors.loginPhoneFake");
+    expect(errorsFor("3333333333").phone).toBe("errors.loginPhoneFake");
+    expect(errorsFor("11111111", "PA").phone).toBe("errors.loginPhoneFake");
+  });
 });
 
 describe("toInternationalPhone", () => {
@@ -81,6 +96,8 @@ describe("login texts", () => {
       errorsFor("abc").phone,
       errorsFor("123").phone,
       errorsFor("3001234567", "XX").countryCode,
+      errorsFor("6011234567").phone,
+      errorsFor("3000000000").phone,
     ];
     for (const code of codes) {
       expect(strings.es[code]).toBeDefined();

@@ -48,6 +48,32 @@ describe("validateDocuments", () => {
     );
   });
 
+  // AI-assisted: see docs/AI_LOG.md #54
+  it("requires a license number of 6 to 15 digits", () => {
+    expect(errorsFor({ licenseNumber: "123456" }).licenseNumber).toBeUndefined();
+    for (const licenseNumber of ["12345", "1".repeat(16)]) {
+      expect(errorsFor({ licenseNumber }).licenseNumber).toBe(
+        "errors.licenseNumberLength",
+      );
+    }
+  });
+
+  // AI-assisted: see docs/AI_LOG.md #54
+  it("rejects expiration dates later than each document can last", () => {
+    // License: up to 10 years. SOAT and inspection: up to 1 year.
+    expect(errorsFor({ licenseExpiry: "2036-11-05" }).licenseExpiry).toBeUndefined();
+    expect(errorsFor({ licenseExpiry: "2036-11-06" }).licenseExpiry).toBe(
+      "errors.expiryTooFar",
+    );
+    expect(errorsFor({ soatExpiry: "2027-11-05" }).soatExpiry).toBeUndefined();
+    expect(errorsFor({ soatExpiry: "2027-11-06" }).soatExpiry).toBe(
+      "errors.expiryTooFar",
+    );
+    expect(errorsFor({ techReviewExpiry: "2028-01-01" }).techReviewExpiry).toBe(
+      "errors.expiryTooFar",
+    );
+  });
+
   describe("vencimientos", () => {
     it("acepta una fecha desde mañana", () => {
       expect(errorsFor({ soatExpiry: "2026-11-06" }).soatExpiry).toBeUndefined();

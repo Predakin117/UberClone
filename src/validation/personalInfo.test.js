@@ -57,9 +57,58 @@ describe("validatePersonalInfo", () => {
     });
 
     it("admite máximo 50 caracteres", () => {
-      expect(errorsFor({ name: "A".repeat(50) }).name).toBeUndefined();
+      // AI-assisted: see docs/AI_LOG.md #54 (two words, so it's a full name)
+      expect(errorsFor({ name: `Ana ${"B".repeat(46)}` }).name).toBeUndefined();
       expect(errorsFor({ name: "A".repeat(51) }).name).toBeDefined();
     });
+
+    // AI-assisted: see docs/AI_LOG.md #54
+    it("requires the first and last name", () => {
+      for (const name of ["Ana", "Ana P", "A B"]) {
+        expect(errorsFor({ name }).name).toBe("errors.nameIncomplete");
+      }
+      expect(errorsFor({ name: "Ana de la Cruz" }).name).toBeUndefined();
+    });
+  });
+
+  // AI-assisted: see docs/AI_LOG.md #54
+  it("rejects ID numbers that start with 0 or repeat one digit", () => {
+    expect(errorsFor({ documentId: "0123456" }).documentId).toBe(
+      "errors.documentIdInvalid",
+    );
+    expect(errorsFor({ documentId: "1111111" }).documentId).toBe(
+      "errors.documentIdRepeated",
+    );
+  });
+
+  // AI-assisted: see docs/AI_LOG.md #54
+  it("accepts a Colombian mobile or the international number of the account", () => {
+    for (const phone of ["3001234567", "+573001234567", "+5491123456789"]) {
+      expect(errorsFor({ phone }).phone).toBeUndefined();
+    }
+    for (const phone of ["6011234567", "+57", "+0573001234567"]) {
+      expect(errorsFor({ phone }).phone).toBe("errors.phoneInvalid");
+    }
+  });
+
+  // AI-assisted: see docs/AI_LOG.md #54
+  it("rejects badly written emails", () => {
+    for (const email of [
+      "ana..perez@ejemplo.com",
+      ".ana@ejemplo.com",
+      "ana.@ejemplo.com",
+      "ana@ejemplo.c",
+      "ana@-ejemplo.com",
+      "ana@ejemplo..com",
+      "ana@ejemplo.com.",
+      "ana,perez@ejemplo.com",
+      `${"a".repeat(95)}@x.com`,
+    ]) {
+      expect(errorsFor({ email }).email).toBe("errors.emailInvalid");
+    }
+    for (const email of ["ana.perez+uber@mail.ejemplo.co", "ANA_01@Ejemplo.com"]) {
+      expect(errorsFor({ email }).email).toBeUndefined();
+    }
   });
 
   it("exige un documento numérico de 6 a 10 dígitos", () => {

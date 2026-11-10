@@ -1,7 +1,15 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12
+// AI-assisted: see docs/AI_LOG.md #9, #12, #54
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
+import { MAX_PASSWORD_LENGTH } from "../validation/account";
 import { MAX_NAME_LENGTH, MIN_DRIVER_AGE } from "../validation/personalInfo";
+import {
+  MAX_CAPACITY,
+  MAX_VEHICLE_AGE,
+  MAX_VEHICLE_NAME_LENGTH,
+  MIN_CAPACITY,
+  XL_MIN_CAPACITY,
+} from "../validation/vehicle";
 
 export const DEFAULT_LANGUAGE = "es";
 
@@ -45,7 +53,7 @@ export const strings = {
     "signup.subtitle":
       "Después podrás iniciar sesión con tu correo o con tu celular.",
     "signup.confirmPassword": "Confirma la contraseña",
-    "signup.passwordHint": "Mínimo 8 caracteres",
+    "signup.passwordHint": "Mínimo 8 caracteres, con letras y números",
     "signup.submit": "Crear cuenta",
     "errors.passwordRequired": "Ingresa la contraseña",
     "errors.passwordTooShort": "La contraseña debe tener mínimo 8 caracteres",
@@ -99,9 +107,10 @@ export const strings = {
     "errors.nameTooLong": `El nombre admite máximo ${MAX_NAME_LENGTH} caracteres`,
     "errors.nameInvalid": "El nombre solo puede tener letras y espacios",
     "errors.documentIdRequired": "El documento de identidad es obligatorio",
-    "errors.documentIdInvalid": "El documento debe tener entre 6 y 10 dígitos",
+    "errors.documentIdInvalid":
+      "El documento debe tener entre 6 y 10 dígitos y no empezar por 0",
     "errors.phoneRequired": "El número de celular es obligatorio",
-    "errors.phoneInvalid": "El celular debe tener 10 dígitos",
+    "errors.phoneInvalid": "El celular debe tener 10 dígitos y empezar por 3",
     "errors.birthDateRequired": "La fecha de nacimiento es obligatoria",
     "errors.birthDateInvalid": "La fecha de nacimiento no es válida",
     "errors.birthDateUnderage": `Debes tener al menos ${MIN_DRIVER_AGE} años`,
@@ -173,6 +182,76 @@ export const strings = {
       "La base de datos rechazó el guardado. Revisa las reglas de Firestore.",
     "save.failed":
       "No se pudieron guardar los datos. Revisa tu conexión e inténtalo de nuevo.",
+
+    // AI-assisted: see docs/AI_LOG.md #54
+    // Limits of the text fields ({count} and {max} are replaced by FormField)
+    "form.charCount": "{count}/{max}",
+    "form.maxLengthReached": "Llegaste al máximo de {max} caracteres",
+    "personal.fromAccount": "Es el de tu cuenta, no se puede cambiar aquí",
+    "login.checking": "Verificando…",
+    "password.signingIn": "Entrando…",
+    "signup.creating": "Creando cuenta…",
+    "errors.nameIncomplete": "Escribe tu nombre y tu apellido",
+    "errors.documentIdRepeated": "Ese número de documento no es válido",
+    "errors.loginPhoneNotMobile":
+      "Ese número no es de celular (en Colombia empiezan por 3)",
+    "errors.loginPhoneFake": "Ese número no parece real",
+    "errors.passwordTooLong": `La contraseña admite máximo ${MAX_PASSWORD_LENGTH} caracteres`,
+    "errors.passwordWeak": "Usa letras y números en la contraseña",
+    "errors.passwordSpaces":
+      "La contraseña no puede empezar ni terminar con espacios",
+    "errors.passwordHasEmail": "La contraseña no puede contener tu correo",
+    "errors.licenseNumberLength":
+      "El número de licencia debe tener entre 6 y 15 dígitos",
+    "errors.expiryTooFar": "Esa fecha está demasiado lejos. Revisa el documento.",
+
+    // Tab 2: vehicle
+    "vehicle.category": "Categoría",
+    "vehicle.plate": "Placa",
+    "vehicle.platePlaceholder": "Ej. ABC123",
+    "vehicle.make": "Marca",
+    "vehicle.makePlaceholder": "Ej. Chevrolet",
+    "vehicle.model": "Modelo",
+    "vehicle.modelPlaceholder": "Ej. Spark GT",
+    "vehicle.year": "Año",
+    "vehicle.yearPlaceholder": "Ej. 2020",
+    "vehicle.color": "Color",
+    "vehicle.capacity": "Capacidad de pasajeros",
+    "vehicle.capacityPlaceholder": `Entre ${MIN_CAPACITY} y ${MAX_CAPACITY}`,
+    "vehicle.capacityPlaceholderXl": `Entre ${XL_MIN_CAPACITY} y ${MAX_CAPACITY}`,
+    "vehicle.photo": "Foto del vehículo (debe verse la placa)",
+    "category.economy": "Económico",
+    "category.xl": "XL",
+    "category.premium": "Premium",
+    "color.white": "Blanco",
+    "color.black": "Negro",
+    "color.gray": "Gris",
+    "color.silver": "Plata",
+    "color.red": "Rojo",
+    "color.blue": "Azul",
+    "color.other": "Otro",
+    "errors.categoryRequired": "Selecciona la categoría",
+    "errors.plateRequired": "La placa es obligatoria",
+    "errors.plateInvalid": "La placa debe tener el formato ABC123",
+    "errors.vehicleMakeRequired": "La marca es obligatoria",
+    "errors.vehicleMakeTooLong": `La marca admite máximo ${MAX_VEHICLE_NAME_LENGTH} caracteres`,
+    "errors.vehicleMakeInvalid":
+      "La marca solo puede tener letras, espacios y guiones",
+    "errors.vehicleModelRequired": "El modelo es obligatorio",
+    "errors.vehicleModelTooLong": `El modelo admite máximo ${MAX_VEHICLE_NAME_LENGTH} caracteres`,
+    "errors.vehicleModelInvalid":
+      "El modelo solo puede tener letras, números, espacios, puntos y guiones",
+    "errors.yearRequired": "El año es obligatorio",
+    "errors.yearInvalid": "El año debe tener 4 dígitos",
+    "errors.yearFuture": "El año no puede ser mayor al actual",
+    "errors.yearTooOld": `El vehículo no puede tener más de ${MAX_VEHICLE_AGE} años`,
+    "errors.colorRequired": "Selecciona el color",
+    "errors.capacityRequired": "La capacidad es obligatoria",
+    "errors.capacityInvalid": "La capacidad debe ser un número entero",
+    "errors.capacityTooLow": `El vehículo debe tener mínimo ${MIN_CAPACITY} puestos para pasajeros`,
+    "errors.capacityTooHigh": `La capacidad máxima es de ${MAX_CAPACITY} pasajeros`,
+    "errors.capacityXl": `La categoría XL exige mínimo ${XL_MIN_CAPACITY} pasajeros`,
+    "errors.vehiclePhotoRequired": "La foto del vehículo es obligatoria",
   },
 
   en: {
@@ -210,7 +289,7 @@ export const strings = {
     "signup.title": "Create your account",
     "signup.subtitle": "Then you can log in with your email or your phone.",
     "signup.confirmPassword": "Confirm password",
-    "signup.passwordHint": "At least 8 characters",
+    "signup.passwordHint": "At least 8 characters, with letters and numbers",
     "signup.submit": "Create account",
     "errors.passwordRequired": "Enter the password",
     "errors.passwordTooShort": "The password must have at least 8 characters",
@@ -261,9 +340,10 @@ export const strings = {
     "errors.nameTooLong": `Name can have at most ${MAX_NAME_LENGTH} characters`,
     "errors.nameInvalid": "Name can only contain letters and spaces",
     "errors.documentIdRequired": "ID number is required",
-    "errors.documentIdInvalid": "ID number must have 6 to 10 digits",
+    "errors.documentIdInvalid":
+      "ID number must have 6 to 10 digits and not start with 0",
     "errors.phoneRequired": "Mobile number is required",
-    "errors.phoneInvalid": "Mobile number must have 10 digits",
+    "errors.phoneInvalid": "Mobile number must have 10 digits and start with 3",
     "errors.birthDateRequired": "Date of birth is required",
     "errors.birthDateInvalid": "Date of birth is not valid",
     "errors.birthDateUnderage": `You must be at least ${MIN_DRIVER_AGE} years old`,
@@ -326,11 +406,76 @@ export const strings = {
       "The database rejected the save. Check the Firestore rules.",
     "save.failed":
       "The data could not be saved. Check your connection and try again.",
+
+    // AI-assisted: see docs/AI_LOG.md #54
+    "form.charCount": "{count}/{max}",
+    "form.maxLengthReached": "You reached the limit of {max} characters",
+    "personal.fromAccount": "It's the one on your account, it can't be changed here",
+    "login.checking": "Checking…",
+    "password.signingIn": "Logging in…",
+    "signup.creating": "Creating account…",
+    "errors.nameIncomplete": "Enter your first and last name",
+    "errors.documentIdRepeated": "That ID number is not valid",
+    "errors.loginPhoneNotMobile":
+      "That is not a mobile number (in Colombia they start with 3)",
+    "errors.loginPhoneFake": "That number doesn't look real",
+    "errors.passwordTooLong": `The password can have at most ${MAX_PASSWORD_LENGTH} characters`,
+    "errors.passwordWeak": "Use letters and numbers in the password",
+    "errors.passwordSpaces": "The password can't start or end with spaces",
+    "errors.passwordHasEmail": "The password can't contain your email",
+    "errors.licenseNumberLength": "License number must have 6 to 15 digits",
+    "errors.expiryTooFar": "That date is too far away. Check the document.",
+
+    // Tab 2: vehicle
+    "vehicle.category": "Category",
+    "vehicle.plate": "License plate",
+    "vehicle.platePlaceholder": "E.g. ABC123",
+    "vehicle.make": "Make",
+    "vehicle.makePlaceholder": "E.g. Chevrolet",
+    "vehicle.model": "Model",
+    "vehicle.modelPlaceholder": "E.g. Spark GT",
+    "vehicle.year": "Year",
+    "vehicle.yearPlaceholder": "E.g. 2020",
+    "vehicle.color": "Color",
+    "vehicle.capacity": "Passenger capacity",
+    "vehicle.capacityPlaceholder": `${MIN_CAPACITY} to ${MAX_CAPACITY}`,
+    "vehicle.capacityPlaceholderXl": `${XL_MIN_CAPACITY} to ${MAX_CAPACITY}`,
+    "vehicle.photo": "Vehicle photo (the plate must be visible)",
+    "category.economy": "Economy",
+    "category.xl": "XL",
+    "category.premium": "Premium",
+    "color.white": "White",
+    "color.black": "Black",
+    "color.gray": "Gray",
+    "color.silver": "Silver",
+    "color.red": "Red",
+    "color.blue": "Blue",
+    "color.other": "Other",
+    "errors.categoryRequired": "Select the category",
+    "errors.plateRequired": "License plate is required",
+    "errors.plateInvalid": "The plate must have the format ABC123",
+    "errors.vehicleMakeRequired": "Make is required",
+    "errors.vehicleMakeTooLong": `Make can have at most ${MAX_VEHICLE_NAME_LENGTH} characters`,
+    "errors.vehicleMakeInvalid": "Make can only contain letters, spaces and hyphens",
+    "errors.vehicleModelRequired": "Model is required",
+    "errors.vehicleModelTooLong": `Model can have at most ${MAX_VEHICLE_NAME_LENGTH} characters`,
+    "errors.vehicleModelInvalid":
+      "Model can only contain letters, numbers, spaces, dots and hyphens",
+    "errors.yearRequired": "Year is required",
+    "errors.yearInvalid": "Year must have 4 digits",
+    "errors.yearFuture": "Year can't be later than the current one",
+    "errors.yearTooOld": `The vehicle can't be more than ${MAX_VEHICLE_AGE} years old`,
+    "errors.colorRequired": "Select the color",
+    "errors.capacityRequired": "Capacity is required",
+    "errors.capacityInvalid": "Capacity must be a whole number",
+    "errors.capacityTooLow": `The vehicle must have at least ${MIN_CAPACITY} passenger seats`,
+    "errors.capacityTooHigh": `The maximum capacity is ${MAX_CAPACITY} passengers`,
+    "errors.capacityXl": `XL requires at least ${XL_MIN_CAPACITY} passengers`,
+    "errors.vehiclePhotoRequired": "A vehicle photo is required",
   },
 };
 
-// Si la clave no existe se devuelve tal cual. Así los mensajes que todavía están
-// escritos directamente en español (pestaña 2) se siguen mostrando.
+// Si la clave no existe se devuelve tal cual (texto que no es una clave).
 export const translate = (language, key) => {
   if (key == null) return key;
   return strings[language]?.[key] ?? strings[DEFAULT_LANGUAGE][key] ?? key;

@@ -1,7 +1,7 @@
-// AI-assisted: see docs/AI_LOG.md #7, #12
+// AI-assisted: see docs/AI_LOG.md #7, #12, #54
 // Pestaña 3: documentos y pagos. Los errores son claves de traducción
 // (src/i18n/strings.js), igual que en la pestaña 1.
-import { parseISODate, toISODate } from "./dates";
+import { parseISODate, toISODate, yearsAgo } from "./dates";
 import { isValidEmail } from "./personalInfo";
 
 export const DOCUMENT_FIELDS = [
@@ -30,6 +30,18 @@ export const requiresTechReview = (vehicleYear, today = new Date()) => {
 };
 
 const LICENSE_NUMBER_REGEX = /^\d+$/;
+// AI-assisted: see docs/AI_LOG.md #54
+// In Colombia the license number is usually the ID number (6 to 10 digits);
+// 15 leaves room for licenses from other countries
+const LICENSE_NUMBER_LENGTH_REGEX = /^\d{6,15}$/;
+
+// Longest validity of each document: a later date was typed by mistake.
+// The license lasts up to 10 years; the SOAT and the inspection, 1 year.
+export const MAX_EXPIRY_YEARS = { license: 10, soat: 1, techReview: 1 };
+
+// Last date the picker allows for each document
+export const maxExpiryDate = (prefix, today = new Date()) =>
+  yearsAgo(-MAX_EXPIRY_YEARS[prefix], today);
 
 // El enunciado pide que cada vencimiento sea posterior a hoy. Las fechas "AAAA-MM-DD"
 // se comparan como texto porque ese formato ordena igual que las fechas.
@@ -38,6 +50,9 @@ const validateExpiry = (value, prefix, today) => {
   const date = parseISODate(value);
   if (!date) return "errors.expiryInvalid";
   if (toISODate(date) <= toISODate(today)) return `errors.${prefix}Expired`;
+  if (toISODate(date) > toISODate(maxExpiryDate(prefix, today))) {
+    return "errors.expiryTooFar";
+  }
   return null;
 };
 
@@ -50,6 +65,8 @@ export const validateDocuments = (data, today = new Date()) => {
     errors.licenseNumber = "errors.licenseNumberRequired";
   } else if (!LICENSE_NUMBER_REGEX.test(licenseNumber)) {
     errors.licenseNumber = "errors.licenseNumberInvalid";
+  } else if (!LICENSE_NUMBER_LENGTH_REGEX.test(licenseNumber)) {
+    errors.licenseNumber = "errors.licenseNumberLength";
   }
   if (data.licensePhoto === "") {
     errors.licensePhoto = "errors.licensePhotoRequired";

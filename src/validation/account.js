@@ -1,9 +1,11 @@
-// AI-assisted: see docs/AI_LOG.md #53
+// AI-assisted: see docs/AI_LOG.md #53, #54
 // Login and sign-up rules. Errors are translation keys (src/i18n/strings.js).
 import { validateLoginPhone } from "./phone";
 import { isValidEmail } from "./personalInfo";
 
 export const MIN_PASSWORD_LENGTH = 8;
+// Firebase accepts longer ones, but nobody types more than this on a phone
+export const MAX_PASSWORD_LENGTH = 64;
 
 export const LOGIN_METHODS = ["phone", "email"];
 
@@ -22,10 +24,32 @@ export const validateLoginEmail = (email) => {
   return {};
 };
 
+// Login password: only the length, because it was already checked when created
 export const validatePassword = (password) => {
   if (password === "") return { password: "errors.passwordRequired" };
   if (password.length < MIN_PASSWORD_LENGTH) {
     return { password: "errors.passwordTooShort" };
+  }
+  if (password.length > MAX_PASSWORD_LENGTH) {
+    return { password: "errors.passwordTooLong" };
+  }
+  return {};
+};
+
+// New password: also needs letters and numbers, no spaces at the ends (they
+// are easy to type by mistake and impossible to see) and can't be the email
+export const validateNewPassword = (password, email = "") => {
+  const lengthErrors = validatePassword(password);
+  if (lengthErrors.password) return lengthErrors;
+  if (password !== password.trim()) {
+    return { password: "errors.passwordSpaces" };
+  }
+  if (!/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(password) || !/\d/.test(password)) {
+    return { password: "errors.passwordWeak" };
+  }
+  const emailUser = normalizeEmail(email).split("@")[0];
+  if (emailUser.length >= 4 && password.toLowerCase().includes(emailUser)) {
+    return { password: "errors.passwordHasEmail" };
   }
   return {};
 };
@@ -51,7 +75,7 @@ export const validateNewAccount = ({
   const errors = {
     ...validateLoginEmail(email),
     ...validateLoginPhone({ countryCode, phone }),
-    ...validatePassword(password),
+    ...validateNewPassword(password, email),
   };
 
   if (confirmPassword === "") {

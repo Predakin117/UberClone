@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #53
+// AI-assisted: see docs/AI_LOG.md #53, #54
 import { strings } from "../i18n/strings";
 import {
   AUTH_ERROR_CODES,
@@ -6,6 +6,7 @@ import {
   buildLoginKey,
   validateLoginIdentifier,
   validateNewAccount,
+  validateNewPassword,
   validatePassword,
 } from "./account";
 
@@ -71,6 +72,41 @@ describe("validatePassword", () => {
     expect(validatePassword("1234567").password).toBe("errors.passwordTooShort");
     expect(validatePassword("12345678")).toEqual({});
   });
+
+  it("allows at most 64 characters", () => {
+    expect(validatePassword("a1".repeat(32))).toEqual({});
+    expect(validatePassword(`${"a1".repeat(32)}x`).password).toBe(
+      "errors.passwordTooLong",
+    );
+  });
+});
+
+describe("validateNewPassword", () => {
+  it("accepts letters and numbers", () => {
+    expect(validateNewPassword("segura123", "ana@ejemplo.com")).toEqual({});
+    expect(validateNewPassword("Contraseña 2026")).toEqual({});
+  });
+
+  it("requires letters and numbers", () => {
+    for (const password of ["12345678", "abcdefgh", "!!!!????"]) {
+      expect(validateNewPassword(password).password).toBe("errors.passwordWeak");
+    }
+  });
+
+  it("rejects spaces at the start or the end", () => {
+    expect(validateNewPassword(" segura123").password).toBe(
+      "errors.passwordSpaces",
+    );
+    expect(validateNewPassword("segura123 ").password).toBe(
+      "errors.passwordSpaces",
+    );
+  });
+
+  it("rejects a password that contains the email user", () => {
+    expect(
+      validateNewPassword("Mariana2026", "mariana@ejemplo.com").password,
+    ).toBe("errors.passwordHasEmail");
+  });
 });
 
 describe("validateNewAccount", () => {
@@ -126,6 +162,10 @@ describe("account texts", () => {
         }),
       ),
       validatePassword("123").password,
+      validatePassword("a".repeat(65)).password,
+      validateNewPassword("12345678").password,
+      validateNewPassword(" segura123").password,
+      validateNewPassword("ana12345", "ana1@ejemplo.com").password,
       validateNewAccount({ ...validAccount, confirmPassword: "x" }).confirmPassword,
     ];
     for (const key of keys) {

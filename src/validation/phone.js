@@ -1,10 +1,12 @@
-// AI-assisted: see docs/AI_LOG.md #52
+// AI-assisted: see docs/AI_LOG.md #52, #54
 // Errors are translation keys (src/i18n/strings.js), same as in personalInfo.js.
 
 // Mobile number digits without the country code or a leading 0.
 // Argentina allows 10 or 11 because mobile numbers may start with an extra 9.
+// mobilePrefix: first digit of every mobile number, when the country has one
+// (in Colombia 6xx numbers are landlines and only 3xx are mobiles).
 export const COUNTRIES = [
-  { code: "CO", dialCode: "+57", flag: "🇨🇴", name: { es: "Colombia", en: "Colombia" }, minDigits: 10, maxDigits: 10 },
+  { code: "CO", dialCode: "+57", flag: "🇨🇴", name: { es: "Colombia", en: "Colombia" }, minDigits: 10, maxDigits: 10, mobilePrefix: "3" },
   { code: "AR", dialCode: "+54", flag: "🇦🇷", name: { es: "Argentina", en: "Argentina" }, minDigits: 10, maxDigits: 11 },
   { code: "BO", dialCode: "+591", flag: "🇧🇴", name: { es: "Bolivia", en: "Bolivia" }, minDigits: 8, maxDigits: 8 },
   { code: "BR", dialCode: "+55", flag: "🇧🇷", name: { es: "Brasil", en: "Brazil" }, minDigits: 11, maxDigits: 11 },
@@ -52,6 +54,11 @@ export const validateLoginPhone = ({ countryCode, phone }) => {
     (digits.length < country.minDigits || digits.length > country.maxDigits)
   ) {
     errors.phone = "errors.loginPhoneLength";
+  } else if (country?.mobilePrefix && !digits.startsWith(country.mobilePrefix)) {
+    errors.phone = "errors.loginPhoneNotMobile";
+  } else if (/^\d(\d)\1+$/.test(digits)) {
+    // Same digit after the first one, like 3000000000: not a real number
+    errors.phone = "errors.loginPhoneFake";
   }
 
   return errors;
