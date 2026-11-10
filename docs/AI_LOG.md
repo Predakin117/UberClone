@@ -172,3 +172,16 @@ Se descartó: La plantilla genérica inicial de Expo que venía por defecto en e
 - Archivos y commit: `README.md`, `docs/AI_LOG.md` — e1b6d60 (README) y el commit siguiente (bitácora)
 - Verificación: Se comprobó que las variables coinciden con `.env.example`, que los scripts existen en `package.json` y que las carpetas de la estructura existen en `main`. [Pendiente: revisar cómo se ve el README en GitHub]
 - Aprendizaje: Importancia de la documentación desde el inicio: Mantener el README.md actualizado y alineado con la realidad técnica del repositorio (scripts reales, variables de entorno precisas y estructura de carpetas correcta) es clave no solo para cumplir con los requisitos académicos, sino también para facilitar el onboarding de cualquier colaborador en el equipo de desarrollo.
+
+### Entrada #52
+
+- Fecha: 2026-11-10
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Agregar una pantalla de inicio de sesión con número de celular antes de las pestañas del registro, con opción de cambiar el país. No está en el enunciado; es una funcionalidad adicional.
+- Prompt: "Quiero hacer una pestaña inicial antes de la pestaña 1 y 2, será el inicio de sesión y aunque no este en la guia quiero hacer el inicio de seión, donde se pueda inciar sesion por numero de telefono, le de la ocpion de cambiar el pais y que pueda colocar el numero, Primero quiero hacer esa parte"
+- Resumen de la respuesta: Se creó la rama `ximena/login` desde `main`. Se agregó `LoginScreen` como primera pantalla sin sesión, con un selector de país (`CountryPicker`) que muestra bandera, nombre y código, y busca por nombre en español o inglés o por código. `src/validation/phone.js` tiene 20 países con la cantidad de dígitos de sus celulares, valida el número y lo convierte a formato internacional (+573001234567). Los textos están en español e inglés en `strings.js`. Por ahora "Continuar" lleva al registro; la verificación por SMS queda para el siguiente paso.
+- Qué se usó / modificó / descartó: [Completar]
+- Archivos y commit: `src/validation/phone.js`, `src/validation/phone.test.js`, `src/components/CountryPicker.js`, `src/screens/auth/LoginScreen.js`, `src/navigation/AppNavigator.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — 95dd67b (código) y el commit siguiente (bitácora)
+- Verificación: `npx jest` pasa 49 tests (13 nuevos en `phone.test.js`), `npx tsc --noEmit` no da errores, `npx expo lint` no reporta problemas en los archivos nuevos y `npx expo export --platform android` genera el bundle. [Pendiente la prueba en el emulador: elegir otro país y buscarlo, número con menos o más dígitos, número correcto que lleva al registro, y textos en inglés]
+- Aprendizaje: 
