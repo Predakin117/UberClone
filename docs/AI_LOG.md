@@ -467,6 +467,107 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Verificación: se revisó que los nombres de las variables coincidan con `.env.example` y `backend/.env.example`, y que `backend/serviceAccountKey.json` esté en `.gitignore`.
 - Aprendizaje: [Completar]
 
+### Entrada #21
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Paso 5 del plan: solicitudes reales desde Firestore, rutas con OpenRouteService y un simulador mínimo de solicitudes, en cuatro partes con su propio commit (backend; servicios y hook de la app; pantallas y navegación; README y `.env.example`).
+- Prompt:
+  > Paso 5 (entrada #21). Ya publiqué las reglas en la consola. Sigue
+  > docs/APIS.md para todo lo de APIs.
+  >
+  > Solicitudes:
+  > 1. src/services/tripRequestsSource.js es el único lugar que sabe de dónde
+  >    vienen las solicitudes: subscribeToNewRequests(onRequests, onError) con
+  >    onSnapshot sobre trips en "requested". Muestra la más antigua por
+  >    createdAt; si Firestore pide un índice compuesto, dame el link.
+  > 2. La suscripción vive dentro de useTripRequests, activa solo con el
+  >    conductor conectado y aprobado, con limpieza en el useEffect. El
+  >    vencimiento de 15 s guarda "rejected" en el viaje (así se va el error de
+  >    lint de ese hook).
+  > 3. src/services/tripRepository.js: aceptar o rechazar con runTransaction,
+  >    avanzar de estado y cerrar con completionFields, validando antes con
+  >    validateDriverUpdate.
+  > 4. El status del viaje en Firestore controla la pantalla: escucha el viaje
+  >    activo del conductor y navega según su status, también al reabrir la app.
+  > 5. IncomingRequestScreen: muestra origen, destino, distancia, duración,
+  >    categoría, método de pago, tarifa y ganancia neta con calculateFare.
+  >    Aceptar y rechazar con useCallback. Todo texto con t().
+  >
+  > Rutas y mapa:
+  > 6. backend/src/rutas.js con calcularRuta(origen, destino) usando
+  >    OpenRouteService, como dice docs/APIS.md. Pruebas con fetch simulado.
+  > 7. backend/scripts/simular-solicitud.js: crea UN viaje "requested" con
+  >    firebase-admin, eligiendo entre unas pocas rutas de Medellín, con la
+  >    categoría como argumento. Usa calcularRuta para distanceKm, durationMin y
+  >    routePolyline; si ORS falla, valores fijos de respaldo. Las direcciones
+  >    sácalas una vez con Nominatim y déjalas escritas en el código. Agrega un
+  >    script en backend/package.json para correrlo.
+  > 8. ActiveTripScreen: dibuja routePolyline con @mapbox/polyline (instálalo
+  >    con npx expo install) y marcadores de origen y destino. El botón que
+  >    cambia a in_progress dice "Pasajero a bordo", como el enunciado.
+  >
+  > Al terminar: README con OpenRouteService y Nominatim y el crédito
+  > "© OpenStreetMap contributors"; ORS_API_KEY= en backend/.env.example.
+  > Corre npm test en la raíz y en backend/, npx expo lint sin errores y
+  > npx tsc --noEmit. Muéstrame el diff antes del commit.
+
+  > Sí, haz el commit de las entradas #19 y #20.
+  >
+  > Paso 5: siguen siendo los 8 puntos, sin cambios. Ya tengo en backend/ la
+  > serviceAccountKey.json y la ORS_API_KEY en backend/.env, y ya publiqué las
+  > reglas en la consola.
+  >
+  > Divídelo en commits que pueda revisar por separado, en este orden:
+  > 1. backend: rutas.js y el simulador, con sus pruebas;
+  > 2. app: tripRequestsSource, tripRepository y useTripRequests;
+  > 3. app: pantallas (solicitud, viaje en curso con la ruta) y navegación
+  >    según el estado;
+  > 4. README y .env.example.
+  > Muéstrame el diff de cada uno antes de su commit. Todo va en la entrada #21.
+
+  > Listo: serviceAccountKey.json ya está en backend/ y ORS_API_KEY en
+  > backend/.env. Haz la prueba real: ejecuta el simulador una vez por ruta,
+  > confirma que la llave en la cabecera Authorization funciona y reemplaza
+  > los valores de respaldo por los reales de ORS. No me muestres la llave ni
+  > el contenido de esos archivos. Después muéstrame el diff final y haz el
+  > commit.
+  >
+  > Para la parte 3: como routePolyline puede ser null cuando ORS falla,
+  > ActiveTripScreen debe dibujar una línea recta entre origen y destino en
+  > ese caso.
+  >
+  > La vulnerabilidad de nodemailer la dejamos para después de la entrega.
+
+  > Listo: la clave ya está en backend/ y ORS_API_KEY en backend/.env.
+  > Ejecuta el simulador una vez por ruta.
+
+  > Listo, ORS_API_KEY ya está guardada en backend/.env. Revisa sin mostrarme
+  > la llave que solo haya una línea ORS_API_KEY con valor (borra cualquier
+  > línea vacía de antes) y ejecuta el simulador una vez por ruta. Reemplaza
+  > los valores de respaldo por los reales de ORS, muéstrame el diff y haz el
+  > commit de la parte 1.
+
+  > Sigue con la parte 2. Dos ajustes:
+  >
+  > 1. Escribe la entrada #21 en la bitácora desde ya, con la parte 1 y sus
+  >    commits, y complétala al terminar cada parte. Así nunca hay commits
+  >    que citen una entrada inexistente.
+  > 2. Cuando termine la parte 2, dime cómo probarla en el celular paso a
+  >    paso. Ya [publiqué / todavía no publiqué] las reglas en la consola.
+- Resumen de la respuesta:
+  - Parte 1 (backend): `backend/src/rutas.js` es el único módulo que llama a OpenRouteService; `calcularRuta` devuelve la distancia con un decimal, la duración en minutos enteros y la polyline codificada. `backend/scripts/simular-solicitud.js` crea una solicitud `requested` con `firebase-admin`, con los campos de la sección 6 más `routePolyline`, eligiendo entre tres rutas de Medellín cuyas direcciones se consultaron una vez en Nominatim ("Parque Lleras" no aparece en Nominatim y se cambió por otros lugares). Recibe la categoría, el método de pago y el número de ruta como argumentos, y si ORS falla usa valores de respaldo.
+- Qué se usó / modificó / descartó:
+  - Se usó: OpenRouteService con la llave en la cabecera `Authorization` y `firebase-admin` 14.5.
+  - Se modificó: se agregó el número de ruta como argumento para probar cada ruta, y los valores de respaldo aproximados se reemplazaron por los reales de ORS.
+  - Se descartó: un simulador más elaborado, por la instrucción de hacerlo mínimo, y arreglar ahora la vulnerabilidad de `nodemailer`, que queda para después de la entrega.
+- Archivos y commit:
+  - Parte 1: `backend/src/rutas.js`, `backend/test/rutas.test.js`, `backend/scripts/simular-solicitud.js`, `backend/test/simular-solicitud.test.js`, `backend/package.json`, `backend/package-lock.json` — 7a14952
+- Verificación:
+  - Parte 1: `npm test` en `backend/` pasa 22 pruebas (9 nuevas). El simulador se ejecutó una vez por ruta: OpenRouteService respondió con la llave en `Authorization` (8,3 km y 13 min; 11 km y 19 min; 3,3 km y 6 min, sin tráfico) y las polylines guardadas empiezan y terminan junto al origen y el destino. Un intento anterior, con la llave todavía sin guardar en `backend/.env`, creó 3 solicitudes con los valores de respaldo; la comprobación de la llave no detuvo el comando, y se corrigió para que se detenga.
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
