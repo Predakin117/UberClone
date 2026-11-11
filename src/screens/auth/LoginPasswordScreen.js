@@ -1,6 +1,6 @@
-// AI-assisted: see docs/AI_LOG.md #53, #54
+// AI-assisted: see docs/AI_LOG.md #53, #54, #55
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import PasswordField from "../../components/PasswordField";
 import NextButton from "../../components/NextButton";
-import { AuthContext } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { resetPassword, signIn } from "../../services/accountService";
 import { authErrorKey, validatePassword } from "../../validation/account";
@@ -21,7 +20,6 @@ import { authErrorKey, validatePassword } from "../../validation/account";
 export default function LoginPasswordScreen() {
   const navigation = useNavigation();
   const { params } = useRoute();
-  const { login } = useContext(AuthContext);
   const { t } = useLanguage();
 
   const [password, setPassword] = useState("");
@@ -46,20 +44,14 @@ export default function LoginPasswordScreen() {
     setIsSigningIn(true);
     try {
       const driver = await signIn(params.email, password);
-      if (!driver.status) {
-        // The account exists but the registration wasn't submitted: back to the
-        // tabs, with the email and phone of the account already filled in
-        navigation.replace("Register", {
-          account: { email: driver.email, phone: driver.phone },
-        });
-        return;
-      }
-      // Registration submitted (pending or approved): AppNavigator switches to
-      // the main menu
-      await login({ id: driver.uid, name: driver.name, status: driver.status });
+      // AI-assisted: see docs/AI_LOG.md #55
+      // Correct password: before entering, a code is sent to the account's email.
+      // VerifyLoginScreen decides where to go next (main menu or the tabs).
+      navigation.navigate("VerifyLogin", { driver });
     } catch (signInError) {
       console.error("Error logging in:", signInError.cause ?? signInError);
       setError(authErrorKey(signInError.code));
+    } finally {
       setIsSigningIn(false);
     }
   };

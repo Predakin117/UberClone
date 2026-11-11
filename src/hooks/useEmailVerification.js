@@ -1,6 +1,7 @@
-// AI-assisted: see docs/AI_LOG.md #13
+// AI-assisted: see docs/AI_LOG.md #13, #55
 // Pide y verifica el código que el backend envía al correo del conductor.
 // El código vale para un correo: si el conductor lo cambia, hay que pedir otro.
+// motivo cambia el texto del correo: "registro" (por defecto) o "login".
 import { useEffect, useState } from "react";
 import {
   enviarCodigo,
@@ -13,7 +14,11 @@ import {
   RESEND_SECONDS,
 } from "../services/verificationErrors";
 
-export const useEmailVerification = ({ email, name }) => {
+export const useEmailVerification = ({
+  email,
+  name,
+  motivo = MOTIVOS.REGISTRO,
+}) => {
   const [sentTo, setSentTo] = useState(null);
   const [verifiedFor, setVerifiedFor] = useState(null);
   const [minutes, setMinutes] = useState(null);
@@ -43,7 +48,7 @@ export const useEmailVerification = ({ email, name }) => {
     const result = await enviarCodigo({
       email,
       nombre: name,
-      motivo: MOTIVOS.REGISTRO,
+      motivo,
     });
     setIsSending(false);
 
