@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #54
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -216,6 +216,43 @@ export const strings = {
       "Tu registro fue rechazado. Comunícate con soporte para revisarlo.",
     "home.statusError":
       "No se pudo verificar el estado de tu cuenta. Revisa tu conexión.",
+
+    // Solicitud nueva ({seconds}, {km} y {minutes} los reemplaza IncomingRequestScreen)
+    "request.title": "¡Nueva solicitud!",
+    "request.seconds": "{seconds} s",
+    "request.origin": "Origen",
+    "request.destination": "Destino",
+    "request.distance": "Distancia",
+    "request.km": "{km} km",
+    "request.duration": "Duración",
+    "request.minutes": "{minutes} min",
+    "request.category": "Categoría",
+    "request.paymentMethod": "Método de pago",
+    "request.fare": "Tarifa estimada",
+    "request.earnings": "Tu ganancia neta",
+    "request.accept": "Aceptar",
+    "request.reject": "Rechazar",
+    "payment.mercadopago": "Mercado Pago",
+    "payment.stripe": "Stripe",
+    "payment.cash": "Efectivo",
+
+    // Errores de los viajes (códigos de TRIP_ERROR_CODES en services/trips.js)
+    "trip.error.invalidTransition":
+      "Ese cambio no está permitido en el estado actual del viaje.",
+    "trip.error.alreadyTaken": "Otro conductor ya tomó esta solicitud.",
+    "trip.error.notApproved":
+      "Tu cuenta debe estar aprobada para tomar solicitudes.",
+    "trip.error.notYourTrip": "Este viaje no es tuyo.",
+    "trip.error.fieldNotAllowed": "No puedes modificar esos datos del viaje.",
+    "trip.error.invalidAmounts": "Los montos del viaje no coinciden con la tarifa.",
+    "trip.error.notFound": "La solicitud ya no existe.",
+    "trip.error.noSession": "Tu sesión se cerró. Inicia sesión de nuevo.",
+    "trip.error.permissionDenied":
+      "La base de datos rechazó el cambio. Revisa las reglas de Firestore.",
+    "trip.error.failed":
+      "No se pudo guardar el cambio. Revisa tu conexión e inténtalo de nuevo.",
+    "trip.error.loadFailed":
+      "No se pudieron cargar las solicitudes. Revisa tu conexión.",
 
     // Guardado en Firestore
     "save.saving": "Guardando…",
@@ -483,6 +520,41 @@ export const strings = {
       "Your registration was rejected. Contact support to review it.",
     "home.statusError":
       "Your account status could not be checked. Check your connection.",
+
+    "request.title": "New request!",
+    "request.seconds": "{seconds} s",
+    "request.origin": "Pickup",
+    "request.destination": "Destination",
+    "request.distance": "Distance",
+    "request.km": "{km} km",
+    "request.duration": "Duration",
+    "request.minutes": "{minutes} min",
+    "request.category": "Category",
+    "request.paymentMethod": "Payment method",
+    "request.fare": "Estimated fare",
+    "request.earnings": "Your net earnings",
+    "request.accept": "Accept",
+    "request.reject": "Decline",
+    "payment.mercadopago": "Mercado Pago",
+    "payment.stripe": "Stripe",
+    "payment.cash": "Cash",
+
+    "trip.error.invalidTransition":
+      "That change is not allowed in the current trip status.",
+    "trip.error.alreadyTaken": "Another driver already took this request.",
+    "trip.error.notApproved":
+      "Your account must be approved to take requests.",
+    "trip.error.notYourTrip": "This trip is not yours.",
+    "trip.error.fieldNotAllowed": "You cannot change that trip data.",
+    "trip.error.invalidAmounts": "The trip amounts do not match the fare.",
+    "trip.error.notFound": "The request no longer exists.",
+    "trip.error.noSession": "Your session ended. Please log in again.",
+    "trip.error.permissionDenied":
+      "The database rejected the change. Check the Firestore rules.",
+    "trip.error.failed":
+      "The change could not be saved. Check your connection and try again.",
+    "trip.error.loadFailed":
+      "The requests could not be loaded. Check your connection.",
 
     "save.saving": "Saving…",
     "save.notConfigured":

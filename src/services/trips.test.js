@@ -1,6 +1,11 @@
+import { CATEGORY_MULTIPLIERS } from "../config/pricing";
+import { strings } from "../i18n/strings";
 import {
   canDriverChangeStatus,
   completionFields,
+  PAYMENT_METHODS,
+  sortOldestFirst,
+  TRIP_ERROR_CODES,
   validateDriverUpdate,
 } from "./trips";
 
@@ -129,6 +134,50 @@ describe("trips", () => {
         validateDriverUpdate(myTrip("completed"), { status: "paid" }, ME),
       ).toBe("invalidTransition");
     });
+  });
+
+  describe("sortOldestFirst", () => {
+    // Imita un Timestamp de Firestore
+    const at = (millis) => ({ toMillis: () => millis });
+
+    it("ordena las solicitudes de la más antigua a la más nueva", () => {
+      const trips = [
+        { id: "b", createdAt: at(200) },
+        { id: "a", createdAt: at(100) },
+        { id: "c", createdAt: at(300) },
+      ];
+      expect(sortOldestFirst(trips).map((trip) => trip.id)).toEqual([
+        "a",
+        "b",
+        "c",
+      ]);
+    });
+
+    it("deja al final la que todavía no tiene createdAt", () => {
+      const trips = [{ id: "nueva", createdAt: null }, { id: "a", createdAt: at(1) }];
+      expect(sortOldestFirst(trips).map((trip) => trip.id)).toEqual([
+        "a",
+        "nueva",
+      ]);
+    });
+
+    it("no modifica la lista original", () => {
+      const trips = [{ id: "b", createdAt: at(2) }, { id: "a", createdAt: at(1) }];
+      sortOldestFirst(trips);
+      expect(trips[0].id).toBe("b");
+    });
+  });
+
+  it("tiene en los dos idiomas cada error, categoría y método de pago", () => {
+    const keys = [
+      ...TRIP_ERROR_CODES.map((code) => `trip.error.${code}`),
+      ...Object.keys(CATEGORY_MULTIPLIERS).map((category) => `category.${category}`),
+      ...PAYMENT_METHODS.map((method) => `payment.${method}`),
+    ];
+    for (const key of keys) {
+      expect(strings.es[key]).toBeDefined();
+      expect(strings.en[key]).toBeDefined();
+    }
   });
 
   describe("al completar", () => {

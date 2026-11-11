@@ -1,79 +1,128 @@
-// AI-assisted: see docs/AI_LOG.md #4
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { useCallback, useContext } from "react";
+// AI-assisted: see docs/AI_LOG.md #4, #21
+// Tarjeta de solicitud nueva (sección 3 del enunciado). HomeScreen la muestra
+// sobre el mapa con la solicitud más antigua y los segundos que quedan para
+// responder; el temporizador vive en useTripRequests.
+import { useNavigation } from "@react-navigation/native";
+import { useCallback, useContext, useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { calculateFare } from "../../config/pricing";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { TripContext } from "../../contexts/TripContext";
-import { useTripRequests } from "../../hooks/useTripRequests";
+import { respondToRequest } from "../../services/tripRepository";
+import { TRIP_STATUS } from "../../services/trips";
 
-export default function IncomingRequestScreen() {
+const formatCop = (amount) => `$${amount.toLocaleString("es-CO")} COP`;
+
+export default function IncomingRequestScreen({ trip, timeLeft, driverStatus }) {
   const navigation = useNavigation();
-  const route = useRoute();
+  const { t } = useLanguage();
   const { acceptTrip } = useContext(TripContext);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState(null);
 
-  const incomingData = route.params?.requestData || {
-    id: "trip_999",
-    passengerName: "María Gómez",
-    pickup: "Parque Lleras, Medellín",
-    dropoff: "Aeropuerto JMC",
-    estimatedFare: 75000,
-    status: "requested",
-  };
+  // La misma función que cierra el viaje: la estimación coincide con el cobro.
+  // Con una categoría desconocida no hay estimación.
+  const estimate = useMemo(() => {
+    try {
+      return calculateFare({
+        distanceKm: trip.distanceKm,
+        durationMin: trip.durationMin,
+        category: trip.category,
+      });
+    } catch {
+      return null;
+    }
+  }, [trip.distanceKm, trip.durationMin, trip.category]);
 
-  const handleAutoReject = useCallback(() => {
-    console.log("Solicitud rechazada automáticamente por tiempo.");
-    navigation.goBack(); // Devolvemos al conductor al mapa
-  }, [navigation]);
+  const handleAccept = useCallback(async () => {
+    setIsSending(true);
+    setError(null);
+    try {
+      await respondToRequest(trip.id, TRIP_STATUS.ACCEPTED, driverStatus);
+      acceptTrip({ ...trip, status: TRIP_STATUS.ACCEPTED });
+      navigation.navigate("ActiveTrip");
+    } catch (acceptError) {
+      console.error("Error aceptando la solicitud:", acceptError.cause ?? acceptError);
+      setError(acceptError.code ?? "trip.error.failed");
+      setIsSending(false);
+    }
+  }, [trip, driverStatus, acceptTrip, navigation]);
 
-  const { request, timeLeft, acceptRequest, rejectRequest } = useTripRequests(
-    incomingData,
-    handleAutoReject,
-  );
+  // Al rechazar, la solicitud sale de la lista y HomeScreen deja de mostrarla
+  const handleReject = useCallback(async () => {
+    setIsSending(true);
+    setError(null);
+    try {
+      await respondToRequest(trip.id, TRIP_STATUS.REJECTED, driverStatus);
+    } catch (rejectError) {
+      console.error("Error rechazando la solicitud:", rejectError.cause ?? rejectError);
+      setError(rejectError.code ?? "trip.error.failed");
+      setIsSending(false);
+    }
+  }, [trip.id, driverStatus]);
 
-  const handleAccept = () => {
-    acceptRequest();
-    // ActiveTripScreen lee el viaje desde el TripContext
-    acceptTrip({ ...request, status: "accepted" });
-    navigation.replace("ActiveTrip");
-  };
-
-  const handleManualReject = () => {
-    rejectRequest();
-    navigation.goBack();
-  };
+  const rows = [
+    [t("request.origin"), trip.origin?.address],
+    [t("request.destination"), trip.destination?.address],
+    [t("request.distance"), t("request.km").replace("{km}", trip.distanceKm)],
+    [
+      t("request.duration"),
+      t("request.minutes").replace("{minutes}", trip.durationMin),
+    ],
+    [t("request.category"), t(`category.${trip.category}`)],
+    [t("request.paymentMethod"), t(`payment.${trip.paymentMethod}`)],
+  ];
 
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.timerText}>{timeLeft}s</Text>
-        <Text style={styles.title}>¡Nueva Solicitud!</Text>
+        <Text style={styles.timerText}>
+          {t("request.seconds").replace("{seconds}", timeLeft)}
+        </Text>
+        <Text style={styles.title}>{t("request.title")}</Text>
 
         <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            👤 Pasajero: {incomingData.passengerName}
-          </Text>
-          <Text style={styles.infoText}>📍 Origen: {incomingData.pickup}</Text>
-          <Text style={styles.infoText}>
-            🏁 Destino: {incomingData.dropoff}
-          </Text>
-          <Text style={styles.fareText}>
-            💵 Tarifa Est.: $
-            {incomingData.estimatedFare.toLocaleString("es-CO")} COP
-          </Text>
+          {rows.map(([label, value]) => (
+            <View key={label} style={styles.row}>
+              <Text style={styles.label}>{label}</Text>
+              <Text style={styles.value}>{value}</Text>
+            </View>
+          ))}
+          {estimate && (
+            <>
+              <View style={styles.row}>
+                <Text style={styles.label}>{t("request.fare")}</Text>
+                <Text style={styles.value}>{formatCop(estimate.fare)}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>{t("request.earnings")}</Text>
+                <Text style={styles.earningsText}>
+                  {formatCop(estimate.driverEarnings)}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
+
+        {error && <Text style={styles.errorText}>{t(error)}</Text>}
 
         <View style={styles.buttonRow}>
           <TouchableOpacity
-            style={[styles.button, styles.btnReject]}
-            onPress={handleManualReject}
+            style={[styles.button, styles.btnReject, isSending && styles.disabled]}
+            onPress={handleReject}
+            disabled={isSending}
+            accessibilityRole="button"
           >
-            <Text style={styles.buttonText}>Rechazar</Text>
+            <Text style={styles.buttonText}>{t("request.reject")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.button, styles.btnAccept]}
+            style={[styles.button, styles.btnAccept, isSending && styles.disabled]}
             onPress={handleAccept}
+            disabled={isSending}
+            accessibilityRole="button"
           >
-            <Text style={styles.buttonText}>Aceptar</Text>
+            <Text style={styles.buttonText}>{t("request.accept")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -83,7 +132,7 @@ export default function IncomingRequestScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     padding: 20,
@@ -102,14 +151,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
-  infoContainer: { width: "100%", marginBottom: 20 },
-  infoText: { fontSize: 16, marginBottom: 8, color: "#333" },
-  fareText: {
+  infoContainer: { width: "100%", marginBottom: 20, gap: 8 },
+  row: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
+  label: { fontSize: 14, color: "#666" },
+  value: { flex: 1, fontSize: 14, color: "#222", textAlign: "right" },
+  earningsText: {
+    flex: 1,
     fontSize: 18,
     fontWeight: "bold",
     color: "#2E7D32",
-    marginTop: 10,
+    textAlign: "right",
   },
+  errorText: { color: "red", fontSize: 13, marginBottom: 12 },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -124,5 +177,6 @@ const styles = StyleSheet.create({
   },
   btnReject: { backgroundColor: "#F44336" },
   btnAccept: { backgroundColor: "#4CAF50" },
+  disabled: { opacity: 0.6 },
   buttonText: { color: "white", fontWeight: "bold", fontSize: 16 },
 });

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #18
+// AI-assisted: see docs/AI_LOG.md #18, #21
 // Colección trips (sección 6 del enunciado): un documento por viaje, en la raíz de
 // Firestore. Estas funciones puras repiten lo que permiten firestore.rules para que
 // la app no intente un cambio que la base de datos va a rechazar.
@@ -56,6 +56,44 @@ export const DRIVER_TRANSITIONS = {
 
 export const canDriverChangeStatus = (from, to) =>
   (DRIVER_TRANSITIONS[from] ?? []).includes(to);
+
+// Viajes que el conductor tiene en curso: el inicio lo lleva a esa pantalla
+export const ACTIVE_STATUSES = [
+  TRIP_STATUS.ACCEPTED,
+  TRIP_STATUS.DRIVER_ARRIVING,
+  TRIP_STATUS.IN_PROGRESS,
+];
+
+// Códigos de error de los viajes, como claves "trip.error.<código>" de
+// src/i18n/strings.js. Los primeros los devuelve validateDriverUpdate; los
+// demás, tripRepository y la fuente de solicitudes.
+export const TRIP_ERROR_CODES = [
+  "invalidTransition",
+  "alreadyTaken",
+  "notApproved",
+  "notYourTrip",
+  "fieldNotAllowed",
+  "invalidAmounts",
+  "notFound",
+  "noSession",
+  "permissionDenied",
+  "failed",
+  "loadFailed",
+];
+
+// Timestamp de Firestore en milisegundos. Una solicitud recién creada puede
+// llegar con createdAt en null mientras el servidor pone la hora: va al final.
+const toMillis = (timestamp) =>
+  timestamp?.toMillis?.() ?? Number.POSITIVE_INFINITY;
+
+// La más antigua primero, por createdAt (la que debe ver el conductor)
+export const sortOldestFirst = (trips) =>
+  [...trips].sort((a, b) => {
+    const first = toMillis(a.createdAt);
+    const second = toMillis(b.createdAt);
+    if (first === second) return 0;
+    return first < second ? -1 : 1;
+  });
 
 // Campos que el conductor puede escribir en cada cambio. Los del pago
 // (paymentStatus, paymentId) nunca están: son del backend.

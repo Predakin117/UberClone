@@ -1,32 +1,40 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17
+// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21
 // src/screens/trip/HomeScreen.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView from "react-native-maps";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useDriverLocation } from "../../hooks/useDriverLocation";
 import { useDriverStatus } from "../../hooks/useDriverStatus";
+import { useTripRequests } from "../../hooks/useTripRequests";
 import { getAvailabilityBlock } from "../../services/driverStatus";
+import IncomingRequestScreen from "./IncomingRequestScreen";
 
 // REGLA: AsyncStorage guarda el último estado de disponibilidad
 const AVAILABILITY_KEY = "@driver_availability";
 
 export default function HomeScreen() {
-  const navigation = useNavigation();
   const { t } = useLanguage();
   const mapRef = useRef(null);
   const [isOnline, setIsOnline] = useState(false);
 
   // Solo un conductor aprobado puede ponerse Disponible (sección 2 del enunciado).
   // Si la cuenta no está aprobada queda desconectado, aunque la última vez quedara conectado.
-  const blockKey = getAvailabilityBlock(useDriverStatus());
+  const driverState = useDriverStatus();
+  const blockKey = getAvailabilityBlock(driverState);
   const canGoOnline = blockKey === null;
   const isActive = isOnline && canGoOnline;
 
   // El rastreo de ubicación solo corre mientras el conductor está conectado
   const { location, errorMsg } = useDriverLocation(isActive);
+
+  // Solicitudes nuevas: solo mientras está conectado y aprobado
+  const {
+    request,
+    timeLeft,
+    error: requestsError,
+  } = useTripRequests(isActive, driverState.status);
 
   useEffect(() => {
     AsyncStorage.getItem(AVAILABILITY_KEY)
@@ -54,11 +62,6 @@ export default function HomeScreen() {
     AsyncStorage.setItem(AVAILABILITY_KEY, String(next)).catch((error) =>
       console.error("Error guardando la disponibilidad:", error),
     );
-  };
-
-  const handleSimulateRequest = () => {
-    // La solicitud y su temporizador de 15 s viven en IncomingRequestScreen
-    navigation.navigate("IncomingRequest");
   };
 
   return (
@@ -94,16 +97,19 @@ export default function HomeScreen() {
         </TouchableOpacity>
         {blockKey && <Text style={styles.noticeText}>{t(blockKey)}</Text>}
         {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
+        {requestsError && (
+          <Text style={styles.errorText}>{t(requestsError)}</Text>
+        )}
       </View>
 
-      {/* Botón de simulación (Solo visible si estás conectado) */}
-      {isActive && (
-        <TouchableOpacity
-          style={styles.simulateBtn}
-          onPress={handleSimulateRequest}
-        >
-          <Text style={styles.simulateBtnText}>Simular Solicitud</Text>
-        </TouchableOpacity>
+      {/* La solicitud más antigua, sobre el mapa. key la reinicia con cada solicitud */}
+      {request && (
+        <IncomingRequestScreen
+          key={request.id}
+          trip={request}
+          timeLeft={timeLeft}
+          driverStatus={driverState.status}
+        />
       )}
     </View>
   );
@@ -146,14 +152,4 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
   },
-
-  simulateBtn: {
-    position: "absolute",
-    bottom: 30,
-    backgroundColor: "#000",
-    padding: 15,
-    borderRadius: 10,
-    elevation: 5,
-  },
-  simulateBtnText: { color: "white", fontWeight: "bold" },
 });

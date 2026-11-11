@@ -1,4 +1,4 @@
-<!-- AI-assisted: see docs/AI_LOG.md #51 -->
+<!-- AI-assisted: see docs/AI_LOG.md #51, #21 -->
 
 # UberClone — Versión Conductor
 
@@ -88,10 +88,12 @@ src/
   components/           Campos reutilizables del registro (texto, lista, foto)
   config/               Tarifas y comisión (pricing.js) y variables de entorno (env.js)
   contexts/             Sesión (Auth), registro (Registration) y viaje activo (Trip)
-  hooks/                useDriverLocation y useTripRequests
+  hooks/                useDriverLocation y useTripRequests (solicitudes nuevas y sus 15 s)
   navigation/           AppNavigator, AuthTabs, MainDrawer y TripStack
   screens/auth/         Pestañas del registro: datos personales, vehículo y documentos
-  screens/trip/         Inicio, solicitud entrante, viaje en curso y resumen
+  screens/trip/         Inicio (con la tarjeta de solicitud entrante), viaje en curso y resumen
+  services/             Firebase y Cloudinary, viajes (trips.js, tripRepository.js) y la
+                        fuente de solicitudes (tripRequestsSource.js)
   screens/main/         Ganancias
   validation/           Reglas de validación de cada pestaña y sus pruebas
 docs/AI_LOG.md          Bitácora de uso de IA
