@@ -349,6 +349,124 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Verificación: Jest pasa 139 pruebas, con las nuevas de `trips.test.js` (orden de estados, conductor no aprobado, solicitud ya tomada, campos del pago y montos alterados), y `npx tsc --noEmit` no da errores. La cuenta de las reglas da el ejemplo del enunciado con aritmética de doble precisión (19.200, 26.900 y 34.600). [Completar: la consola de Firebase acepta las reglas al publicarlas]
 - Aprendizaje: [Completar]
 
+### Entrada #19
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Corregir el error de lint de `AuthContext.js` que reportaba `npx expo lint`.
+- Prompt:
+  > corre esto en todo el proyecto npx expo lint
+
+  > Sí: arregla AuthContext.js en un commit aparte (fix: lint), antes del
+  > paso 5, y muéstrame el diff. El de useTripRequests se resuelve en el paso
+  > 5 como dijiste. El aviso del test déjalo así: es intencional.
+  > Al terminar el paso 5, npx expo lint debe quedar sin errores.
+- Resumen de la respuesta: `npx expo lint` reportó 2 errores y 1 aviso, todos anteriores: `AuthContext.js` usaba `checkSession` antes de declararla, `useTripRequests.js` cambiaba el estado dentro de un `useEffect` y `emailVerification.test.js` tiene un `import` después de los `jest.mock`. Se movió `checkSession` dentro del `useEffect` de `AuthContext`, sin cambiar lo que hace.
+- Qué se usó / modificó / descartó:
+  - Se usó: el arreglo de `AuthContext.js` tal cual.
+  - Se dejó para el paso 5: el error de `useTripRequests.js`, porque ese hook se reescribe.
+  - Se descartó: cambiar el aviso del test, que es intencional.
+- Archivos y commit: `src/contexts/AuthContext.js` — dce30f5
+- Verificación: `npx expo lint` ya no reporta el error de `AuthContext.js`; Jest pasa 139 pruebas y `npx tsc --noEmit` no da errores.
+- Aprendizaje: [Completar]
+
+### Entrada #20
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Crear `docs/APIS.md`, la guía de las APIs y servicios externos del proyecto, para que los dos integrantes y cualquier sesión de Claude Code trabajen con las mismas reglas.
+- Prompt:
+  > Aclaraciones antes de la tarea:
+  > - CLAUDE.md ya existe y ya tiene la línea @docs/APIS.md: no lo reescribas,
+  >   solo inclúyelo en el commit tal como está.
+  > - Esta tarea es la entrada #20 de la bitácora.
+
+  > La tarea #20 es crear docs/APIS.md: la guía de las APIs y servicios
+  > externos del proyecto, para que cualquier sesión de Claude Code y los dos
+  > integrantes trabajen con las mismas reglas. CLAUDE.md ya existe y ya
+  > tiene la línea @docs/APIS.md: no lo reescribas, solo inclúyelo en el
+  > commit tal como está.
+  >
+  > Para cada servicio escribe: para qué lo usamos, estado (Activa, Pendiente
+  > o En veremos), dónde se llama (app o backend) y en qué archivo, la
+  > variable de entorno si tiene, y las reglas o límites.
+  >
+  > ## Reglas generales
+  > - Toda llave secreta va solo en backend/.env. En la app solo van variables
+  >   EXPO_PUBLIC_ que no son secretas. Cada variable nueva se agrega sin valor
+  >   al .env.example que corresponda.
+  > - Cada API externa se usa desde un solo módulo, para poder cambiar de
+  >   proveedor sin tocar las pantallas.
+  > - Preferimos lo que funciona en Expo Go. Cualquier librería con código
+  >   nativo necesita aprobación del equipo porque obliga a un development build.
+  > - Las llamadas de rutas se hacen una vez al crear la solicitud y una vez al
+  >   aceptarla, nunca en cada actualización de ubicación (sección 7 del
+  >   enunciado). La ruta se guarda en el viaje para no volver a pedirla.
+  >
+  > ## Activas
+  > 1. OpenRouteService (rutas) — backend, backend/src/rutas.js, ORS_API_KEY.
+  >    calcularRuta(origen, destino) devuelve { distanceKm, durationMin,
+  >    encodedPolyline }. Recibe coordenadas como [longitud, latitud]. Cupo
+  >    diario gratuito. Si falla, el simulador usa valores fijos de respaldo.
+  >    Crédito obligatorio: "© OpenStreetMap contributors".
+  > 2. @mapbox/polyline (librería) — app. Decodifica routePolyline del viaje
+  >    para dibujarlo con Polyline de react-native-maps. decode devuelve
+  >    [lat, lng].
+  > 3. reverseGeocodeAsync de expo-location — app. Convierte la ubicación del
+  >    conductor en dirección. Solo cuando cambia el punto que se muestra.
+  > 4. Nominatim (OpenStreetMap) — solo backend, en el simulador. Máximo 1
+  >    petición por segundo, User-Agent propio obligatorio, prohibido para
+  >    autocompletar. Las direcciones de las rutas de ejemplo se consultan una
+  >    vez y quedan escritas en el código.
+  > 5. Firebase Auth y Firestore — app y backend. Colecciones drivers,
+  >    accounts, loginIndex y trips. Tiempo real con onSnapshot, siempre con
+  >    limpieza en el useEffect. El backend usa firebase-admin con
+  >    backend/serviceAccountKey.json (en .gitignore). Los campos y estados de
+  >    trips son el contrato con la API del pasajero: no se renombran. Si
+  >    cambia firestore.rules, hay que publicarlas a mano en la consola.
+  > 6. Cloudinary — app. Fotos del registro con upload preset sin firma; en
+  >    Firestore solo se guarda la URL.
+  > 7. Gmail con contraseña de aplicación — backend, backend/src/mailer.js,
+  >    MAIL_USER y MAIL_PASS. Códigos de verificación.
+  > 8. Cloudflare Quick Tunnel — herramienta, no código. Da una URL pública
+  >    https al backend (cloudflared tunnel --url http://localhost:3000). La
+  >    URL cambia cada vez: la app la lee de EXPO_PUBLIC_BACKEND_API_URL y el
+  >    backend de PUBLIC_BACKEND_URL. Nunca se escribe en el código.
+  >
+  > ## Pendientes
+  > 9. Mercado Pago Checkout Pro (modo prueba) — backend, MP_ACCESS_TOKEN (el
+  >    token de prueba empieza por APP_USR). Lo implementa Ximena. Crea la
+  >    preferencia con external_reference = tripId, confirma el pago
+  >    consultando a Mercado Pago y actualiza el viaje con firebase-admin. La
+  >    app nunca escribe paymentStatus, paymentId ni el status paid.
+  > 10. Notificaciones push (servicio de Expo o FCM) — app y backend. Avisan de
+  >    solicitudes nuevas con la app en segundo plano. No funcionan en Expo
+  >    Go: requieren development build. Se hace al final si alcanza el tiempo.
+  > 11. API del pasajero de la profesora — todavía no sabemos cómo funciona.
+  >    Solo src/services/tripRequestsSource.js sabe de dónde vienen las
+  >    solicitudes; al llegar la API se cambia ese archivo.
+  >
+  > ## En veremos
+  > 12. Google Routes API — reemplazaría a OpenRouteService dentro de
+  >    backend/src/rutas.js. Requiere facturación activa en Google Cloud,
+  >    restringir la llave y alertas de presupuesto.
+  >
+  > No cambies código en esta tarea: solo docs/APIS.md y CLAUDE.md. Muéstrame
+  > el diff antes del commit y registra este prompt tal cual en la entrada #20.
+  > El paso 5 (entrada #21) lo hacemos después, en commits aparte.
+  >
+  > Sobre docs/enunciado.pdf: lo copio yo ahora a docs/ y queda fuera de Git.
+- Resumen de la respuesta: Se escribió `docs/APIS.md` con las reglas generales y los 12 servicios en el formato pedido. Para los archivos que todavía no existen (`backend/src/rutas.js` y el simulador) se indica que se crean en el paso 5. Se agregaron los nombres exactos de las variables de Firebase y Cloudinary del `.env.example`, el cupo del plan gratuito de OpenRouteService (unas 2.000 rutas al día y 40 por minuto) y que el backend solo lee `MAIL_PASS` al arrancar. `CLAUDE.md` se incluyó tal como lo dejó el equipo.
+- Qué se usó / modificó / descartó:
+  - Se usó: la estructura y el contenido del prompt.
+  - Se modificó: nada de `CLAUDE.md`.
+  - Se descartó: cambiar `.gitignore` en esta tarea; se hizo después en un commit aparte (4824141) para ignorar `docs/enunciado.pdf` y `CLAUDE.local.md`.
+- Archivos y commit: `docs/APIS.md`, `CLAUDE.md` — 66703e6
+- Verificación: se revisó que los nombres de las variables coincidan con `.env.example` y `backend/.env.example`, y que `backend/serviceAccountKey.json` esté en `.gitignore`.
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
