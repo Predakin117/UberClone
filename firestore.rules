@@ -30,5 +30,24 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+
+    // AI-assisted: see docs/AI_LOG.md #53
+    // Login lookup: one document per email or phone (id "email_..." or "phone_...")
+    // pointing to the account. Anyone can check one exact key before logging in,
+    // but nobody can list the collection, so the drivers' data is never exposed.
+    // A key can only be created once, so an email or phone can't be taken twice.
+    match /loginIndex/{key} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Email and phone of each account (Firebase Auth with email and password)
+    match /accounts/{uid} {
+      allow read, create: if request.auth != null && request.auth.uid == uid;
+      allow update, delete: if false;
+    }
   }
 }

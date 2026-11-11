@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12, #54
 import { createContext, useContext, useMemo, useState } from "react";
 import { saveDriverSection } from "../services/driverRepository";
 import { validateDocuments } from "../validation/documents";
@@ -10,18 +10,24 @@ export const RegistrationContext = createContext();
 
 const isEmpty = (fieldErrors) => Object.keys(fieldErrors).length === 0;
 
-export const RegistrationProvider = ({ children }) => {
+// AI-assisted: see docs/AI_LOG.md #54
+// account: { email, phone } of the logged-in account. Tab 1 shows them already
+// filled in and locked, so they can't differ from the ones used to log in.
+const ACCOUNT_FIELDS = ["email", "phone"];
+
+export const RegistrationProvider = ({ account, children }) => {
   const { login } = useContext(AuthContext); // Para simular el login al finalizar
+  const lockedFields = ACCOUNT_FIELDS.filter((field) => account?.[field]);
 
   const [formData, setFormData] = useState({
     // Pestaña 1: Datos personales
     profilePhoto: "",
     name: "",
     documentId: "",
-    phone: "",
+    phone: account?.phone ?? "",
     birthDate: "",
     gender: "",
-    email: "",
+    email: account?.email ?? "",
     language: "",
     // Pestaña 2: Vehículo
     category: "",
@@ -72,6 +78,7 @@ export const RegistrationProvider = ({ children }) => {
   }, [personalErrors, vehicleErrors, documentErrors, touched]);
 
   const handleChange = (field, value) => {
+    if (lockedFields.includes(field)) return;
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -148,6 +155,7 @@ export const RegistrationProvider = ({ children }) => {
         handleChange,
         touchField,
         touchFields,
+        lockedFields,
         isPersonalValid,
         isVehicleValid,
         isDocsValid,

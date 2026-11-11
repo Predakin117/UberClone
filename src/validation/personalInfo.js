@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #7, #9
+// AI-assisted: see docs/AI_LOG.md #7, #9, #54
 // Los errores son claves de traducción (src/i18n/strings.js); la pantalla los
 // muestra en el idioma elegido.
 import { getAge, parseISODate } from "./dates";
@@ -26,15 +26,34 @@ export const PERSONAL_FIELDS = [
 
 export const MAX_NAME_LENGTH = 50;
 export const MIN_DRIVER_AGE = 18;
+// AI-assisted: see docs/AI_LOG.md #54
+// Shared by every email field (login, sign-up, tab 1 and Mercado Pago)
+export const MAX_EMAIL_LENGTH = 100;
 
 // Letras (con tildes, ü y ñ) y espacios
 const NAME_REGEX = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/;
-const DOCUMENT_REGEX = /^\d{6,10}$/;
-const PHONE_REGEX = /^\d{10}$/;
+// No leading 0 (Colombian ID numbers don't start with 0)
+const DOCUMENT_REGEX = /^[1-9]\d{5,9}$/;
+// Colombian mobile (10 digits starting with 3) or the international number of
+// the account (+573001234567), which fills in this field after the sign-up
+const PHONE_REGEX = /^(3\d{9}|\+[1-9]\d{7,14})$/;
+// Same digit repeated, like 1111111: not a real number
+const REPEATED_DIGITS_REGEX = /^(\d)\1+$/;
 
-// Formato básico usuario@dominio.ext
-export const isValidEmail = (email) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+// user@domain.ext: letters, digits and . _ % + - before the @; a domain with
+// letters, digits and hyphens; an extension of 2 or more letters. No spaces,
+// no ".." and no dot at the start or the end of the user part.
+const EMAIL_REGEX =
+  /^[A-Za-z0-9_%+-]+(\.[A-Za-z0-9_%+-]+)*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/;
+
+export const isValidEmail = (email) => {
+  const value = email.trim();
+  return value.length <= MAX_EMAIL_LENGTH && EMAIL_REGEX.test(value);
+};
+
+// Name and last name: at least two words of 2 or more letters
+const hasFullName = (name) =>
+  name.split(/\s+/).filter((word) => word.length >= 2).length >= 2;
 
 // today se puede inyectar para que las pruebas no dependan de la fecha real
 export const validatePersonalInfo = (data, today = new Date()) => {
@@ -51,6 +70,8 @@ export const validatePersonalInfo = (data, today = new Date()) => {
     errors.name = "errors.nameTooLong";
   } else if (!NAME_REGEX.test(name)) {
     errors.name = "errors.nameInvalid";
+  } else if (!hasFullName(name)) {
+    errors.name = "errors.nameIncomplete";
   }
 
   const documentId = data.documentId.trim();
@@ -58,6 +79,8 @@ export const validatePersonalInfo = (data, today = new Date()) => {
     errors.documentId = "errors.documentIdRequired";
   } else if (!DOCUMENT_REGEX.test(documentId)) {
     errors.documentId = "errors.documentIdInvalid";
+  } else if (REPEATED_DIGITS_REGEX.test(documentId)) {
+    errors.documentId = "errors.documentIdRepeated";
   }
 
   const phone = data.phone.trim();

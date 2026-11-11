@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #50, #10
+// AI-assisted: see docs/AI_LOG.md #50, #10, #54
 import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
 import { ScrollView, StyleSheet } from "react-native";
@@ -9,8 +9,9 @@ import SelectField from "../../components/SelectField";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { RegistrationContext } from "../../contexts/RegistrationContext";
 import {
-  CATEGORY_OPTIONS,
-  COLOR_OPTIONS,
+  CATEGORY_VALUES,
+  COLOR_VALUES,
+  MAX_VEHICLE_NAME_LENGTH,
   normalizePlate,
   VEHICLE_FIELDS,
 } from "../../validation/vehicle";
@@ -30,13 +31,27 @@ export default function VehicleScreen() {
     saveError,
   } = useContext(RegistrationContext);
 
-  // Las listas y la foto no tienen onBlur: se marcan como visitadas al elegir
+  // Option labels in the chosen language
+  const categoryOptions = CATEGORY_VALUES.map((value) => ({
+    value,
+    label: t(`category.${value}`),
+  }));
+  const colorOptions = COLOR_VALUES.map((value) => ({
+    value,
+    label: t(`color.${value}`),
+  }));
+
+  // Lists and the photo have no onBlur: they're marked as visited when chosen
   const handleSelect = (field, value) => {
     handleChange(field, value);
     touchField(field);
   };
 
-  // Si la pestaña es válida se guarda en Firestore y solo entonces se avanza
+  // Only digits for year and capacity, even if a symbol gets pasted
+  const handleDigits = (field) => (text) =>
+    handleChange(field, text.replace(/\D/g, ""));
+
+  // If the tab is valid it's saved in Firestore and only then it moves on
   const handleNext = async () => {
     touchFields(VEHICLE_FIELDS);
     if (!isVehicleValid) return;
@@ -50,84 +65,91 @@ export default function VehicleScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <SelectField
-        label="Categoría"
+        label={t("vehicle.category")}
         value={formData.category}
-        options={CATEGORY_OPTIONS}
+        options={categoryOptions}
         onChange={(value) => handleSelect("category", value)}
-        error={errors.category}
+        error={t(errors.category)}
       />
 
       <FormField
-        label="Placa"
+        label={t("vehicle.plate")}
         value={formData.plate}
         onChangeText={(text) => handleChange("plate", normalizePlate(text))}
         onBlur={() => touchField("plate")}
-        error={errors.plate}
-        placeholder="Ej. ABC123"
+        error={t(errors.plate)}
+        placeholder={t("vehicle.platePlaceholder")}
         autoCapitalize="characters"
         autoCorrect={false}
         maxLength={6}
       />
 
       <FormField
-        label="Marca"
+        label={t("vehicle.make")}
         value={formData.vehicleMake}
         onChangeText={(text) => handleChange("vehicleMake", text)}
         onBlur={() => touchField("vehicleMake")}
-        error={errors.vehicleMake}
-        placeholder="Ej. Chevrolet"
-        maxLength={30}
+        error={t(errors.vehicleMake)}
+        placeholder={t("vehicle.makePlaceholder")}
+        autoCapitalize="words"
+        maxLength={MAX_VEHICLE_NAME_LENGTH}
+        showLimit
       />
 
       <FormField
-        label="Modelo"
+        label={t("vehicle.model")}
         value={formData.vehicleModel}
         onChangeText={(text) => handleChange("vehicleModel", text)}
         onBlur={() => touchField("vehicleModel")}
-        error={errors.vehicleModel}
-        placeholder="Ej. Spark GT"
-        maxLength={30}
+        error={t(errors.vehicleModel)}
+        placeholder={t("vehicle.modelPlaceholder")}
+        maxLength={MAX_VEHICLE_NAME_LENGTH}
+        showLimit
       />
 
       <FormField
-        label="Año"
+        label={t("vehicle.year")}
         value={formData.year}
-        onChangeText={(text) => handleChange("year", text)}
+        onChangeText={handleDigits("year")}
         onBlur={() => touchField("year")}
-        error={errors.year}
-        placeholder="Ej. 2020"
+        error={t(errors.year)}
+        placeholder={t("vehicle.yearPlaceholder")}
         keyboardType="number-pad"
         maxLength={4}
       />
 
       <SelectField
-        label="Color"
+        label={t("vehicle.color")}
         value={formData.color}
-        options={COLOR_OPTIONS}
+        options={colorOptions}
         onChange={(value) => handleSelect("color", value)}
-        error={errors.color}
+        error={t(errors.color)}
       />
 
       <FormField
-        label="Capacidad de pasajeros"
+        label={t("vehicle.capacity")}
         value={formData.capacity}
-        onChangeText={(text) => handleChange("capacity", text)}
+        onChangeText={handleDigits("capacity")}
         onBlur={() => touchField("capacity")}
-        error={errors.capacity}
-        placeholder={formData.category === "xl" ? "Mínimo 6" : "Ej. 4"}
+        error={t(errors.capacity)}
+        placeholder={
+          formData.category === "xl"
+            ? t("vehicle.capacityPlaceholderXl")
+            : t("vehicle.capacityPlaceholder")
+        }
         keyboardType="number-pad"
-        maxLength={2}
+        maxLength={1}
       />
 
       <PhotoField
-        label="Foto del vehículo (debe verse la placa)"
+        label={t("vehicle.photo")}
         uri={formData.vehiclePhoto}
         onChange={(uri) => handleSelect("vehiclePhoto", uri)}
-        error={errors.vehiclePhoto}
+        error={t(errors.vehiclePhoto)}
       />
 
       <NextButton
-        label="Siguiente"
+        label={t("common.next")}
         onPress={handleNext}
         isSaving={isSaving}
         error={saveError?.section === "vehicle" && t(saveError.code)}

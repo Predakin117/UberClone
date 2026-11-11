@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useEffect, useState } from "react";
+import { signOutAccount } from "../services/accountService";
 
 export const AuthContext = createContext();
 
@@ -44,6 +45,9 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await AsyncStorage.removeItem("@driver_session");
+      // AI-assisted: see docs/AI_LOG.md #53
+      // Also closes the Firebase session, so the next login starts clean
+      await signOutAccount();
       setDriverData(null);
       setIsAuthenticated(false);
     } catch (error) {

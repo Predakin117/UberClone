@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #2, #9, #13
+// AI-assisted: see docs/AI_LOG.md #2, #9, #13, #54
 // src/navigation/AuthTabs.js
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -37,13 +37,14 @@ const RegistrationTabs = () => {
   );
 };
 
+// route.params.account ({ email, phone }) comes from the sign-up or the login.
 // La confirmación del correo va encima de las pestañas, dentro del mismo
-// RegistrationProvider, para que use los datos del formulario
-export const AuthTabs = () => {
+// RegistrationProvider, para que use los datos del formulario.
+export const AuthTabs = ({ route }) => {
   const { t } = useLanguage();
 
   return (
-    <RegistrationProvider>
+    <RegistrationProvider account={route?.params?.account}>
       <Stack.Navigator>
         <Stack.Screen
           name="RegistrationTabs"

@@ -1,6 +1,8 @@
-// AI-assisted: see docs/AI_LOG.md #10, #13
-// Botón principal de cada pestaña del registro: muestra "Guardando…" (o busyLabel)
-// mientras trabaja y el error debajo si algo falla (nunca en un Alert).
+// AI-assisted: see docs/AI_LOG.md #10, #13, #54
+// Botón principal de cada pestaña del registro: muestra "Guardando…" mientras se
+// guarda en Firestore y el error debajo si algo falla (nunca en un Alert).
+// The login screens and the email confirmation use it too, with their own
+// loadingLabel and style.
 import {
   ActivityIndicator,
   StyleSheet,
@@ -16,14 +18,15 @@ export default function NextButton({
   onPress,
   isSaving = false,
   disabled = false,
-  busyLabel,
   error,
+  loadingLabel,
+  style,
 }) {
   const { t } = useLanguage();
   const isDisabled = disabled || isSaving;
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, style]}>
       <TouchableOpacity
         style={[styles.button, isDisabled && styles.buttonDisabled]}
         onPress={onPress}
@@ -35,7 +38,7 @@ export default function NextButton({
           <View style={styles.row}>
             <ActivityIndicator color="#fff" />
             <Text style={styles.buttonText}>
-              {busyLabel ?? t("save.saving")}
+              {loadingLabel ?? t("save.saving")}
             </Text>
           </View>
         ) : (

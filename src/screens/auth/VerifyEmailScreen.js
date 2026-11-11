@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #13
+// AI-assisted: see docs/AI_LOG.md #13, #14
 // Último paso del registro: confirma con un código que el correo de la pestaña 1 es
 // del conductor. Solo con el código correcto se guarda el registro como Pendiente.
 import { useNavigation } from "@react-navigation/native";
@@ -13,7 +13,7 @@ import { useEmailVerification } from "../../hooks/useEmailVerification";
 export default function VerifyEmailScreen() {
   const navigation = useNavigation();
   const { t } = useLanguage();
-  const { formData, submitRegistration, isSaving, saveError } =
+  const { formData, lockedFields, submitRegistration, isSaving, saveError } =
     useContext(RegistrationContext);
   const [code, setCode] = useState("");
 
@@ -43,6 +43,9 @@ export default function VerifyEmailScreen() {
     await submitRegistration();
   };
 
+  // Si el correo viene de la cuenta del login está bloqueado en la pestaña 1:
+  // no se ofrece cambiarlo
+  const canChangeEmail = !lockedFields.includes("email");
   const changeEmail = () =>
     navigation.navigate("RegistrationTabs", { screen: "PersonalInfo" });
 
@@ -68,7 +71,7 @@ export default function VerifyEmailScreen() {
           label={t("verify.sendCode")}
           onPress={sendCode}
           isSaving={isSending}
-          busyLabel={t("verify.sending")}
+          loadingLabel={t("verify.sending")}
           error={errorText}
         />
       ) : (
@@ -86,7 +89,7 @@ export default function VerifyEmailScreen() {
             label={t("verify.confirm")}
             onPress={handleConfirm}
             isSaving={isVerifying || isSaving}
-            busyLabel={isVerifying ? t("verify.verifying") : undefined}
+            loadingLabel={isVerifying ? t("verify.verifying") : undefined}
             error={errorText || (saveError && t(saveError.code))}
           />
           {!isVerified && (
@@ -105,9 +108,11 @@ export default function VerifyEmailScreen() {
         </>
       )}
 
-      <TouchableOpacity onPress={changeEmail} accessibilityRole="button">
-        <Text style={styles.link}>{t("verify.changeEmail")}</Text>
-      </TouchableOpacity>
+      {canChangeEmail && (
+        <TouchableOpacity onPress={changeEmail} accessibilityRole="button">
+          <Text style={styles.link}>{t("verify.changeEmail")}</Text>
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }

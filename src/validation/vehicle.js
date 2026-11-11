@@ -1,19 +1,18 @@
-// AI-assisted: see docs/AI_LOG.md #50
-// Las mismas categorías que elige el pasajero (valores en inglés, como en la colección trips)
-export const CATEGORY_OPTIONS = [
-  { value: "economy", label: "Económico" },
-  { value: "xl", label: "XL" },
-  { value: "premium", label: "Premium" },
-];
+// AI-assisted: see docs/AI_LOG.md #50, #54
+// Tab 2: vehicle. Errors are translation keys (src/i18n/strings.js), same as in
+// tabs 1 and 3, so the screen shows them in the chosen language.
 
-export const COLOR_OPTIONS = [
-  { value: "white", label: "Blanco" },
-  { value: "black", label: "Negro" },
-  { value: "gray", label: "Gris" },
-  { value: "silver", label: "Plata" },
-  { value: "red", label: "Rojo" },
-  { value: "blue", label: "Azul" },
-  { value: "other", label: "Otro" },
+// Same categories the passenger picks (values in English, as in the trips collection).
+// The labels are in strings.js as "category.<value>" and "color.<value>".
+export const CATEGORY_VALUES = ["economy", "xl", "premium"];
+export const COLOR_VALUES = [
+  "white",
+  "black",
+  "gray",
+  "silver",
+  "red",
+  "blue",
+  "other",
 ];
 
 export const VEHICLE_FIELDS = [
@@ -27,69 +26,104 @@ export const VEHICLE_FIELDS = [
   "vehiclePhoto",
 ];
 
-const MAX_NAME_LENGTH = 30;
-const XL_MIN_CAPACITY = 6;
+export const MAX_VEHICLE_NAME_LENGTH = 30;
+// Like Uber: a car with at least 4 seats for passengers (6 for XL)
+export const MIN_CAPACITY = 4;
+export const XL_MIN_CAPACITY = 6;
+export const MAX_CAPACITY = 8;
+// Older vehicles are not accepted
+export const MAX_VEHICLE_AGE = 20;
 
-// Placa de carro en Colombia: tres letras y tres números (ABC123)
+// Colombian car plate: three letters and three numbers (ABC123)
 const PLATE_REGEX = /^[A-Z]{3}\d{3}$/;
+// Make: letters, spaces and hyphens (Mercedes-Benz). At least 2 letters.
+const MAKE_REGEX = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+([ -][A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)*$/;
+// Model: also numbers and dots (Spark GT, CX-5, Model 3, 1.6)
+const MODEL_REGEX =
+  /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+([ .-][A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)*$/;
 
-// Mayúsculas antes de validar; los guiones no se quitan, así que ABC-123 es inválida
+// Uppercase before validating; hyphens are kept, so ABC-123 is invalid
 export const normalizePlate = (text) => text.trim().toUpperCase();
 
-const isOption = (options, value) =>
-  options.some((option) => option.value === value);
+// Collapses repeated spaces: "Spark   GT" → "Spark GT"
+const cleanText = (text) => text.trim().replace(/\s+/g, " ");
 
-const validateName = (value, label) => {
-  if (value.trim() === "") return `La ${label} es obligatoria`;
-  if (value.trim().length > MAX_NAME_LENGTH) {
-    return `La ${label} admite máximo ${MAX_NAME_LENGTH} caracteres`;
+export const minVehicleYear = (today = new Date()) =>
+  today.getFullYear() - MAX_VEHICLE_AGE;
+
+const validateMake = (value) => {
+  const make = cleanText(value);
+  if (make === "") return "errors.vehicleMakeRequired";
+  if (make.length > MAX_VEHICLE_NAME_LENGTH) return "errors.vehicleMakeTooLong";
+  if (make.length < 2 || !MAKE_REGEX.test(make)) {
+    return "errors.vehicleMakeInvalid";
   }
   return null;
 };
 
-export const validateVehicle = (data) => {
-  const errors = {};
-  const currentYear = new Date().getFullYear();
+const validateModel = (value) => {
+  const model = cleanText(value);
+  if (model === "") return "errors.vehicleModelRequired";
+  if (model.length > MAX_VEHICLE_NAME_LENGTH) {
+    return "errors.vehicleModelTooLong";
+  }
+  if (!MODEL_REGEX.test(model)) return "errors.vehicleModelInvalid";
+  return null;
+};
 
-  if (!isOption(CATEGORY_OPTIONS, data.category)) {
-    errors.category = "Selecciona la categoría";
+// today can be injected so the tests don't depend on the real date
+export const validateVehicle = (data, today = new Date()) => {
+  const errors = {};
+  const currentYear = today.getFullYear();
+
+  if (!CATEGORY_VALUES.includes(data.category)) {
+    errors.category = "errors.categoryRequired";
   }
 
   const plate = normalizePlate(data.plate);
   if (plate === "") {
-    errors.plate = "La placa es obligatoria";
+    errors.plate = "errors.plateRequired";
   } else if (!PLATE_REGEX.test(plate)) {
-    errors.plate = "La placa debe tener el formato ABC123";
+    errors.plate = "errors.plateInvalid";
   }
 
-  const makeError = validateName(data.vehicleMake, "marca");
+  const makeError = validateMake(data.vehicleMake);
   if (makeError) errors.vehicleMake = makeError;
 
-  const modelError = validateName(data.vehicleModel, "línea o modelo");
+  const modelError = validateModel(data.vehicleModel);
   if (modelError) errors.vehicleModel = modelError;
 
-  if (data.year.trim() === "") {
-    errors.year = "El año es obligatorio";
-  } else if (!/^\d{4}$/.test(data.year)) {
-    errors.year = "El año debe tener 4 dígitos";
-  } else if (Number(data.year) > currentYear) {
-    errors.year = `El año no puede ser mayor a ${currentYear}`;
+  const year = data.year.trim();
+  if (year === "") {
+    errors.year = "errors.yearRequired";
+  } else if (!/^\d{4}$/.test(year)) {
+    errors.year = "errors.yearInvalid";
+  } else if (Number(year) > currentYear) {
+    errors.year = "errors.yearFuture";
+  } else if (Number(year) < minVehicleYear(today)) {
+    errors.year = "errors.yearTooOld";
   }
 
-  if (!isOption(COLOR_OPTIONS, data.color)) {
-    errors.color = "Selecciona el color";
+  if (!COLOR_VALUES.includes(data.color)) {
+    errors.color = "errors.colorRequired";
   }
 
-  if (data.capacity.trim() === "") {
-    errors.capacity = "La capacidad es obligatoria";
-  } else if (!/^\d+$/.test(data.capacity) || Number(data.capacity) < 1) {
-    errors.capacity = "La capacidad debe ser un número mayor a 0";
-  } else if (data.category === "xl" && Number(data.capacity) < XL_MIN_CAPACITY) {
-    errors.capacity = `La categoría XL exige mínimo ${XL_MIN_CAPACITY} pasajeros`;
+  const capacity = data.capacity.trim();
+  const minCapacity =
+    data.category === "xl" ? XL_MIN_CAPACITY : MIN_CAPACITY;
+  if (capacity === "") {
+    errors.capacity = "errors.capacityRequired";
+  } else if (!/^\d+$/.test(capacity)) {
+    errors.capacity = "errors.capacityInvalid";
+  } else if (Number(capacity) > MAX_CAPACITY) {
+    errors.capacity = "errors.capacityTooHigh";
+  } else if (Number(capacity) < minCapacity) {
+    errors.capacity =
+      data.category === "xl" ? "errors.capacityXl" : "errors.capacityTooLow";
   }
 
   if (data.vehiclePhoto === "") {
-    errors.vehiclePhoto = "La foto del vehículo es obligatoria";
+    errors.vehiclePhoto = "errors.vehiclePhotoRequired";
   }
 
   return errors;
