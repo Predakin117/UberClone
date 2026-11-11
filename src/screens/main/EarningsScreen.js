@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #15
 import { useMemo, useState } from "react";
 import {
     ScrollView,
@@ -21,7 +22,7 @@ export default function EarningsScreen() {
     return calculateFare({
       distanceKm: parseFloat(distanceKm) || 0,
       durationMin: parseFloat(durationMin) || 0,
-      category: isPremium ? "premium" : "standard",
+      category: isPremium ? "premium" : "economy",
       tip: parseFloat(tip) || 0,
     });
   }, [distanceKm, durationMin, isPremium, tip]);
