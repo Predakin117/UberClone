@@ -1,7 +1,9 @@
-// AI-assisted: see docs/AI_LOG.md #12, #15
+// AI-assisted: see docs/AI_LOG.md #12, #15, #18
 // Tarifa, comisión y ganancia del conductor (sección 5 del enunciado). Todos los
 // valores se configuran aquí y se manejan en pesos colombianos enteros.
 // Son valores didácticos, no tarifas reales.
+// firestore.rules repite estos valores para revisar los montos al completar un
+// viaje: si cambian aquí, hay que cambiarlos allá.
 
 export const BASE_FARE = 3500;
 export const PRICE_PER_KM = 1200;
