@@ -232,6 +232,123 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Verificación: Jest pasa 126 pruebas, `npx tsc --noEmit` no da errores y el bundle de Android se genera. [Completar con la prueba en el celular: con el estado `pending` el interruptor está bloqueado y, al cambiarlo a `approved` en la consola, se habilita sin reiniciar la app]
 - Aprendizaje: [Completar]
 
+### Entrada #17
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Traducir el interruptor "CONECTADO / DESCONECTADO" de la pantalla de inicio.
+- Prompt:
+  > 1. Entrada #54 de la bitácora (fila 96) · 20 min
+  > El código la cita en 4 archivos y no existe. Está en tu rango de números.
+  >
+  > 2. Hashes de la bitácora (fila 97) · 15 min
+  > Cambiar “el commit siguiente” por el hash real en las entradas #50, #51 y #52, y quitar PrimaryButton.js de la #53.
+  >
+  > 3. “CONECTADO / DESCONECTADO” traducido (fila 22) · 10 min
+  > Dos claves en strings.js. Opcional, pero se nota si la profe cambia a inglés.
+  >
+  > Después, la cadena principal (en este orden)
+  >
+  > 4. Colección trips y sus reglas (filas 82 y 74) · 1 hora · lo más importante ahora
+  > Sin esto no hay dónde guardar viajes, y de ahí cuelgan historial, ganancias y pagos. Pónganse de acuerdo primero en los campos (tabla de la sección 6 del PDF) pa’ poder trabajar en paralelo.
+  >
+  > 5. Solicitud real desde Firestore (filas 48, 86, 39, 72 y 50) · 2 horas
+  > Script en el backend que crea la solicitud, la app la escucha con onSnapshot, los estados se guardan en el viaje, y la tarjeta muestra distancia, duración, categoría y ganancia neta calculadas con calculateFare (no los 75.000 fijos).
+  >
+  > 6. Ubicación a Firestore (fila 37) · 30 min
+  > Ya tienen el patrón de useDriverStatus; es guardar la ubicación en drivers/{uid} cada pocos segundos dentro de useDriverLocation.
+
+  > Correcciones a lo que te pasé. Soy Tamiro José Solano Muriel.
+  >
+  > 1. NO hagas los pasos 1 y 2: son entradas de Ximena (#50 a #54) y las
+  >    arregla ella en su rama. No toques esas entradas de docs/AI_LOG.md.
+  > 2. Haz el paso 3 y luego los pasos 4, 5 y 6, en ese orden, cada uno en su
+  >    propio commit, en la rama tamiro/viajes-firestore.
+  > 3. Paso 4: la colección trips es de primer nivel (no subcolección), con los
+  >    campos exactos de la tabla de la sección 6 de docs/enunciado.pdf. Agrega
+  >    sus reglas a firestore.rules y avísame para publicarlas en la consola.
+  > 4. Paso 5: el script del backend usa firebase-admin con
+  >    backend/serviceAccountKey.json, que yo descargo; no me pidas su contenido.
+  > 5. Antes de cada commit, muéstrame el diff para revisarlo.
+  > 6. Mis entradas de bitácora siguen desde la #17. Este mensaje y el anterior
+  >    van copiados tal cual en la entrada que corresponda.
+- Resumen de la respuesta: Se agregaron las claves `home.online` y `home.offline` en español e inglés, y `HomeScreen` las usa con `t()` en vez del texto fijo. Antes de la corrección, Claude ya había hecho los pasos 1 y 2 en una rama local (`tamiro/viajes`); con la corrección se rehízo solo el paso 3 en `tamiro/viajes-firestore` y ese trabajo no se subió.
+- Qué se usó / modificó / descartó:
+  - Se usó: el cambio de traducción tal cual.
+  - Se descartó: los pasos 1 y 2 (las entradas #50 a #54 son de Ximena) y la rama local `tamiro/viajes`.
+- Archivos y commit: `src/i18n/strings.js`, `src/screens/trip/HomeScreen.js` — 41568ea
+- Verificación: las pruebas de `src/i18n` pasan, incluida la que exige las mismas claves en los dos idiomas. [Completar con la prueba en el celular cambiando el idioma a inglés]
+- Aprendizaje: [Completar]
+
+### Entrada #18
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Crear la colección `trips` con los campos y estados del enunciado, y sus reglas de Firestore.
+- Prompt:
+  > Sí, haz el commit del paso 3. Recuerda que la entrada #17 debe existir
+  > antes de cualquier push.
+  >
+  > Para el paso 4, ten en cuenta en firestore.rules:
+  > - Un conductor puede leer los viajes donde driverId es su uid, y también
+  >   los que están en status "requested" (todavía sin conductor), o nunca
+  >   verá las solicitudes nuevas. Las consultas de la app deben filtrar igual
+  >   que las reglas.
+  > - Aceptar: solo de "requested" a "accepted", poniendo driverId igual a su
+  >   propio uid, con runTransaction desde la app.
+  > - El conductor solo avanza status en este orden: accepted → driver_arriving
+  >   → in_progress → completed. Puede pasar a "cancelled" antes de
+  >   in_progress, y a "rejected" si rechaza o se vencen los 15 segundos.
+  > - paymentStatus, paymentId y el status "paid" solo los escribe el backend
+  >   con firebase-admin; la app no puede.
+  > - Nadie borra viajes.
+  > Agrega pruebas para las funciones puras que valides los cambios de estado
+  > y muéstrame el diff antes del commit. Avísame cuando haya que publicar las
+  > reglas en la consola.
+
+  > Cambio de plan: la profesora nos va a dar una API del pasajero para simular
+  > los viajes. Todavía no sabemos cómo funciona.
+  >
+  > - En el paso 4, respeta exactamente los nombres de campos y estados del
+  >   enunciado (sección 6 y sección 3): son el contrato con esa API.
+  > - En el paso 5, separa la fuente de las solicitudes en un solo módulo
+  >   (por ejemplo src/services/tripRequestsSource.js) con una función para
+  >   suscribirse a solicitudes nuevas. Por ahora la implementas con onSnapshot
+  >   sobre trips en "requested". Así, cuando llegue la API, solo cambiamos ese
+  >   archivo y las pantallas quedan igual.
+  > - No hagas un script elaborado de solicitudes: solo un simulador mínimo que
+  >   cree un viaje "requested" con los campos del enunciado, para probar.
+
+  > Antes del commit del paso 4, aplica los dos cambios de firestore.rules que
+  > te pedí: exigir conductor aprobado (get() de drivers/{uid}) para aceptar o
+  > rechazar, y verificar la coherencia de los montos al completar. Ajusta
+  > validateDriverUpdate y sus pruebas, muéstrame el diff y luego haz el commit.
+  >
+  > El plan del paso 5 me parece bien, con estos ajustes:
+  > 1. La suscripción a solicitudes nuevas va dentro de useTripRequests (hook
+  >    obligatorio del enunciado), activa solo mientras el conductor está
+  >    conectado y aprobado, con limpieza en el useEffect.
+  > 2. El status del viaje en Firestore controla la pantalla (sección 3): escucha
+  >    con onSnapshot el viaje activo del conductor y navega según su status.
+  >    Si la app se reabre en medio de un viaje, debe volver a esa pantalla.
+  > 3. Si hay varias solicitudes, muestra la más antigua por createdAt. Si
+  >    Firestore pide un índice compuesto, avísame con el link.
+  > 4. En IncomingRequestScreen, usa useCallback para aceptar y rechazar.
+  > 5. El simulador puede elegir entre unas pocas rutas de ejemplo de Medellín
+  >    con distancia y duración fijas, y recibir la categoría como argumento.
+  >
+  > Cada paso con su commit y su entrada de bitácora (desde la #17).
+- Resumen de la respuesta: `trips` es una colección de primer nivel con los 19 campos de la sección 6 y los estados de la sección 3 (incluido `rejected`, que la sección 3 menciona al explicar `accepted`). En `firestore.rules`, el conductor lee sus viajes y las solicitudes en `requested`; solo un conductor aprobado puede aceptar o rechazar una solicitud sin conductor, y queda a su nombre; después avanza en orden y puede cancelar antes de `in_progress`. Al completar, los montos deben coincidir con `calculateFare`. Nadie crea ni borra viajes desde la app, y el pago queda para el backend. `src/services/trips.js` repite esas reglas como funciones puras.
+- Qué se usó / modificó / descartó:
+  - Se usó: los nombres exactos de la sección 6 y la sección 3 como contrato con la API del pasajero.
+  - Se modificó: las reglas repiten los valores de `pricing.js` para recalcular la tarifa, y `pricing.js` tiene un comentario que avisa que hay que cambiarlos en los dos lugares.
+  - Se descartó: pasar una solicitud rechazada al siguiente conductor; queda `rejected` para todos, que basta para la demostración con un conductor.
+- Archivos y commit: `firestore.rules`, `src/services/trips.js`, `src/services/trips.test.js`, `src/config/pricing.js` — abe1511
+- Verificación: Jest pasa 139 pruebas, con las nuevas de `trips.test.js` (orden de estados, conductor no aprobado, solicitud ya tomada, campos del pago y montos alterados), y `npx tsc --noEmit` no da errores. La cuenta de las reglas da el ejemplo del enunciado con aritmética de doble precisión (19.200, 26.900 y 34.600). [Completar: la consola de Firebase acepta las reglas al publicarlas]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
