@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #54
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #54
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -205,6 +205,15 @@ export const strings = {
     "verify.error.sin_conexion":
       "No se pudo conectar con el servidor. Revisa que esté encendido y en la misma red Wi-Fi",
     "verify.error.generico": "Ocurrió un error. Inténtalo de nuevo",
+
+    // Inicio: por qué el conductor todavía no puede ponerse Disponible
+    "home.checkingStatus": "Verificando el estado de tu cuenta…",
+    "home.pendingApproval":
+      "Tu cuenta está pendiente de aprobación. Podrás conectarte cuando sea aprobada.",
+    "home.rejected":
+      "Tu registro fue rechazado. Comunícate con soporte para revisarlo.",
+    "home.statusError":
+      "No se pudo verificar el estado de tu cuenta. Revisa tu conexión.",
 
     // Guardado en Firestore
     "save.saving": "Guardando…",
@@ -462,6 +471,14 @@ export const strings = {
     "verify.error.sin_conexion":
       "Could not reach the server. Check that it is running and on the same Wi-Fi network",
     "verify.error.generico": "Something went wrong. Please try again",
+
+    "home.checkingStatus": "Checking your account status…",
+    "home.pendingApproval":
+      "Your account is pending approval. You can go online once it is approved.",
+    "home.rejected":
+      "Your registration was rejected. Contact support to review it.",
+    "home.statusError":
+      "Your account status could not be checked. Check your connection.",
 
     "save.saving": "Saving…",
     "save.notConfigured":

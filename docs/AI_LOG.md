@@ -123,6 +123,115 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - [Pendiente: la prueba en el celular de los errores al tocar Siguiente con todo vacío, la cámara y la galería, el calendario que no deja elegir menores y el idioma guardado al cerrar y abrir la app]
 - Aprendizaje: [Completar]
 
+### Entrada #10
+
+- Fecha: 2026-11-09
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code
+- Objetivo: Guardar las pestañas 1 y 2 del registro en Firestore y subir las fotos a Cloudinary.
+- Prompt: [Completar: prompts de la sesión, copiados tal como se escribieron]
+- Resumen de la respuesta: Se conectó la app a Firebase con el SDK web, con sesión anónima guardada en AsyncStorage. Cada pestaña se guarda en el documento `drivers/{uid}` al tocar Siguiente, las fotos se suben a Cloudinary con un upload preset sin firma y "Enviar registro" deja el estado en `pending`. Las reglas de `firestore.rules` solo dejan a cada conductor leer y escribir su documento, sin poder aprobarse solo.
+- Qué se usó / modificó / descartó: [Completar]
+- Archivos y commit: `src/config/firebase.js`, `src/config/env.js`, `src/services/driverRepository.js`, `src/services/driverDocs.js`, `src/services/driverDocs.test.js`, `src/services/cloudinary.js`, `src/components/NextButton.js`, `src/contexts/RegistrationContext.js`, `src/screens/auth/*.js`, `src/i18n/strings.js`, `firestore.rules`, `.env.example`, `package.json`, `package-lock.json` — f03905c y ac07030 (Pull Request #6)
+- Verificación: [Completar]
+- Aprendizaje: [Completar]
+
+### Entrada #11
+
+- Fecha: 2026-11-10
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude (Cowork)
+- Objetivo: Crear el backend que envía un código de 6 dígitos al correo del conductor y el servicio de la app que lo pide y lo verifica.
+- Prompt: [Completar: prompts de la sesión de Cowork, copiados tal como se escribieron]
+- Resumen de la respuesta: Se creó `backend/` con Node puro (http y crypto) y Nodemailer con Gmail. Las rutas `POST /api/v1/auth/enviar-codigo` y `POST /api/v1/auth/verificar-codigo` guardan el código cifrado con sal, vencen a los 10 minutos, permiten 5 intentos y 60 segundos entre envíos, y nunca devuelven el código en la respuesta. En la app, `src/services/emailVerification.js` llama al backend sin lanzar errores.
+- Qué se usó / modificó / descartó:
+  - Se usó: el backend y el servicio tal como se generaron.
+  - Se modificó: el trabajo se movió a la rama `tamiro/codigo-verificacion` desde `main`, porque estaba sin commit encima de `tamiro/firestore`, y las marcas de IA pasaron de #52 a #11 porque la #52 ya era la pantalla de login de Ximena.
+  - Se descartó: Express; el backend usa solo módulos de Node.
+- Archivos y commit: `backend/*`, `src/services/emailVerification.js`, `src/services/emailVerification.test.js`, `package.json`, `eslint.config.js` — 00cbadf (Pull Request #8); `backend/package-lock.json` — a9649e9
+- Verificación: `node --test` en `backend` pasa 13 pruebas y Jest pasa las 4 del servicio. El envío real se probó junto con la entrada #13.
+- Aprendizaje: [Completar]
+
+### Entrada #12
+
+- Fecha: 2026-11-10
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Completar la pestaña 3 del registro (Documentos y pagos) con los campos y las validaciones del enunciado.
+- Prompt: "hagamos la pestaña 3"
+- Resumen de la respuesta: Se agregaron la licencia (número, foto y vencimiento), el SOAT (foto y vencimiento), la revisión técnico-mecánica (solo si el vehículo tiene 5 años o más), el correo de Mercado Pago y la casilla de términos con la comisión del 20 % visible. Los vencimientos deben ser posteriores a hoy, los errores salen debajo de cada campo en español e inglés, y el guardado sube hasta tres fotos a la vez a Cloudinary.
+- Qué se usó / modificó / descartó:
+  - Se usó: los componentes de la base (`PhotoField`, `DateField`, `NextButton`) y un `CheckboxField` nuevo.
+  - Se modificó: `driverRepository` sube varias fotos por pestaña, y `COMMISSION_RATE` pasó a ser una constante exportada de `pricing.js` para mostrarla en los términos.
+  - Se descartó: hacer la pestaña 3 como un formulario aparte; usa el mismo `RegistrationContext` que las pestañas 1 y 2.
+- Archivos y commit: `src/screens/auth/DocumentsScreen.js`, `src/components/CheckboxField.js`, `src/components/DateField.js`, `src/validation/documents.js`, `src/validation/documents.test.js`, `src/validation/dates.js`, `src/validation/dates.test.js`, `src/services/driverDocs.js`, `src/services/driverDocs.test.js`, `src/services/driverRepository.js`, `src/contexts/RegistrationContext.js`, `src/i18n/strings.js`, `src/i18n/strings.test.js`, `src/config/pricing.js` — defd95f (Pull Request #7)
+- Verificación: Jest pasa 73 pruebas, `npx tsc --noEmit` no da errores y `npx expo export --platform android` genera el bundle. En el celular se probaron los vencimientos desde mañana, la revisión técnico-mecánica según el año, la casilla de términos y el envío con estado `pending` en Firestore. Las fuentes no coinciden en si la primera revisión es al quinto o al sexto año (Sentencia C-745/12 y un documento del RUNT de 2023); se usó 5 en la constante `TECH_REVIEW_FIRST_YEAR`, pendiente de confirmar con la profesora.
+- Aprendizaje: [Completar]
+
+### Entrada #13
+
+- Fecha: 2026-11-10
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Confirmar con un código enviado al correo que el correo del conductor es suyo antes de enviar el registro.
+- Prompt: "puedes crear una pestaña que sea de confirmaciond e codigo de cuenta que se le manda al correo de la persona"
+- Resumen de la respuesta: Se creó la pantalla "Confirmar correo", que se abre al tocar "Enviar registro" en la pestaña 3. El conductor pide el código, lo escribe y, solo si es correcto, el registro se guarda como `pending`. Tiene reenvío con cuenta regresiva de 60 segundos, errores traducidos según el `codigoError` del backend y reintento del guardado sin pedir otro código.
+- Qué se usó / modificó / descartó:
+  - Se usó: el backend y el servicio de la entrada #11, y un hook nuevo `useEmailVerification` con limpieza del temporizador en `useEffect`.
+  - Se modificó: `AuthTabs` pasó a ser una pila con las pestañas y la pantalla de confirmación dentro del mismo `RegistrationProvider`.
+  - Se descartó: hacerla una cuarta pestaña, porque se podría abrir antes de llenar las otras tres y pedir el código sin tener todo listo.
+- Archivos y commit: `src/screens/auth/VerifyEmailScreen.js`, `src/hooks/useEmailVerification.js`, `src/services/verificationErrors.js`, `src/services/verificationErrors.test.js`, `src/navigation/AuthTabs.js`, `src/screens/auth/DocumentsScreen.js`, `src/components/NextButton.js`, `src/i18n/strings.js`, `src/i18n/strings.test.js` — 8c595ba (Pull Request #9)
+- Verificación: Jest pasa 77 pruebas, `npx tsc --noEmit` no da errores y el bundle de Android se genera. En el celular, el primer envío falló porque Gmail rechazó la contraseña de aplicación (error 535); con una contraseña nueva y el backend reiniciado, el código llegó al correo y la confirmación funcionó.
+- Aprendizaje: [Completar]
+
+### Entrada #14
+
+- Fecha: 2026-11-10
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Unir el login con cuentas de Ximena (`ximena/login-auth`) con la confirmación del correo que ya estaba en `main`, y que las dos partes funcionen juntas.
+- Prompt: "como podemos solucionarlo" / "necesito que el commit de mi compañera se fusionen que funcionen correctamente mi parte y la parte de ella"
+- Resumen de la respuesta: Se creó la rama `tamiro/integrar-login-auth` desde la de Ximena y se le trajo `main`. Se resolvieron 4 conflictos conservando lo de los dos: `AuthTabs` recibe la cuenta del login y mantiene la pantalla de confirmación, `NextButton` queda con un solo nombre para el texto de carga (`loadingLabel`), y `DocumentsScreen` y `strings.js` unen los cambios de ambos. Se revisó que el registro use el mismo usuario de Firebase que crea el login.
+- Qué se usó / modificó / descartó:
+  - Se usó: el trabajo de Ximena completo y el de `main`.
+  - Se modificó: la pantalla de confirmación usa `loadingLabel` en vez de `busyLabel`, y oculta "Cambiar el correo" cuando el correo viene de la cuenta, porque en la pestaña 1 está bloqueado.
+  - Se descartó: modificar la rama de Ximena directamente, por si tenía trabajo sin subir.
+- Archivos y commit: `src/navigation/AuthTabs.js`, `src/components/NextButton.js`, `src/screens/auth/DocumentsScreen.js`, `src/screens/auth/VerifyEmailScreen.js`, `src/i18n/strings.js` — 5a673ec y d7d932e (Pull Request #10)
+- Verificación: Jest pasa 119 pruebas, las 13 del backend pasan, `npx tsc --noEmit` no da errores, el bundle de Android se genera y no quedaron marcas de conflicto. En la consola de Firebase se activaron los proveedores Correo electrónico/contraseña y Anónimo, y se publicaron las reglas. [Completar con la prueba del flujo completo en el celular]
+- Aprendizaje: [Completar]
+
+### Entrada #15
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Que la tarifa use exactamente las reglas y los valores de la sección 5 del enunciado.
+- Prompt: "1. Arreglar la tarifa (filas 67, 68 y 71) · 30 min Es lo más fácil de verificar para la profe: mete el ejemplo del PDF y mira si da 19.200 y 26.900. Además, el pago, el historial y las ganancias usan esta función, así que si queda mal, todo lo que viene después sale mal. 2. Llenar los huecos de la bitácora (fila 96) · 45 min Las entradas #10 a #14 y #54 que el código cita y no existen. Es riesgo académico puro: el PDF dice que no declarar el uso de IA es falta de honestidad. No es código, pero puede costar más que cualquier pantalla. 3. Bloquear Disponible si no está aprobado (fila 14) · 15 min Un if en HomeScreen. Cumple un requisito del registro y se ve bonito en el video: “lo apruebo en la consola y ahora sí me deja conectarme”."
+- Resumen de la respuesta: `calculateFare` usa tarifa base de 3.500, 1.200 por km, 250 por minuto, mínimo de 6.000 y multiplicadores 1,0, 1,4 y 1,8 para Económico, XL y Premium. Redondea al múltiplo de 100 antes de la comisión del 20 %, maneja pesos enteros y rechaza categorías desconocidas.
+- Qué se usó / modificó / descartó:
+  - Se usó: el ejemplo del enunciado (8,5 km y 22 minutos) como prueba.
+  - Se modificó: el simulador de `EarningsScreen` usa la categoría `economy` en vez de `standard`.
+  - Se descartó: seguir usando Económico cuando llega una categoría desconocida, porque escondía errores; ahora la función lanza un error.
+- Archivos y commit: `src/config/pricing.js`, `src/config/pricing.test.js`, `src/screens/main/EarningsScreen.js` — 63e3bcc
+- Verificación: Jest da el ejemplo del enunciado: Económico 19.200 (comisión 3.840, neto 15.360) y XL 26.900 (comisión 5.380, neto 21.520).
+- Aprendizaje: [Completar]
+
+### Entrada #16
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Que el conductor no pueda ponerse Disponible hasta que su registro esté aprobado (sección 2 del enunciado).
+- Prompt: el mismo de la entrada #15 (punto 3).
+- Resumen de la respuesta: Un hook nuevo, `useDriverStatus`, escucha en tiempo real el campo `status` de `drivers/{uid}` con `onSnapshot` y deja de escucharlo al salir de la pantalla. `HomeScreen` solo habilita el interruptor cuando el estado es `approved` y muestra por qué no se puede conectar: pendiente, rechazado, verificando o sin conexión.
+- Qué se usó / modificó / descartó:
+  - Se usó: `onSnapshot` de Firestore, que también cubre parte del tiempo real que pide la sección 7.
+  - Se modificó: el rastreo de ubicación solo corre si el conductor está conectado y aprobado.
+  - Se descartó: revisar el estado guardado en el celular al iniciar sesión, porque no se entera cuando se aprueba la cuenta en la consola.
+- Archivos y commit: `src/hooks/useDriverStatus.js`, `src/services/driverStatus.js`, `src/services/driverStatus.test.js`, `src/screens/trip/HomeScreen.js`, `src/i18n/strings.js` — 52a0683
+- Verificación: Jest pasa 126 pruebas, `npx tsc --noEmit` no da errores y el bundle de Android se genera. [Completar con la prueba en el celular: con el estado `pending` el interruptor está bloqueado y, al cambiarlo a `approved` en la consola, se habilita sin reiniciar la app]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03

@@ -1,47 +1,56 @@
-// AI-assisted: see docs/AI_LOG.md #12
+// AI-assisted: see docs/AI_LOG.md #12, #15
+// Tarifa, comisión y ganancia del conductor (sección 5 del enunciado). Todos los
+// valores se configuran aquí y se manejan en pesos colombianos enteros.
+// Son valores didácticos, no tarifas reales.
+
+export const BASE_FARE = 3500;
+export const PRICE_PER_KM = 1200;
+export const PRICE_PER_MIN = 250;
+export const MIN_FARE = 6000;
+
+// Las mismas categorías que elige el pasajero (valores de vehicle.js)
+export const CATEGORY_MULTIPLIERS = { economy: 1.0, xl: 1.4, premium: 1.8 };
+
 // Comisión de la plataforma: la usa calculateFare y la muestra la pestaña 3
 export const COMMISSION_RATE = 0.2;
 
+const ROUND_TO = 100;
+
+/**
+ * Función pura que usan la estimación del pasajero y el cierre del viaje.
+ * distanceKm y durationMin salen de la ruta; la propina va completa al conductor.
+ * Devuelve { fare, commission, driverEarnings, commissionRate, tip }; commissionRate
+ * se guarda con cada viaje para que un cambio futuro no altere el historial.
+ */
 export const calculateFare = ({
   distanceKm,
   durationMin,
-  category = "standard",
+  category = "economy",
   tip = 0,
 }) => {
-  // 1. Definimos las tarifas base (Valores de ejemplo para Medellín)
-  const baseRates = {
-    standard: { baseFare: 4000, pricePerKm: 1200, pricePerMin: 200 },
-    premium: { baseFare: 6500, pricePerKm: 1800, pricePerMin: 300 },
-  };
+  const multiplier = CATEGORY_MULTIPLIERS[category];
+  if (multiplier === undefined) {
+    throw new Error(`Categoría desconocida: ${category}`);
+  }
 
-  const rates = baseRates[category] || baseRates.standard;
+  const subtotal =
+    BASE_FARE + distanceKm * PRICE_PER_KM + durationMin * PRICE_PER_MIN;
 
-  // 2. Cálculo bruto de la carrera
-  const rawFare =
-    rates.baseFare +
-    distanceKm * rates.pricePerKm +
-    durationMin * rates.pricePerMin;
+  // La tarifa se redondea al múltiplo de 100 COP más cercano antes de la comisión
+  const fare = Math.max(
+    MIN_FARE,
+    Math.round((subtotal * multiplier) / ROUND_TO) * ROUND_TO,
+  );
+  const commission = Math.round(fare * COMMISSION_RATE);
 
-  // 3. Regla estricta: Redondear al múltiplo de 100 COP más cercano
-  let finalFare = Math.round(rawFare / 100) * 100;
+  // Propinas completas al conductor, en pesos enteros y nunca negativas
+  const safeTip = Math.max(0, Math.round(tip || 0));
 
-  // Tarifa mínima de seguridad (Ej. 5000 COP)
-  if (finalFare < 5000) finalFare = 5000;
-
-  // 4. Regla estricta: Comisión del 20% para la plataforma
-  const commissionRate = COMMISSION_RATE;
-  const commission = finalFare * commissionRate;
-
-  // 5. Regla estricta: Propinas 100% al conductor (nunca negativas)
-  const safeTip = Math.max(0, tip);
-  const driverEarnings = finalFare - commission + safeTip;
-
-  // Retornamos el objeto exacto pedido en los requerimientos
   return {
-    fare: finalFare,
+    fare,
     commission,
-    commissionRate, // Lo devolvemos porque la regla dice: "Se debe guardar el commissionRate por cada viaje en la BD"
-    driverEarnings,
+    driverEarnings: fare - commission + safeTip,
+    commissionRate: COMMISSION_RATE,
     tip: safeTip,
   };
 };
