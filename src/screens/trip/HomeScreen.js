@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #16
+// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17
 // src/screens/trip/HomeScreen.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -89,7 +89,7 @@ export default function HomeScreen() {
           accessibilityState={{ checked: isActive, disabled: !canGoOnline }}
         >
           <Text style={styles.onlineText}>
-            {isActive ? "CONECTADO" : "DESCONECTADO"}
+            {isActive ? t("home.online") : t("home.offline")}
           </Text>
         </TouchableOpacity>
         {blockKey && <Text style={styles.noticeText}>{t(blockKey)}</Text>}

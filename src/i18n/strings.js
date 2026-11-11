@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #54
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #54
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -206,7 +206,9 @@ export const strings = {
       "No se pudo conectar con el servidor. Revisa que esté encendido y en la misma red Wi-Fi",
     "verify.error.generico": "Ocurrió un error. Inténtalo de nuevo",
 
-    // Inicio: por qué el conductor todavía no puede ponerse Disponible
+    // Inicio: interruptor de disponibilidad y por qué todavía no puede conectarse
+    "home.online": "CONECTADO",
+    "home.offline": "DESCONECTADO",
     "home.checkingStatus": "Verificando el estado de tu cuenta…",
     "home.pendingApproval":
       "Tu cuenta está pendiente de aprobación. Podrás conectarte cuando sea aprobada.",
@@ -472,6 +474,8 @@ export const strings = {
       "Could not reach the server. Check that it is running and on the same Wi-Fi network",
     "verify.error.generico": "Something went wrong. Please try again",
 
+    "home.online": "ONLINE",
+    "home.offline": "OFFLINE",
     "home.checkingStatus": "Checking your account status…",
     "home.pendingApproval":
       "Your account is pending approval. You can go online once it is approved.",
