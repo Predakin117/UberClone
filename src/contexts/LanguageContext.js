@@ -3,13 +3,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useState } from "react";
 import { DEFAULT_LANGUAGE, strings, translate } from "../i18n/strings";
 
-// REGLA: AsyncStorage solo guarda preferencias como el idioma, nunca datos sensibles
+// RULE: AsyncStorage only stores preferences like the language, never sensitive data
 const LANGUAGE_KEY = "@app_language";
 
 const isSupported = (language) =>
   Object.prototype.hasOwnProperty.call(strings, language);
 
-// El valor por defecto deja usar t() aunque un componente se pruebe sin el Provider
+// The default value lets t() work even when a component is tested without the Provider
 export const LanguageContext = createContext({
   language: DEFAULT_LANGUAGE,
   setLanguage: () => {},
@@ -19,20 +19,20 @@ export const LanguageContext = createContext({
 export const LanguageProvider = ({ children }) => {
   const [language, setLanguageState] = useState(DEFAULT_LANGUAGE);
 
-  // Recupera el idioma que el conductor eligió la última vez
+  // Restores the language the driver picked last time
   useEffect(() => {
     AsyncStorage.getItem(LANGUAGE_KEY)
       .then((stored) => {
         if (isSupported(stored)) setLanguageState(stored);
       })
-      .catch((error) => console.error("Error leyendo el idioma:", error));
+      .catch((error) => console.error("Error reading the language:", error));
   }, []);
 
   const setLanguage = (next) => {
     if (!isSupported(next)) return;
     setLanguageState(next);
     AsyncStorage.setItem(LANGUAGE_KEY, next).catch((error) =>
-      console.error("Error guardando el idioma:", error),
+      console.error("Error saving the language:", error),
     );
   };
 

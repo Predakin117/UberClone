@@ -4,20 +4,20 @@ export const TripContext = createContext();
 
 export const TripProvider = ({ children }) => {
   const [activeTrip, setActiveTrip] = useState(null);
-  const [tripStatus, setTripStatus] = useState("idle"); // Estados: idle, driver_arriving, in_progress, completed
+  const [tripStatus, setTripStatus] = useState("idle"); // States: idle, driver_arriving, in_progress, completed
 
-  // Función para iniciar un viaje al aceptar una solicitud
+  // Starts a trip when a request is accepted
   const acceptTrip = (tripData) => {
     setActiveTrip(tripData);
     setTripStatus("driver_arriving");
   };
 
-  // Función para avanzar las etapas del viaje
+  // Moves the trip to its next stage
   const advanceTripState = (newStatus) => {
     setTripStatus(newStatus);
   };
 
-  // Función para limpiar la memoria al finalizar y cobrar
+  // Clears the trip state after finishing and charging
   const finishTrip = () => {
     setActiveTrip(null);
     setTripStatus("idle");

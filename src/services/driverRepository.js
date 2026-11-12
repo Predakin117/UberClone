@@ -1,16 +1,16 @@
 // AI-assisted: see docs/AI_LOG.md #10, #12, #54
-// Guarda el registro del conductor en Firestore, en el documento drivers/{uid}.
-// Cada pestaña queda en su propio mapa: personal, vehicle y documents.
+// Saves the driver's registration to Firestore, in the drivers/{uid} document.
+// Each tab goes in its own map: personal, vehicle and documents.
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db, ensureSignedIn, isFirebaseConfigured } from "../config/firebase";
 import { isCloudinaryConfigured, uploadImage } from "./cloudinary";
 import { DOC_BUILDERS, photosToUpload } from "./driverDocs";
 import { withTimeout } from "./withTimeout";
 
-// Sin conexión, setDoc espera indefinidamente la respuesta del servidor
+// Without a connection, setDoc waits forever for the server's response
 const SAVE_TIMEOUT_MS = 15000;
 
-// El código es una clave de src/i18n/strings.js para mostrar el error traducido
+// code is a key of src/i18n/strings.js used to show the translated error
 export class SaveError extends Error {
   constructor(code, cause) {
     super(code);
@@ -20,9 +20,9 @@ export class SaveError extends Error {
 }
 
 /**
- * Sube las fotos de la pestaña que aún son locales y guarda la pestaña en Firestore.
- * Devuelve { uid, photoUrls } (campo → URL) para que el formulario reemplace las rutas
- * locales por las URL y no vuelva a subir las mismas fotos.
+ * Uploads the tab's photos that are still local and saves the tab to Firestore.
+ * Returns { uid, photoUrls } (field → URL) so the form replaces the local paths
+ * with the URLs and doesn't upload the same photos again.
  */
 export const saveDriverSection = async (
   section,
@@ -38,7 +38,7 @@ export const saveDriverSection = async (
     throw new SaveError("save.notConfigured");
   }
 
-  // La pestaña 3 tiene hasta tres fotos: se suben a la vez
+  // Tab 3 has up to three photos: they are uploaded in parallel
   let photoUrls = {};
   if (fieldsToUpload.length > 0) {
     try {
@@ -60,7 +60,7 @@ export const saveDriverSection = async (
       [section]: DOC_BUILDERS[section](data),
       updatedAt: serverTimestamp(),
     };
-    // Regla de negocio: al enviar el registro la cuenta queda Pendiente de aprobación
+    // Business rule: submitting the registration leaves the account pending approval
     if (submit) {
       payload.status = "pending";
       payload.submittedAt = serverTimestamp();
