@@ -1,11 +1,12 @@
 // AI-assisted: see docs/AI_LOG.md #50, #10, #54
 import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import FormField from "../../components/FormField";
 import NextButton from "../../components/NextButton";
 import PhotoField from "../../components/PhotoField";
 import SelectField from "../../components/SelectField";
+import StepLayout from "../../components/StepLayout";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { RegistrationContext } from "../../contexts/RegistrationContext";
 import {
@@ -59,10 +60,18 @@ export default function VehicleScreen() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
+    <StepLayout
+      title={t("register.title.Vehicle")}
+      subtitle={t("register.subtitle.Vehicle")}
+      footer={
+        <NextButton
+          label={t("common.next")}
+          onPress={handleNext}
+          isSaving={isSaving}
+          error={saveError?.section === "vehicle" && t(saveError.code)}
+          style={styles.footerButton}
+        />
+      }
     >
       <SelectField
         label={t("vehicle.category")}
@@ -147,18 +156,10 @@ export default function VehicleScreen() {
         onChange={(uri) => handleSelect("vehiclePhoto", uri)}
         error={t(errors.vehiclePhoto)}
       />
-
-      <NextButton
-        label={t("common.next")}
-        onPress={handleNext}
-        isSaving={isSaving}
-        error={saveError?.section === "vehicle" && t(saveError.code)}
-      />
-    </ScrollView>
+    </StepLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  content: { padding: 20 },
+  footerButton: { marginTop: 0 },
 });

@@ -2,6 +2,7 @@
 // src/navigation/AuthTabs.js
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import RegistrationStepBar from "../components/RegistrationStepBar";
 import { useLanguage } from "../contexts/LanguageContext";
 import { RegistrationProvider } from "../contexts/RegistrationContext";
 
@@ -17,7 +18,12 @@ const RegistrationTabs = () => {
   const { t } = useLanguage();
 
   return (
-    <Tab.Navigator screenOptions={{ headerShown: true }}>
+    // The step bar with the % goes on top and replaces the header: each screen
+    // shows its own title
+    <Tab.Navigator
+      tabBar={(props) => <RegistrationStepBar {...props} />}
+      screenOptions={{ headerShown: false, tabBarPosition: "top" }}
+    >
       <Tab.Screen
         name="PersonalInfo"
         component={PersonalInfoScreen}
