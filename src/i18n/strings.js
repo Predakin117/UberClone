@@ -247,6 +247,25 @@ export const strings = {
     "home.statusError":
       "No se pudo verificar el estado de tu cuenta. Revisa tu conexión.",
     "home.backToTrip": "Volver al viaje en curso",
+    "home.available": "Disponible",
+    "home.unavailable": "No disponible",
+    "home.onlineTitle": "Estás conectado",
+    "home.offlineTitle": "Estás desconectado",
+    "home.onlineSubtitle":
+      "Buscando viajes cerca de ti. Tu ubicación se actualiza cada pocos segundos.",
+    "home.offlineSubtitle":
+      "Conéctate para empezar a recibir solicitudes de viaje.",
+    "home.openMenu": "Abrir menú",
+
+    // Menú lateral
+    "drawer.home": "Inicio",
+    "drawer.profile": "Mi perfil",
+    "drawer.history": "Historial",
+    "drawer.earnings": "Mis ganancias",
+    "drawer.settings": "Configuración",
+    "drawer.logout": "Cerrar sesión",
+    "drawer.driver": "Conductor",
+    "drawer.greeting": "Hola, {name}",
 
     // Solicitud nueva ({seconds}, {km} y {minutes} los reemplaza IncomingRequestCard)
     "request.title": "¡Nueva solicitud!",
@@ -607,6 +626,23 @@ export const strings = {
     "home.statusError":
       "Your account status could not be checked. Check your connection.",
     "home.backToTrip": "Back to the current trip",
+    "home.available": "Available",
+    "home.unavailable": "Unavailable",
+    "home.onlineTitle": "You're online",
+    "home.offlineTitle": "You're offline",
+    "home.onlineSubtitle":
+      "Looking for trips near you. Your location updates every few seconds.",
+    "home.offlineSubtitle": "Go online to start receiving trip requests.",
+    "home.openMenu": "Open menu",
+
+    "drawer.home": "Home",
+    "drawer.profile": "My profile",
+    "drawer.history": "History",
+    "drawer.earnings": "My earnings",
+    "drawer.settings": "Settings",
+    "drawer.logout": "Log out",
+    "drawer.driver": "Driver",
+    "drawer.greeting": "Hi, {name}",
 
     "request.title": "New request!",
     "request.seconds": "{seconds} s",

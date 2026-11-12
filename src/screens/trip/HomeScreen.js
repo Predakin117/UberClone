@@ -1,11 +1,13 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21, #27
+// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21, #27, #57
 // src/screens/trip/HomeScreen.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView from "react-native-maps";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import IncomingRequestCard from "../../components/IncomingRequestCard";
+import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
 import { useDriverLocation } from "../../hooks/useDriverLocation";
@@ -23,6 +25,7 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const mapRef = useRef(null);
+  const insets = useSafeAreaInsets();
   const [isOnline, setIsOnline] = useState(false);
   const activeTrip = useTrip();
   const activeTripId = activeTrip.trip?.id ?? null;
@@ -87,12 +90,16 @@ export default function HomeScreen() {
     );
   };
 
+  // AI-assisted: see docs/AI_LOG.md #57
+  // Only the look changes: full-screen map, round menu button, status chip on
+  // top and a bottom sheet with the Available / Unavailable switch
   return (
     <View style={styles.container}>
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
         showsUserLocation={isActive}
+        showsMyLocationButton={false}
         initialRegion={{
           latitude: 6.2442,
           longitude: -75.5812,
@@ -101,40 +108,89 @@ export default function HomeScreen() {
         }}
       />
 
-      {/* Control de Conexión Superior */}
-      <View style={styles.header}>
+      {/* Barra superior: menú y estado */}
+      <View style={[styles.topBar, { top: insets.top + spacing.md }]}>
         <TouchableOpacity
-          style={[
-            styles.onlineButton,
-            isActive ? styles.online : styles.offline,
-            !canGoOnline && styles.blocked,
-          ]}
-          onPress={toggleOnline}
-          disabled={!canGoOnline}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: isActive, disabled: !canGoOnline }}
+          style={styles.menuButton}
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          accessibilityRole="button"
+          accessibilityLabel={t("home.openMenu")}
         >
-          <Text style={styles.onlineText}>
-            {isActive ? t("home.online") : t("home.offline")}
-          </Text>
+          <View style={styles.menuLine} />
+          <View style={styles.menuLine} />
+          <View style={styles.menuLine} />
         </TouchableOpacity>
-        {blockKey && <Text style={styles.noticeText}>{t(blockKey)}</Text>}
-        {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
+
+        <View style={styles.statusChip}>
+          <View
+            style={[styles.statusDot, isActive && styles.statusDotOnline]}
+          />
+          <Text style={styles.statusChipText}>
+            {isActive ? t("home.available") : t("home.unavailable")}
+          </Text>
+        </View>
+
+        {/* Mismo ancho que el botón del menú, para centrar el estado */}
+        <View style={styles.menuSpacer} />
+      </View>
+
+      {/* Avisos: cuenta sin aprobar, ubicación y solicitudes */}
+      <View style={[styles.notices, { top: insets.top + spacing.md + 60 }]}>
+        {blockKey && (
+          <Text style={[styles.notice, styles.noticeInfo]}>{t(blockKey)}</Text>
+        )}
+        {errorMsg && (
+          <Text style={[styles.notice, styles.noticeError]}>{errorMsg}</Text>
+        )}
         {requestsError && (
-          <Text style={styles.errorText}>{t(requestsError)}</Text>
+          <Text style={[styles.notice, styles.noticeError]}>
+            {t(requestsError)}
+          </Text>
         )}
       </View>
 
-      {/* Si el conductor volvió al inicio con un viaje en curso */}
-      {activeTripId && (
+      {/* Panel inferior con el interruptor Disponible / No disponible */}
+      <View
+        style={[
+          styles.sheet,
+          { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.sm },
+        ]}
+      >
+        <View style={styles.handle} />
+
+        {/* Si el conductor volvió al inicio con un viaje en curso */}
+        {activeTripId && (
+          <TouchableOpacity
+            style={styles.backToTrip}
+            onPress={() => navigation.navigate("ActiveTrip")}
+            accessibilityRole="button"
+          >
+            <Text style={styles.backToTripText}>{t("home.backToTrip")}</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
-          style={styles.backToTrip}
-          onPress={() => navigation.navigate("ActiveTrip")}
-          accessibilityRole="button"
+          style={[styles.switchRow, !canGoOnline && styles.blocked]}
+          onPress={toggleOnline}
+          disabled={!canGoOnline}
+          activeOpacity={0.8}
+          accessibilityRole="switch"
+          accessibilityLabel={t("home.available")}
+          accessibilityState={{ checked: isActive, disabled: !canGoOnline }}
         >
-          <Text style={styles.backToTripText}>{t("home.backToTrip")}</Text>
+          <View style={styles.switchTexts}>
+            <Text style={styles.sheetTitle}>
+              {isActive ? t("home.onlineTitle") : t("home.offlineTitle")}
+            </Text>
+            <Text style={styles.sheetSubtitle}>
+              {isActive ? t("home.onlineSubtitle") : t("home.offlineSubtitle")}
+            </Text>
+          </View>
+          <View style={[styles.track, isActive && styles.trackOn]}>
+            <View style={[styles.thumb, isActive && styles.thumbOn]} />
+          </View>
         </TouchableOpacity>
-      )}
+      </View>
 
       {/* La solicitud más antigua, sobre el mapa. key la reinicia con cada solicitud */}
       {request && (
@@ -149,50 +205,142 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center" },
+const MENU_SIZE = 48;
+const TRACK_WIDTH = 60;
+const THUMB_SIZE = 28;
+const TRACK_PADDING = 3;
 
-  header: {
+const shadow = {
+  shadowColor: colors.black,
+  shadowOpacity: 0.15,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 3 },
+  elevation: 6,
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.surface },
+
+  topBar: {
     position: "absolute",
-    top: 50,
-    width: "100%",
+    left: spacing.lg,
+    right: spacing.lg,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
-  onlineButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    elevation: 5,
+  menuButton: {
+    width: MENU_SIZE,
+    height: MENU_SIZE,
+    borderRadius: MENU_SIZE / 2,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    ...shadow,
   },
-  online: { backgroundColor: "#4CAF50" },
-  offline: { backgroundColor: "#757575" },
-  blocked: { opacity: 0.6 },
-  noticeText: {
-    marginTop: 10,
-    marginHorizontal: 20,
-    backgroundColor: "white",
-    color: "#333",
-    textAlign: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+  menuLine: {
+    width: 18,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.black,
   },
-  onlineText: { color: "white", fontWeight: "bold", fontSize: 16 },
-  errorText: {
-    marginTop: 10,
-    backgroundColor: "white",
-    color: "#F44336",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+  menuSpacer: { width: MENU_SIZE },
+  statusChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.white,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md - 2,
+    ...shadow,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.placeholder,
+  },
+  statusDotOnline: { backgroundColor: colors.success },
+  statusChipText: { fontSize: 15, fontWeight: "700", color: colors.black },
+
+  notices: {
+    position: "absolute",
+    left: spacing.lg,
+    right: spacing.lg,
+    gap: spacing.sm,
+  },
+  notice: {
+    backgroundColor: colors.white,
+    color: colors.textPrimary,
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    borderLeftWidth: 4,
+    overflow: "hidden",
+    ...shadow,
+  },
+  noticeInfo: { borderLeftColor: colors.black },
+  noticeError: { borderLeftColor: colors.error, color: colors.error },
+
+  sheet: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: spacing.xl - 4,
+    paddingTop: spacing.sm,
+    gap: spacing.lg,
+    ...shadow,
+  },
+  handle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.border,
   },
   backToTrip: {
-    position: "absolute",
-    bottom: 30,
-    backgroundColor: "#000",
-    padding: 15,
-    borderRadius: 10,
-    elevation: 5,
+    backgroundColor: colors.black,
+    borderRadius: radius.sm,
+    minHeight: 52,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  backToTripText: { color: "white", fontWeight: "bold" },
+  backToTripText: { color: colors.white, fontSize: 16, fontWeight: "600" },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.lg,
+  },
+  blocked: { opacity: 0.5 },
+  switchTexts: { flex: 1, gap: spacing.xs },
+  sheetTitle: { ...typography.title, fontSize: 24 },
+  sheetSubtitle: typography.caption,
+  track: {
+    width: TRACK_WIDTH,
+    height: THUMB_SIZE + TRACK_PADDING * 2,
+    borderRadius: radius.pill,
+    padding: TRACK_PADDING,
+    backgroundColor: colors.border,
+    justifyContent: "center",
+  },
+  trackOn: { backgroundColor: colors.success },
+  thumb: {
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: THUMB_SIZE / 2,
+    backgroundColor: colors.white,
+    ...shadow,
+    elevation: 2,
+  },
+  thumbOn: {
+    transform: [{ translateX: TRACK_WIDTH - THUMB_SIZE - TRACK_PADDING * 2 }],
+  },
 });
