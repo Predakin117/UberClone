@@ -60,6 +60,11 @@ export const canDriverChangeStatus = (from, to) =>
 // Estado del pago que muestra el resumen (sección 3): Efectivo, Aprobado,
 // Rechazado o Pendiente. paymentStatus lo escribe solo el backend.
 export const paymentStatusKey = (trip) => {
+  // AI-assisted: see docs/AI_LOG.md #28
+  // Cash already confirmed by the driver (the backend left the trip "paid")
+  if (trip.paymentMethod === "cash" && trip.status === TRIP_STATUS.PAID) {
+    return "summary.paymentStatus.cashReceived";
+  }
   if (trip.paymentMethod === "cash") return "summary.paymentStatus.cash";
   if (trip.paymentStatus === "approved") return "summary.paymentStatus.approved";
   if (trip.paymentStatus === "rejected") return "summary.paymentStatus.rejected";

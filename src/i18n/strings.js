@@ -313,6 +313,26 @@ export const strings = {
     "summary.backToMap": "Volver al mapa",
     "summary.error": "No se pudo cargar el resumen del viaje.",
     // AI-assisted: see docs/AI_LOG.md #28
+    "summary.paymentStatus.cashReceived": "Efectivo recibido",
+    "summary.cashReceived": "Recibí efectivo",
+    "summary.confirmingCash": "Confirmando…",
+
+    // Errores de pago (códigos de PAYMENT_ERROR_CODES en services/payments.js)
+    "payment.error.no_implementado":
+      "Este método de pago todavía no está disponible.",
+    "payment.error.sin_backend":
+      "Falta configurar el servidor de pagos en el archivo .env.",
+    "payment.error.sin_conexion":
+      "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+    "payment.error.sin_sesion": "Tu sesión se cerró. Inicia sesión de nuevo.",
+    "payment.error.no_autorizado":
+      "El servidor no aceptó tu sesión. Inicia sesión de nuevo.",
+    "payment.error.no_encontrado": "El viaje ya no existe.",
+    "payment.error.no_es_tu_viaje": "Este viaje no es tuyo.",
+    "payment.error.estado_invalido": "El viaje todavía no está terminado.",
+    "payment.error.metodo_invalido":
+      "El método de pago de este viaje no corresponde.",
+    "payment.error.fallo": "No se pudo confirmar el pago. Inténtalo de nuevo.",
 
     // Periodos de ganancias e historial
     "period.today": "Hoy",
@@ -717,6 +737,25 @@ export const strings = {
     "summary.backToMap": "Back to map",
     "summary.error": "The trip summary could not be loaded.",
     // AI-assisted: see docs/AI_LOG.md #28
+    "summary.paymentStatus.cashReceived": "Cash received",
+    "summary.cashReceived": "I received the cash",
+    "summary.confirmingCash": "Confirming…",
+
+    "payment.error.no_implementado":
+      "This payment method is not available yet.",
+    "payment.error.sin_backend":
+      "The payment server is not set up in the .env file.",
+    "payment.error.sin_conexion":
+      "Could not reach the server. Check your connection and try again.",
+    "payment.error.sin_sesion": "Your session ended. Please log in again.",
+    "payment.error.no_autorizado":
+      "The server did not accept your session. Please log in again.",
+    "payment.error.no_encontrado": "The trip no longer exists.",
+    "payment.error.no_es_tu_viaje": "This trip is not yours.",
+    "payment.error.estado_invalido": "The trip is not finished yet.",
+    "payment.error.metodo_invalido":
+      "The payment method of this trip does not match.",
+    "payment.error.fallo": "The payment could not be confirmed. Try again.",
 
     "period.today": "Today",
     "period.week": "This week",

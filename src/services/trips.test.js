@@ -184,6 +184,7 @@ describe("trips", () => {
   it("muestra el estado del pago: Efectivo, Aprobado, Rechazado o Pendiente", () => {
     const cases = [
       [{ paymentMethod: "cash", paymentStatus: null }, "summary.paymentStatus.cash"],
+      [{ paymentMethod: "cash", paymentStatus: "cash", status: "paid" }, "summary.paymentStatus.cashReceived"],
       [{ paymentMethod: "mercadopago", paymentStatus: "approved" }, "summary.paymentStatus.approved"],
       [{ paymentMethod: "mercadopago", paymentStatus: "rejected" }, "summary.paymentStatus.rejected"],
       [{ paymentMethod: "stripe", paymentStatus: null }, "summary.paymentStatus.pending"],
