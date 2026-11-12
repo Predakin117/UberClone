@@ -21,7 +21,7 @@ import {
   PERSONAL_FIELDS,
 } from "../../validation/personalInfo";
 
-// El selector no deja elegir fechas de menores de edad ni antes de 1900
+// The picker doesn't allow dates of minors or before 1900
 const MIN_BIRTH_DATE = new Date(1900, 0, 1);
 
 export default function PersonalInfoScreen() {
@@ -49,13 +49,13 @@ export default function PersonalInfoScreen() {
     label: t(`gender.${value}`),
   }));
 
-  // Las listas, la foto y la fecha no tienen onBlur: se marcan como visitadas al elegir
+  // Lists, the photo and the date have no onBlur: they count as visited when chosen
   const handleSelect = (field, value) => {
     handleChange(field, value);
     touchField(field);
   };
 
-  // El idioma elegido cambia la app de inmediato y queda guardado en AsyncStorage
+  // The chosen language changes the app right away and is saved in AsyncStorage
   const handleLanguage = (value) => {
     handleSelect("language", value);
     setLanguage(value);
@@ -63,7 +63,7 @@ export default function PersonalInfoScreen() {
 
   const openSelfie = () => navigation.navigate("ProfilePhoto");
 
-  // Si la pestaña es válida se guarda en Firestore y solo entonces se avanza
+  // If the tab is valid it is saved to Firestore, and only then it moves on
   const handleNext = async () => {
     if (!isPersonalValid) {
       // AI-assisted: see docs/AI_LOG.md #58

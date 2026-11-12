@@ -1,7 +1,7 @@
 // AI-assisted: see docs/AI_LOG.md #55, #58
-// Paso 3 del login: la contraseña ya fue correcta, ahora se confirma con un código
-// que llega al correo de la cuenta. Solo con el código correcto se entra a la app
-// (o se vuelve a las pestañas si el registro no se había enviado).
+// Step 3 of the login: the password was right, now a code sent to the
+// account's email confirms it. Only the right code opens the app (or the
+// tabs again if the registration wasn't submitted).
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useContext, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -17,7 +17,7 @@ import { MOTIVOS } from "../../services/emailVerification";
 
 export default function VerifyLoginScreen() {
   const navigation = useNavigation();
-  // driver es lo que devolvió signIn(): { uid, email, phone, name, status }
+  // driver is what signIn() returned: { uid, email, phone, name, status }
   const { driver } = useRoute().params;
   const { login } = useContext(AuthContext);
   const { t } = useLanguage();
@@ -42,15 +42,15 @@ export default function VerifyLoginScreen() {
     motivo: MOTIVOS.LOGIN,
   });
 
-  // El código se pide solo al abrir la pantalla, una única vez
+  // The code is requested once, when the screen opens
   useEffect(() => {
     if (autoSent.current) return;
     autoSent.current = true;
     sendCode();
   }, [sendCode]);
 
-  // Si vuelve atrás sin confirmar, se cierra la sesión de Firebase que abrió la
-  // contraseña: sin el código no queda nadie con sesión
+  // Going back without confirming signs out of the Firebase session the
+  // password opened: without the code nobody stays signed in
   useEffect(
     () =>
       navigation.addListener("beforeRemove", () => {
@@ -75,14 +75,14 @@ export default function VerifyLoginScreen() {
     verified.current = true;
 
     if (!driver.status) {
-      // La cuenta existe pero el registro no se envió: a las pestañas, con el
-      // correo y el celular de la cuenta ya puestos
+      // The account exists but the registration wasn't submitted: to the
+      // tabs, with the account's email and phone already filled in
       navigation.replace("Register", {
         account: { email: driver.email, phone: driver.phone },
       });
       return;
     }
-    // Registro enviado (pendiente o aprobado): AppNavigator pasa al menú principal
+    // Registration submitted (pending or approved): AppNavigator opens the main menu
     setIsEntering(true);
     await login({ id: driver.uid, name: driver.name, status: driver.status });
   };
