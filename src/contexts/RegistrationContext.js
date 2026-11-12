@@ -1,10 +1,9 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12, #54
-import { createContext, useContext, useMemo, useState } from "react";
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12, #54, #59
+import { createContext, useMemo, useState } from "react";
 import { saveDriverSection } from "../services/driverRepository";
 import { validateDocuments } from "../validation/documents";
 import { validatePersonalInfo } from "../validation/personalInfo";
 import { validateVehicle } from "../validation/vehicle";
-import { AuthContext } from "./AuthContext";
 
 export const RegistrationContext = createContext();
 
@@ -16,7 +15,6 @@ const isEmpty = (fieldErrors) => Object.keys(fieldErrors).length === 0;
 const ACCOUNT_FIELDS = ["email", "phone"];
 
 export const RegistrationProvider = ({ account, children }) => {
-  const { login } = useContext(AuthContext); // Used to simulate the login when finishing
   const lockedFields = ACCOUNT_FIELDS.filter((field) => account?.[field]);
 
   const [formData, setFormData] = useState({
@@ -131,20 +129,20 @@ export const RegistrationProvider = ({ account, children }) => {
     }
   };
 
+  // AI-assisted: see docs/AI_LOG.md #59
+  // Returns the uid once the registration is saved as "Pending approval", or
+  // null if it couldn't be sent (the reason goes to saveError). The caller
+  // shows RegistrationSubmittedScreen, which opens the main menu.
   const submitRegistration = async () => {
-    if (!canSubmit || isSaving) return;
+    if (!canSubmit || isSaving) return null;
 
     // Tabs 1 and 2 are saved again in case the driver went back to them
     // with the tab bar (without tapping Next) and changed something
-    if (!(await saveSection("personal"))) return;
-    if (!(await saveSection("vehicle"))) return;
+    if (!(await saveSection("personal"))) return null;
+    if (!(await saveSection("vehicle"))) return null;
 
     // Business rule: moves to "Pending approval"
-    const uid = await saveSection("documents", { submit: true });
-    if (!uid) return;
-
-    alert("Registro enviado. Estado: Pendiente de aprobación.");
-    login({ id: uid, name: formData.name, status: "pending" });
+    return saveSection("documents", { submit: true });
   };
 
   return (

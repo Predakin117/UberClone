@@ -1,6 +1,7 @@
-// AI-assisted: see docs/AI_LOG.md #13, #14, #58
-// Último paso del registro: confirma con un código que el correo de la pestaña 1 es
-// del conductor. Solo con el código correcto se guarda el registro como Pendiente.
+// AI-assisted: see docs/AI_LOG.md #13, #14, #58, #59
+// Last step of the registration: a code confirms that the email of tab 1
+// belongs to the driver. Only with the right code is the registration saved
+// as Pending.
 import { useNavigation } from "@react-navigation/native";
 import { useContext, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
@@ -40,13 +41,22 @@ export default function VerifyEmailScreen() {
 
   const handleConfirm = async () => {
     if (!(await verifyCode(code))) return;
-    // Correo confirmado: se guarda el registro y la cuenta queda Pendiente de aprobación.
-    // Si el guardado falla, el botón lo reintenta sin pedir otro código.
-    await submitRegistration();
+    // Email confirmed: the registration is saved and the account is Pending
+    // approval. If saving fails, the button retries without a new code.
+    const uid = await submitRegistration();
+    // AI-assisted: see docs/AI_LOG.md #59
+    // reset: the tabs and this screen are done, the back button can't
+    // return to them
+    if (uid) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "RegistrationSubmitted", params: { uid } }],
+      });
+    }
   };
 
-  // Si el correo viene de la cuenta del login está bloqueado en la pestaña 1:
-  // no se ofrece cambiarlo
+  // If the email comes from the login account it is locked in tab 1, so
+  // changing it isn't offered
   const canChangeEmail = !lockedFields.includes("email");
   const changeEmail = () =>
     navigation.navigate("RegistrationTabs", { screen: "PersonalInfo" });

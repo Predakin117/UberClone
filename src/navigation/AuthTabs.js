@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #2, #9, #13, #54, #56, #58
+// AI-assisted: see docs/AI_LOG.md #2, #9, #13, #54, #56, #58, #59
 // src/navigation/AuthTabs.js
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -9,6 +9,7 @@ import { RegistrationProvider } from "../contexts/RegistrationContext";
 import DocumentsScreen from "../screens/auth/DocumentsScreen";
 import PersonalInfoScreen from "../screens/auth/PersonalInfoScreen";
 import ProfilePhotoScreen from "../screens/auth/ProfilePhotoScreen";
+import RegistrationSubmittedScreen from "../screens/auth/RegistrationSubmittedScreen";
 import VehicleScreen from "../screens/auth/VehicleScreen";
 import VerifyEmailScreen from "../screens/auth/VerifyEmailScreen";
 
@@ -73,6 +74,12 @@ export const AuthTabs = ({ route }) => {
           name="ProfilePhoto"
           component={ProfilePhotoScreen}
           options={backHeader}
+        />
+        {/* AI-assisted: see docs/AI_LOG.md #59 */}
+        <Stack.Screen
+          name="RegistrationSubmitted"
+          component={RegistrationSubmittedScreen}
+          options={{ headerShown: false, gestureEnabled: false }}
         />
       </Stack.Navigator>
     </RegistrationProvider>
