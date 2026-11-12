@@ -1038,6 +1038,93 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - [Pendiente: probar en el celular editar el nombre, la foto y el correo de Mercado Pago, los errores debajo de cada campo, el aviso de vencimiento, el cambio de idioma y cerrar sesión]
 - Aprendizaje: [Completar]
 
+### Entrada #31
+
+- Fecha: 2026-11-12
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Detalles de la app del conductor parecidos a Uber Driver (tarjeta de solicitud, calificar al pasajero, gráfica semanal, contacto con el pasajero, carro en el mapa, píldora de ganancias y mapa oscuro de noche), sin cambiar la lógica de estados, tarifas ni pagos.
+- Prompt (se omiten las líneas sobre la rama, los commits y el push):
+  > Detalles estilo Uber Driver. [...] Usa theme.js y t() en español e
+  > inglés. [...] No cambies la lógica de estados, tarifas ni pagos.
+  >
+  > 0. Colores: en IncomingRequestCard, ActiveTripScreen y TripSummaryScreen
+  >    reemplaza los colores escritos a mano (#4CAF50, #F44336, #FF9800,
+  >    #2E7D32, #E53935, #e8f5e9, grises sueltos) por theme.js. Botón
+  >    principal negro; verde solo para dinero; rojo solo para errores y
+  >    cancelar.
+  >
+  > 1. Tarjeta de solicitud: arriba "N min · X km de distancia" hasta el punto
+  >    de recogida, calculado en línea recta (Haversine) desde la ubicación
+  >    actual del conductor con una velocidad promedio de 25 km/h. NO llames
+  >    a OpenRouteService aquí (sección 7: solo al crear y al aceptar). La
+  >    cuenta regresiva como barra que se achica, "Aceptar" grande negro y
+  >    "Rechazar" como X discreta.
+  >
+  > 2. Calificar al pasajero: en TripSummaryScreen, 5 estrellas para
+  >    calificarlo, una sola vez. Guárdalo en un campo NUEVO passengerRating
+  >    (entero 1 a 5), no en rating, que es la calificación del conductor y
+  >    la usa el perfil. Cambia firestore.rules para que el conductor del
+  >    viaje pueda escribir solo passengerRating, una vez, en un viaje
+  >    completed o paid, y repite la regla en trips.js con pruebas.
+  >    Muéstrame el diff de las reglas y espera mi sí antes de publicarlas
+  >    con firebase-admin; luego confirma que las publicadas coinciden.
+  >
+  > 3. Ganancias: gráfica de barras de la semana (lunes a domingo) con la
+  >    ganancia neta de cada día, hecha con Views (sin librerías nuevas),
+  >    resaltando el día de hoy. Los datos salen de useEarnings, con una
+  >    función pura nueva y sus pruebas.
+  >
+  > 4. Llamar y mensaje: en ActiveTripScreen, junto al nombre del pasajero,
+  >    botones con íconos de teléfono y chat que abren tel: y sms: con
+  >    Linking. Solo si el viaje tiene passengerPhone. En el simulador
+  >    (simular-solicitud.js) agrega passengerName y passengerPhone de
+  >    ejemplo como campos extra, sin cambiar los del enunciado; actualiza
+  >    su prueba que revisa los campos y docs/APIS.md.
+  >
+  > 5. Ícono de carro: en el mapa del inicio y del viaje, un Marker propio
+  >    con forma de carro (hecho con Views o un ícono de @expo/vector-icons,
+  >    sin imágenes nuevas) que rota según el heading de la ubicación, en
+  >    vez del punto azul.
+  >
+  > 6. Píldora de ganancias: si HomeScreen no la tiene ya, una píldora negra
+  >    arriba al centro con la ganancia neta de hoy desde useEarnings.
+  >
+  > 7. Mapa oscuro de noche: entre las 6 p. m. y las 6 a. m., customMapStyle
+  >    oscuro en los mapas del inicio, el viaje y el historial. Si en iOS no
+  >    aplica, que no falle.
+  >
+  > Antes de cada commit: npm test (raíz y backend), npx expo lint sin
+  > errores y npx tsc --noEmit.
+
+  Respuesta de Tamiro al diff de las reglas: "Sí, publícalas".
+- Resumen de la respuesta:
+  - 0: los tres archivos ya usaban `theme.js` desde la entrada #29 (también la barra, la X y "Aceptar" del punto 1), así que no hubo commit.
+  - 1: `pickupEstimate` (en `src/services/pickupEstimate.js`) calcula con Haversine la distancia en línea recta desde la ubicación que ya tenía `HomeScreen` y los minutos a 25 km/h (redondeados hacia arriba, mínimo 1). La tarjeta muestra "6 min · 2,4 km de distancia" con `formatDecimal` según el idioma. No llama a OpenRouteService.
+  - 2: `PassengerRating` muestra 5 estrellas y un botón "Enviar calificación"; `ratePassenger` escribe solo `passengerRating`. `firestore.rules` agrega una tercera forma de `update` en `trips`: el conductor del viaje, con el viaje `completed` o `paid`, sin `passengerRating` previo, cambiando solo ese campo y con un entero de 1 a 5. `validatePassengerRating` en `trips.js` repite la regla. El resumen pasó a `ScrollView` para que quepa.
+  - 3: `weeklyEarnings` (en `earnings.js`) da la ganancia neta de lunes a domingo y marca hoy; `calculateEarnings` la entrega como `weekDays`, así que llega por `useEarnings`. `WeekEarningsChart` dibuja las barras con Views, con hoy en negro.
+  - 4: `passengerContact` arma `tel:` y `sms:` con el número limpio; si el viaje no tiene `passengerPhone`, no hay botones. Los íconos son `Ionicons` de `@expo/vector-icons`, instalado con `npx expo install`. El simulador agrega `passengerName` y `passengerPhone` de un pasajero de ejemplo con número inventado.
+  - 5: `CarMarker` es un carro visto desde arriba hecho con Views, con `flat` y `rotation`. `nextHeading` solo usa el rumbo del GPS si el carro va a más de 1 m/s y, si no, conserva el último. `useDriverLocation` agrega `heading` a la ubicación que muestra (a Firestore siguen yendo solo `lat`/`lng`) y `useCarPosition` sigue el GPS en el viaje sin guardar nada.
+  - 6: una píldora negra con "Hoy" y la ganancia neta, debajo del chip Disponible / No disponible, con `useEarningsTrips` y `useEarnings`.
+  - 7: `isNightTime` (de 18:00 a 5:59) y `useNightMap`, que revisa la hora cada minuto y le da al mapa `customMapStyle` oscuro (Android) y `userInterfaceStyle: "dark"` (iOS con Apple Maps, donde `customMapStyle` no hace nada).
+- Qué se usó / modificó / descartó:
+  - Se usó: la ubicación que `HomeScreen` ya tenía para la distancia a la recogida, `useEarnings` para la gráfica y la píldora, y el método de la entrada #27 (token real y API REST de Firestore) para probar las reglas.
+  - Se modificó: la píldora no quedó en el centro de la barra superior, porque ahí está el chip de estado de Ximena: quedó centrada justo debajo y los avisos bajaron. El historial no tiene mapa (es una lista), así que el mapa oscuro quedó solo en el inicio y el viaje. Los colores del estilo oscuro están en `src/config/mapStyle.js` y no en `theme.js`, porque son colores del formato de estilos de Google Maps y no de la interfaz. El pin del punto de recogida sigue en verde (ver entrada #29).
+  - Se descartó: tocar los estados, las tarifas o los pagos; usar una imagen o un ícono para el carro (un dibujo visto desde arriba rota mejor); y una librería de gráficas.
+- Archivos y commit:
+  - Punto 1: `src/services/pickupEstimate.js`, `src/services/pickupEstimate.test.js`, `src/components/IncomingRequestCard.js`, `src/screens/trip/HomeScreen.js`, `src/i18n/format.js`, `src/i18n/format.test.js`, `src/i18n/strings.js` — deefd8d
+  - Punto 2: `firestore.rules`, `src/services/trips.js`, `src/services/trips.test.js`, `src/services/tripRepository.js`, `src/components/PassengerRating.js`, `src/screens/trip/TripSummaryScreen.js`, `src/i18n/strings.js`, `docs/APIS.md` — e2a1116
+  - Punto 3: `src/services/earnings.js`, `src/services/earnings.test.js`, `src/components/WeekEarningsChart.js`, `src/screens/main/EarningsScreen.js`, `src/i18n/strings.js` — 3688a4f
+  - Punto 4: `src/services/passengerContact.js`, `src/services/passengerContact.test.js`, `src/screens/trip/ActiveTripScreen.js`, `backend/scripts/simular-solicitud.js`, `backend/test/simular-solicitud.test.js`, `docs/APIS.md`, `package.json`, `package-lock.json`, `src/i18n/strings.js` — c82c18a
+  - Punto 5: `src/components/CarMarker.js`, `src/hooks/useCarPosition.js`, `src/services/carHeading.js`, `src/services/carHeading.test.js`, `src/hooks/useDriverLocation.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js` — f5cbaf4
+  - Punto 6: `src/screens/trip/HomeScreen.js`, `src/i18n/strings.js` — 1931999
+  - Punto 7: `src/config/mapStyle.js`, `src/config/mapStyle.test.js`, `src/hooks/useNightMap.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js` — 7b57e23
+- Verificación:
+  - Antes de cada commit: Jest de la raíz (al final 256 pruebas, 30 nuevas: Haversine y estimación de recogida, decimales por idioma, `validatePassengerRating`, `weeklyEarnings` incluso con la semana empezando en el mes anterior, `passengerContact`, `nextHeading` e `isNightTime`), las 42 del backend (con la prueba de campos del simulador actualizada), `npx expo lint` sin errores y `npx tsc --noEmit` sin errores.
+  - Reglas: antes de cambiarlas se comparó lo publicado en `uber-clone-ba0e2` con `firestore.rules` (solo cambiaban los comentarios). Con el sí de Tamiro se publicaron con `releaseFirestoreRulesetFromSource` de firebase-admin, y `getFirestoreRuleset` confirmó que lo publicado es igual al archivo. Con un token real de la cuenta de Tamiro y la API REST de Firestore, sobre viajes simulados ya pagados: `passengerRating` 5 respondió 200; una segunda calificación, escribir `rating` y un `passengerRating` de 6 respondieron 403; `rating` y `status` no cambiaron.
+  - [Pendiente: probar en el celular los puntos 1 a 7]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
