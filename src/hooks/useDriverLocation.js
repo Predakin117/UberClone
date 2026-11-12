@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #4, #27
+// AI-assisted: see docs/AI_LOG.md #4, #27, #31
 // Mientras el conductor está conectado (isAvailable), rastrea su ubicación y la
 // guarda en drivers/{uid} como máximo cada 10 segundos (src/services/driverLocation.js).
 // Con un viaje en curso (hasActiveTrip) sigue guardando la ubicación, pero queda
@@ -6,6 +6,7 @@
 // deja de rastrear y lo marca no disponible.
 import * as Location from "expo-location";
 import { useEffect, useRef, useState } from "react";
+import { nextHeading } from "../services/carHeading";
 import {
   availabilityOnTripChange,
   isDriverAvailable,
@@ -69,7 +70,12 @@ export const useDriverLocation = (isAvailable, hasActiveTrip = false) => {
           (newLocation) => {
             if (cancelled) return;
             const { latitude, longitude } = newLocation.coords;
-            setLocation({ latitude, longitude });
+            // heading turns the car on the map; Firestore only gets lat/lng
+            setLocation((previous) => ({
+              latitude,
+              longitude,
+              heading: nextHeading(previous?.heading, newLocation.coords),
+            }));
 
             // El mapa se mueve con cada lectura, pero Firestore recibe como máximo una cada 10 s
             const now = Date.now();

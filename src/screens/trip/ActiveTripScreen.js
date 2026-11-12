@@ -9,6 +9,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
+import CarMarker from "../../components/CarMarker";
 import {
   CONTROL_HEIGHT,
   colors,
@@ -18,6 +19,7 @@ import {
 } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
+import { useCarPosition } from "../../hooks/useCarPosition";
 import { passengerContact } from "../../services/passengerContact";
 import { advanceTrip, completeTrip } from "../../services/tripRepository";
 import { navigationUrl, tripRoute } from "../../services/tripRoute";
@@ -29,6 +31,8 @@ export default function ActiveTripScreen() {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const { trip, isLoading, pickupRoute } = useTrip();
+  // The car on the map (read-only GPS; the home screen saves the location)
+  const carPosition = useCarPosition();
   const mapRef = useRef(null);
   // Evita volver al inicio mientras se abre el resumen del viaje terminado
   const isFinishing = useRef(false);
@@ -153,7 +157,6 @@ export default function ActiveTripScreen() {
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
-        showsUserLocation
         onMapReady={() => setIsMapReady(true)}
         initialRegion={{
           latitude: trip.origin.lat,
@@ -189,6 +192,7 @@ export default function ActiveTripScreen() {
             lineDashPattern={route.isReal ? undefined : [10, 10]}
           />
         )}
+        <CarMarker position={carPosition} />
       </MapView>
 
       <View style={styles.panel}>

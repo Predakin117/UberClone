@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import CarMarker from "../../components/CarMarker";
 import IncomingRequestCard from "../../components/IncomingRequestCard";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -76,7 +77,12 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!location) return;
     mapRef.current?.animateToRegion(
-      { ...location, latitudeDelta: 0.02, longitudeDelta: 0.02 },
+      {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      },
       500,
     );
   }, [location]);
@@ -98,7 +104,6 @@ export default function HomeScreen() {
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
-        showsUserLocation={isActive}
         showsMyLocationButton={false}
         initialRegion={{
           latitude: 6.2442,
@@ -106,7 +111,10 @@ export default function HomeScreen() {
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         }}
-      />
+      >
+        {/* The car replaces the blue dot while the driver is online */}
+        {isActive && <CarMarker position={location} />}
+      </MapView>
 
       {/* Barra superior: menú y estado */}
       <View style={[styles.topBar, { top: insets.top + spacing.md }]}>
