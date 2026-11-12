@@ -669,6 +669,49 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Nota (corrección): las comprobaciones de la parte 1 que tocaron Firestore (las solicitudes creadas, las polylines guardadas) y la de la parte 3 sobre los índices se hicieron en `biblioteca-clase`, no en el proyecto de la app. Siguen siendo válidas las respuestas de OpenRouteService, que no dependen de Firebase, y la conclusión de los índices, que depende de la forma de la consulta y no del proyecto. La prueba en el celular de las partes 2, 3 y 3b debe hacerse con solicitudes creadas en `uber-clone-ba0e2`. La protección se probó con la clave equivocada: el simulador se negó antes de llamar a ORS y sin escribir nada; `npm test` en `backend/` pasa 27 pruebas (2 nuevas).
 - Aprendizaje: [Completar]
 
+### Entrada #22
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Evitar que Firestore se quede "sin conexión" en el celular cuando la red corta la conexión de streaming que usa por defecto.
+- Prompt:
+  > Console Error
+  >
+  > [2026-11-12T01:37:09.059Z]  @firebase/firestore: Firestore (13.2.0): Could not reach Cloud Firestore backend. Backend didn't respond within 10 seconds.
+  > This typically indicates that your device does not have a healthy Internet connection at the moment. The client will operate in offline mode until it is able to successfully connect to the backend.
+  >
+  > Source:
+  > D:\Projects\uberclone-driver\node_modules\@firebase\logger\dist\esm\index.esm.js (78:23)
+  >
+  > Call Stack:
+  > addLog (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\LogBox\Data\LogBoxData.js:235)
+  > addConsoleLog (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\LogBox\LogBox.js:213)
+  > reactConsoleErrorHandler (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\Core\ExceptionsManager.js:248)
+  > console.level (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\Core\setUpDeveloperTools.js:42)
+  > defaultLogHandler (D:\Projects\uberclone-driver\node_modules\@firebase\logger\dist\esm\index.esm.js:78)
+  > Logger#error (D:\Projects\uberclone-driver\node_modules\@firebase\logger\dist\esm\index.esm.js:161)
+  > __PRIVATE_logError (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:104)
+  > __PRIVATE_OnlineStateTracker#du (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:24528)
+  > asyncQueue.enqueueAfterDelay$argument_2 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:24498)
+  > asyncQueue.enqueueAndForget$argument_0 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:25204)
+  > IE$argument_0 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:28803)
+  > TE.then$argument_0 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:28836)
+
+  > Sí, prepara el cambio de long polling en src/config/firebase.js:
+  > usa initializeFirestore(app, { experimentalForceLongPolling: true }) al
+  > crear la app, y conserva getFirestore(app) en la rama que reutiliza la app
+  > ya creada (Fast Refresh), para no inicializar Firestore dos veces.
+  > Commit aparte, muéstrame el diff antes. Va en mi siguiente entrada de
+  > bitácora (#22).
+- Resumen de la respuesta: Claude explicó que el aviso no era de permisos ni de código, sino que el celular no llegaba al servidor de Firestore en 10 segundos, y que Firestore seguía funcionando desde el PC. Propuso revisar la conexión del celular y, si se repetía con buena conexión, forzar long polling. En `src/config/firebase.js`, Firestore se crea con `initializeFirestore(app, { experimentalForceLongPolling: true })` al iniciar la app, y con Fast Refresh se reutiliza esa instancia con `getFirestore(app)`.
+- Qué se usó / modificó / descartó:
+  - Se usó: la opción `experimentalForceLongPolling`, que se confirmó en los tipos de Firebase 13.2.0 instalado.
+  - Se descartó: pasar a datos móviles como solución, porque el celular dejaría de llegar al backend del PC (código por correo y ruta hasta el pasajero).
+- Archivos y commit: `src/config/firebase.js` — e6ecc93
+- Verificación: Jest pasa 155 pruebas, `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. Fast Refresh no aplica el cambio: hay que cerrar la app por completo o recargarla. [Completar con la prueba en el celular: el aviso "Could not reach Cloud Firestore backend" ya no aparece]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
