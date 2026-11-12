@@ -256,6 +256,8 @@ export const strings = {
     "home.offlineSubtitle":
       "Conéctate para empezar a recibir solicitudes de viaje.",
     "home.openMenu": "Abrir menú",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "home.todayEarnings": "Hoy",
 
     // Menú lateral
     "drawer.home": "Inicio",
@@ -740,6 +742,8 @@ export const strings = {
       "Looking for trips near you. Your location updates every few seconds.",
     "home.offlineSubtitle": "Go online to start receiving trip requests.",
     "home.openMenu": "Open menu",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "home.todayEarnings": "Today",
 
     "drawer.home": "Home",
     "drawer.profile": "My profile",

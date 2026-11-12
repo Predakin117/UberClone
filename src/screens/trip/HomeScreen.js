@@ -12,8 +12,11 @@ import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
 import { useDriverLocation } from "../../hooks/useDriverLocation";
+import { useEarnings } from "../../hooks/useEarnings";
+import { useEarningsTrips } from "../../hooks/useEarningsTrips";
 import { useDriverStatus } from "../../hooks/useDriverStatus";
 import { useTripRequests } from "../../hooks/useTripRequests";
+import { formatCop } from "../../i18n/format";
 import {
   canReceiveRequests,
   getAvailabilityBlock,
@@ -30,6 +33,10 @@ export default function HomeScreen() {
   const [isOnline, setIsOnline] = useState(false);
   const activeTrip = useTrip();
   const activeTripId = activeTrip.trip?.id ?? null;
+  // AI-assisted: see docs/AI_LOG.md #31
+  // Today's net earnings for the pill on top, the same as the earnings screen
+  const { trips: earningsTrips } = useEarningsTrips();
+  const todayEarnings = useEarnings(earningsTrips).today.netEarnings;
 
   // Solo un conductor aprobado puede ponerse Disponible (sección 2 del enunciado).
   // Si la cuenta no está aprobada queda desconectado, aunque la última vez quedara conectado.
@@ -142,8 +149,23 @@ export default function HomeScreen() {
         <View style={styles.menuSpacer} />
       </View>
 
+      {/* Today's net earnings, under the status chip */}
+      <View
+        style={[styles.earningsPill, { top: insets.top + spacing.md + 60 }]}
+        accessible
+        accessibilityLabel={`${t("home.todayEarnings")} ${formatCop(todayEarnings)}`}
+      >
+        <Text style={styles.earningsLabel}>{t("home.todayEarnings")}</Text>
+        <Text style={styles.earningsAmount}>{formatCop(todayEarnings)}</Text>
+      </View>
+
       {/* Avisos: cuenta sin aprobar, ubicación y solicitudes */}
-      <View style={[styles.notices, { top: insets.top + spacing.md + 60 }]}>
+      <View
+        style={[
+          styles.notices,
+          { top: insets.top + spacing.md + 60 + EARNINGS_PILL_SPACE },
+        ]}
+      >
         {blockKey && (
           <Text style={[styles.notice, styles.noticeInfo]}>{t(blockKey)}</Text>
         )}
@@ -215,6 +237,8 @@ export default function HomeScreen() {
 }
 
 const MENU_SIZE = 48;
+// Height of the earnings pill plus the gap below it
+const EARNINGS_PILL_SPACE = 52;
 const TRACK_WIDTH = 60;
 const THUMB_SIZE = 28;
 const TRACK_PADDING = 3;
@@ -273,6 +297,21 @@ const styles = StyleSheet.create({
   },
   statusDotOnline: { backgroundColor: colors.success },
   statusChipText: { fontSize: 15, fontWeight: "700", color: colors.black },
+
+  earningsPill: {
+    position: "absolute",
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: spacing.sm,
+    backgroundColor: colors.black,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    ...shadow,
+  },
+  earningsLabel: { ...typography.label, color: colors.disabledText },
+  earningsAmount: { fontSize: 18, fontWeight: "700", color: colors.white },
 
   notices: {
     position: "absolute",
