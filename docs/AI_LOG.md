@@ -829,7 +829,34 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se modificó: `simular-solicitud.js` ahora toma `leerVariableEnv`, `revisarProyecto` y la carga de la clave de `proyecto.js` (los sigue exportando para sus pruebas) y usa la constante `PASAJERO_SIMULADO`.
   - Se descartó: pasar la clave de servicio como objeto en vez de ruta para quitar el aviso "keyFilename is deprecated", porque solo cambió por otro aviso igual ("fromJSON is deprecated"); los dos salen de dentro de `firebase-admin` y no afectan.
 - Archivos y commit: `backend/scripts/simular-historial.js`, `backend/scripts/limpiar-simulados.js`, `backend/scripts/proyecto.js`, `backend/scripts/simular-solicitud.js`, `backend/test/simular-historial.test.js`, `backend/package.json` — 632a7cf
-- Verificación: las pruebas del backend pasan 34 (7 nuevas: campos del enunciado, montos iguales a `calculateFare`, mezcla de pagos y categorías, fechas un miércoles, un lunes y el 1 de diciembre, y lotes de 500); Jest de la raíz pasa 158, `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores. `npm run simular-historial -- no-existe-prueba@example.com` comprobó el proyecto `uber-clone-ba0e2` y respondió "No hay ninguna cuenta con el correo…" sin escribir nada. [Pendiente: correrlo con el correo real del conductor, ver los viajes en el historial y las ganancias de la app y luego `npm run limpiar-simulados`]
+- Verificación: las pruebas del backend pasan 34 (7 nuevas: campos del enunciado, montos iguales a `calculateFare`, mezcla de pagos y categorías, fechas un miércoles, un lunes y el 1 de diciembre, y lotes de 500); Jest de la raíz pasa 158, `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores. `npm run simular-historial -- no-existe-prueba@example.com` comprobó el proyecto `uber-clone-ba0e2` y respondió "No hay ninguna cuenta con el correo…" sin escribir nada. Después se corrió con las cuentas de Tamiro (`tamirokrac@gmail.com`) y de Ximena (`ximerosa1307@gmail.com`) en `uber-clone-ba0e2`: cada una quedó con 10 viajes `paid`, confirmados con una consulta a Firestore. Ganancia neta esperada en cada cuenta: hoy 52.240 COP (3 viajes), semana desde el lunes 108.520 COP (6) y mes 182.680 COP (10). [Pendiente: ver los viajes en el historial y las ganancias de la app y luego `npm run limpiar-simulados` antes del video]
+- Aprendizaje: [Completar]
+
+### Entrada #26
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Que el conductor confirme el pago en efectivo y el viaje quede pagado, escribiendo `paymentStatus` y `paid` solo desde el backend.
+- Prompt (punto 4 del mensaje copiado en la entrada #23):
+  > 4. Pago en efectivo, POST /api/v1/pagos/efectivo { tripId }: la app manda
+  >    el token de Firebase del conductor en Authorization: Bearer, y el
+  >    backend lo verifica con firebase-admin (verifyIdToken). Solo si el
+  >    viaje está completed, es de ese conductor y su paymentMethod es cash,
+  >    lo actualiza con paymentStatus "cash" y status "paid". Pruebas con
+  >    firebase-admin simulado. Luego implementa markCashReceived en
+  >    payments.js para llamar a esa ruta.
+- Resumen de la respuesta: `backend/src/pagos.js` tiene `crearPagos({ auth, db })`, que recibe el Auth y el Firestore de firebase-admin. `confirmarEfectivo` lee el token de `Authorization: Bearer`, lo verifica con `verifyIdToken` y, en una transacción, revisa en este orden que el viaje exista, sea del conductor, sea en efectivo y esté `completed`; solo entonces escribe `{ paymentStatus: "cash", status: "paid" }`. `app.js` agrega la ruta `POST /api/v1/pagos/efectivo` y permite la cabecera `Authorization` en CORS. `server.js` inicia firebase-admin con `serviceAccountKey.json`; sin la clave el backend arranca igual y la ruta responde 503. En la app, `markCashReceived(tripId)` toma el token con `auth.currentUser.getIdToken()` y llama a la ruta; nunca lanza y devuelve `sin_backend`, `sin_sesion`, `sin_conexion` o el código del backend (los que la app no conoce llegan como `fallo`).
+- Qué se usó / modificó / descartó:
+  - Se usó: una transacción de Firestore, para que dos toques seguidos no escriban dos veces, y el mismo estilo de `routesApi.js` en la app (tiempo límite de 15 segundos, nunca lanza).
+  - Se modificó: además de lo pedido, si el viaje ya está `paid` en efectivo la ruta responde `{ ok: true }` sin volver a escribir, porque la app puede reintentar después de perder la respuesta. Un `tripId` vacío, que no es texto o con `/` responde 400 `datos_invalidos`. El comentario de `estado_invalido` en `PAYMENT_ERROR_CODES` dejó de decir "o ya está pagado".
+  - Se descartó: revisar que el proyecto de la clave coincida con el de la app (como en los scripts): si no coinciden, `verifyIdToken` rechaza el token y la ruta responde 401 sin escribir.
+- Archivos y commit: `backend/src/pagos.js`, `backend/src/app.js`, `backend/src/server.js`, `backend/test/pagos.test.js`, `backend/README.md`, `src/services/payments.js`, `src/services/payments.test.js` — 4cbf14f
+- Verificación:
+  - Las pruebas del backend pasan 42 (8 nuevas en `pagos.test.js`, con Auth y Firestore de firebase-admin simulados y peticiones HTTP reales al servidor): pago correcto, sin token o token inválido, viaje de otro conductor, método distinto de efectivo, viaje no terminado, viaje inexistente, `tripId` inválido, viaje ya pagado y backend sin firebase-admin.
+  - Jest de la raíz pasa 162 (6 en `payments.test.js`, 5 nuevas para `markCashReceived`), `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores.
+  - Con el backend corriendo de verdad y conectado a `uber-clone-ba0e2`: sin token y con un token falso responde 401 `no_autorizado`, y el preflight de CORS permite `Authorization`. Con un token real de la cuenta de Tamiro (sacado con `createCustomToken` y `signInWithCustomToken`), sobre los viajes simulados de la entrada #25: el de efectivo ya pagado respondió 200 sin cambiar el documento (mismo `updateTime`), el de Mercado Pago 409 `metodo_invalido` y uno inexistente 404 `no_encontrado`.
+  - [Pendiente: probar en el celular, con el botón de Ximena, un viaje real en efectivo que pase de `completed` a `paid`]
 - Aprendizaje: [Completar]
 
 ### Entrada #50
