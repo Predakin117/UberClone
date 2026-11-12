@@ -1,10 +1,11 @@
-// AI-assisted: see docs/AI_LOG.md #11, #21
+// AI-assisted: see docs/AI_LOG.md #11, #21, #26
 // Servidor HTTP con el módulo nativo de Node (sin Express).
 // Rutas (bajo /api/v1):
 //   GET  /health
 //   POST /auth/enviar-codigo     { email, nombre?, motivo: "registro" | "login", dispositivo? }
 //   POST /auth/verificar-codigo  { email, codigo }
 //   POST /rutas                  { origen: { lat, lng }, destino: { lat, lng } }
+//   POST /pagos/efectivo         { tripId }  con "Authorization: Bearer <token de Firebase>"
 const http = require("node:http");
 const { renderCorreo } = require("./mailer");
 const { calcularRuta: calcularRutaOrs } = require("./rutas");
@@ -22,7 +23,7 @@ function responder(res, status, cuerpo) {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   });
   res.end(JSON.stringify(cuerpo));
@@ -63,6 +64,8 @@ function createApp({
   store,
   enviarCorreo,
   calcularRuta = calcularRutaOrs,
+  // crearPagos(...) de ./pagos, o null si firebase-admin no está configurado
+  pagos = null,
   basePath = "/api/v1",
   logger = console,
 }) {
@@ -138,6 +141,22 @@ function createApp({
     }
   }
 
+  // El conductor confirma que recibió el efectivo (backend/src/pagos.js)
+  async function pagoEnEfectivo(req, res, body) {
+    if (!pagos) {
+      return responder(res, 503, {
+        ok: false,
+        codigoError: "pagos_no_configurados",
+        error: "Falta backend/serviceAccountKey.json para confirmar pagos",
+      });
+    }
+    const { status, cuerpo } = await pagos.confirmarEfectivo(
+      req.headers.authorization,
+      body,
+    );
+    return responder(res, status, cuerpo);
+  }
+
   return http.createServer(async (req, res) => {
     const ruta = (req.url || "").split("?")[0];
 
@@ -150,6 +169,7 @@ function createApp({
       [`${basePath}/auth/enviar-codigo`]: enviarCodigo,
       [`${basePath}/auth/verificar-codigo`]: verificarCodigo,
       [`${basePath}/rutas`]: calcularRutaHandler,
+      [`${basePath}/pagos/efectivo`]: pagoEnEfectivo,
     };
     const manejador = rutas[ruta];
     if (!manejador) return responder(res, 404, { ok: false, error: "Ruta no encontrada" });
