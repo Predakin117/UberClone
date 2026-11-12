@@ -1,11 +1,27 @@
-// AI-assisted: see docs/AI_LOG.md #4, #21
+// AI-assisted: see docs/AI_LOG.md #4, #21, #29
 // Tarjeta de solicitud nueva (sección 3 del enunciado). HomeScreen la muestra
 // sobre el mapa con la solicitud más antigua y los segundos que quedan para
-// responder; el temporizador vive en useTripRequests.
-import { useCallback, useMemo, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+// responder; el temporizador vive en useTripRequests. The countdown is also a
+// bar that shrinks from 15 to 0 seconds.
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Animated,
+  Easing,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { calculateFare } from "../config/pricing";
+import {
+  CONTROL_HEIGHT,
+  colors,
+  radius,
+  spacing,
+  typography,
+} from "../config/theme";
 import { useLanguage } from "../contexts/LanguageContext";
+import { REQUEST_SECONDS } from "../hooks/useTripRequests";
 import { respondToRequest } from "../services/tripRepository";
 import { TRIP_STATUS } from "../services/trips";
 
@@ -15,6 +31,27 @@ export default function IncomingRequestCard({ trip, timeLeft, driverStatus }) {
   const { t } = useLanguage();
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
+  // Share of the time left, from 1 (15 s) to 0. Each second it slides to the
+  // next value, so the bar shrinks smoothly instead of jumping.
+  const [progress] = useState(
+    () => new Animated.Value(Math.min(timeLeft / REQUEST_SECONDS, 1)),
+  );
+
+  useEffect(() => {
+    const animation = Animated.timing(progress, {
+      toValue: Math.max(timeLeft - 1, 0) / REQUEST_SECONDS,
+      duration: timeLeft > 0 ? 1000 : 0,
+      easing: Easing.linear,
+      useNativeDriver: false,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [timeLeft, progress]);
+
+  const barWidth = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0%", "100%"],
+  });
 
   // La misma función que cierra el viaje: la estimación coincide con el cobro.
   // Con una categoría desconocida no hay estimación.
@@ -72,10 +109,32 @@ export default function IncomingRequestCard({ trip, timeLeft, driverStatus }) {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.timerText}>
-          {t("request.seconds").replace("{seconds}", timeLeft)}
-        </Text>
+        <TouchableOpacity
+          style={[styles.rejectButton, isSending && styles.disabled]}
+          onPress={handleReject}
+          disabled={isSending}
+          hitSlop={spacing.md}
+          accessibilityRole="button"
+          accessibilityLabel={t("request.reject")}
+        >
+          <View style={[styles.crossBar, styles.crossForward]} />
+          <View style={[styles.crossBar, styles.crossBack]} />
+        </TouchableOpacity>
+
         <Text style={styles.title}>{t("request.title")}</Text>
+
+        <View style={styles.timerRow}>
+          <View
+            style={styles.timerTrack}
+            accessibilityRole="progressbar"
+            accessibilityValue={{ min: 0, max: REQUEST_SECONDS, now: timeLeft }}
+          >
+            <Animated.View style={[styles.timerFill, { width: barWidth }]} />
+          </View>
+          <Text style={styles.timerText}>
+            {t("request.seconds").replace("{seconds}", timeLeft)}
+          </Text>
+        </View>
 
         <View style={styles.infoContainer}>
           {rows.map(([label, value]) => (
@@ -88,7 +147,9 @@ export default function IncomingRequestCard({ trip, timeLeft, driverStatus }) {
             <>
               <View style={styles.row}>
                 <Text style={styles.label}>{t("request.fare")}</Text>
-                <Text style={styles.value}>{formatCop(estimate.fare)}</Text>
+                <Text style={[styles.value, styles.money]}>
+                  {formatCop(estimate.fare)}
+                </Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>{t("request.earnings")}</Text>
@@ -102,77 +163,96 @@ export default function IncomingRequestCard({ trip, timeLeft, driverStatus }) {
 
         {error && <Text style={styles.errorText}>{t(error)}</Text>}
 
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={[styles.button, styles.btnReject, isSending && styles.disabled]}
-            onPress={handleReject}
-            disabled={isSending}
-            accessibilityRole="button"
-          >
-            <Text style={styles.buttonText}>{t("request.reject")}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, styles.btnAccept, isSending && styles.disabled]}
-            onPress={handleAccept}
-            disabled={isSending}
-            accessibilityRole="button"
-          >
-            <Text style={styles.buttonText}>{t("request.accept")}</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.acceptButton, isSending && styles.disabled]}
+          onPress={handleAccept}
+          disabled={isSending}
+          accessibilityRole="button"
+        >
+          <Text style={styles.acceptText}>{t("request.accept")}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
+const CROSS_SIZE = 14;
+
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: colors.backdrop,
     justifyContent: "center",
-    padding: 20,
+    padding: spacing.xl - 4,
   },
   card: {
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 25,
-    alignItems: "center",
+    backgroundColor: colors.background,
+    borderRadius: radius.lg,
+    padding: spacing.xl,
     elevation: 10,
   },
-  timerText: {
-    fontSize: 40,
-    fontWeight: "bold",
-    color: "#E53935",
-    marginBottom: 10,
+  // Discreet X in the top right corner to decline
+  rejectButton: {
+    position: "absolute",
+    top: spacing.lg,
+    right: spacing.lg,
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
   },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
-  infoContainer: { width: "100%", marginBottom: 20, gap: 8 },
-  row: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
-  label: { fontSize: 14, color: "#666" },
-  value: { flex: 1, fontSize: 14, color: "#222", textAlign: "right" },
+  crossBar: {
+    position: "absolute",
+    width: CROSS_SIZE,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.textSecondary,
+  },
+  crossForward: { transform: [{ rotate: "45deg" }] },
+  crossBack: { transform: [{ rotate: "-45deg" }] },
+  title: { ...typography.section, marginBottom: spacing.md, paddingRight: 40 },
+  timerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginBottom: spacing.xl - 4,
+  },
+  timerTrack: {
+    flex: 1,
+    height: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    overflow: "hidden",
+  },
+  timerFill: {
+    height: "100%",
+    borderRadius: radius.pill,
+    backgroundColor: colors.black,
+  },
+  timerText: { ...typography.label, minWidth: 36, textAlign: "right" },
+  infoContainer: { marginBottom: spacing.xl - 4, gap: spacing.sm },
+  row: { flexDirection: "row", justifyContent: "space-between", gap: spacing.md },
+  label: { ...typography.caption, fontSize: 14 },
+  value: { ...typography.body, fontSize: 14, flex: 1, textAlign: "right" },
+  money: { color: colors.success, fontWeight: "600" },
   earningsText: {
     flex: 1,
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#2E7D32",
+    fontWeight: "700",
+    color: colors.success,
     textAlign: "right",
   },
-  errorText: { color: "red", fontSize: 13, marginBottom: 12 },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  button: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 10,
-    marginHorizontal: 5,
+  errorText: { ...typography.caption, color: colors.error, marginBottom: spacing.md },
+  acceptButton: {
+    minHeight: CONTROL_HEIGHT + 4,
+    borderRadius: radius.md,
+    backgroundColor: colors.black,
     alignItems: "center",
+    justifyContent: "center",
   },
-  btnReject: { backgroundColor: "#F44336" },
-  btnAccept: { backgroundColor: "#4CAF50" },
+  acceptText: { color: colors.white, fontSize: 18, fontWeight: "700" },
   disabled: { opacity: 0.6 },
-  buttonText: { color: "white", fontWeight: "bold", fontSize: 16 },
 });

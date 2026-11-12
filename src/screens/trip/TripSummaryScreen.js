@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #4, #21, #28
+// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29
 // Cobro y resumen del viaje (sección 3 del enunciado): tarifa final, comisión,
 // ganancia neta y estado del pago. Los montos son los que se guardaron al
 // completar el viaje, calculados con calculateFare. The trip is listened to in
@@ -13,7 +13,13 @@ import {
   View,
 } from "react-native";
 import FieldMessage from "../../components/FieldMessage";
-import { colors, radius, spacing } from "../../config/theme";
+import {
+  CONTROL_HEIGHT,
+  colors,
+  radius,
+  spacing,
+  typography,
+} from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../hooks/useTrip";
 import { markCashReceived } from "../../services/payments";
@@ -131,42 +137,44 @@ export default function TripSummaryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#fff",
+    padding: spacing.xl - 4,
+    backgroundColor: colors.background,
     justifyContent: "center",
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
+    ...typography.title,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: spacing.xl - 4,
   },
   card: {
-    backgroundColor: "#f5f5f5",
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
+    backgroundColor: colors.surface,
+    padding: spacing.xl - 4,
+    borderRadius: radius.md,
+    marginBottom: spacing.xl - 4,
   },
-  detailText: { fontSize: 16, marginBottom: 10, color: "#333" },
+  detailText: { ...typography.body, marginBottom: spacing.sm + 2 },
   receipt: {
-    backgroundColor: "#e8f5e9",
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 40,
+    backgroundColor: colors.surface,
+    padding: spacing.xl - 4,
+    borderRadius: radius.md,
+    marginBottom: spacing.xxl + 8,
   },
-  receiptText: { fontSize: 16, marginBottom: 10, color: "#424242" },
+  receiptText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm + 2,
+  },
   earnText: {
     fontSize: 22,
-    fontWeight: "bold",
-    color: "#2E7D32",
-    marginVertical: 10,
+    fontWeight: "700",
+    color: colors.success,
+    marginVertical: spacing.sm + 2,
   },
-  errorText: { fontSize: 18, color: "red", textAlign: "center" },
-  // AI-assisted: see docs/AI_LOG.md #28
+  errorText: { ...typography.body, fontSize: 18, color: colors.error, textAlign: "center" },
   cashBlock: { marginTop: -spacing.xl, marginBottom: spacing.xl },
   cashButton: {
-    minHeight: 52,
-    borderRadius: radius.md,
+    minHeight: CONTROL_HEIGHT,
+    borderRadius: radius.pill,
     borderWidth: 2,
     borderColor: colors.black,
     backgroundColor: colors.white,
@@ -175,12 +183,14 @@ const styles = StyleSheet.create({
   },
   cashButtonBusy: { borderColor: colors.border },
   busyRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  cashButtonText: { color: colors.black, fontSize: 18, fontWeight: "bold" },
+  cashButtonText: { color: colors.black, fontSize: 18, fontWeight: "700" },
+  // Main button: black with white text
   button: {
-    backgroundColor: "#000",
-    padding: 18,
-    borderRadius: 12,
+    minHeight: CONTROL_HEIGHT + 4,
+    backgroundColor: colors.black,
+    borderRadius: radius.md,
     alignItems: "center",
+    justifyContent: "center",
   },
-  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  buttonText: { color: colors.white, fontSize: 18, fontWeight: "700" },
 });

@@ -296,6 +296,9 @@ export const strings = {
     "activeTrip.straightLine":
       "Ruta aproximada: no se pudo calcular la ruta por las calles.",
     "activeTrip.loadingRoute": "Calculando la ruta hasta el pasajero…",
+    // AI-assisted: see docs/AI_LOG.md #29
+    "activeTrip.navigate": "Navegar",
+    "activeTrip.navigateFailed": "No se pudo abrir Google Maps.",
     "activeTrip.noLocation":
       "No hay ubicación del conductor: no se puede trazar la ruta hasta el pasajero.",
 
@@ -721,6 +724,9 @@ export const strings = {
     "activeTrip.straightLine":
       "Approximate route: the street route could not be calculated.",
     "activeTrip.loadingRoute": "Calculating the route to the passenger…",
+    // AI-assisted: see docs/AI_LOG.md #29
+    "activeTrip.navigate": "Navigate",
+    "activeTrip.navigateFailed": "Google Maps could not be opened.",
     "activeTrip.noLocation":
       "No driver location: the route to the passenger cannot be drawn.",
 

@@ -1,5 +1,5 @@
 import polyline from "@mapbox/polyline";
-import { pickupRoute, tripRoute } from "./tripRoute";
+import { navigationUrl, pickupRoute, tripRoute } from "./tripRoute";
 
 const trip = {
   origin: { lat: 6.25185, lng: -75.56864, address: "Plaza Botero" },
@@ -62,5 +62,31 @@ describe("pickupRoute", () => {
     expect(pickupRoute(driver, trip.origin, { ok: true, encodedPolyline: "" })).toEqual(
       straightLine,
     );
+  });
+});
+
+// AI-assisted: see docs/AI_LOG.md #29
+describe("navigationUrl", () => {
+  const maps = "https://www.google.com/maps/dir/?api=1&destination=";
+
+  it("goes to the pickup point while the driver is arriving", () => {
+    expect(navigationUrl({ ...trip, status: "driver_arriving" })).toBe(
+      `${maps}6.25185,-75.56864`,
+    );
+  });
+
+  it("goes to the destination with the passenger on board", () => {
+    expect(navigationUrl({ ...trip, status: "in_progress" })).toBe(
+      `${maps}6.25683,-75.59015`,
+    );
+  });
+
+  it("has nowhere to go in other states or without coordinates", () => {
+    expect(navigationUrl({ ...trip, status: "accepted" })).toBeNull();
+    expect(navigationUrl({ ...trip, status: "completed" })).toBeNull();
+    expect(navigationUrl(null)).toBeNull();
+    expect(
+      navigationUrl({ status: "in_progress", destination: { address: "x" } }),
+    ).toBeNull();
   });
 });
