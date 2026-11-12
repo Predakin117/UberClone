@@ -5,16 +5,20 @@
 import {
   collection,
   doc,
+  limit,
   onSnapshot,
+  orderBy,
   query,
   runTransaction,
   serverTimestamp,
+  Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 import {
   ACTIVE_STATUSES,
+  TRIP_STATUS,
   completionFields,
   validateDriverUpdate,
 } from "./trips";
@@ -114,3 +118,67 @@ export const subscribeToActiveTrip = (uid, onTrip, onError) => {
     onError,
   );
 };
+
+// AI-assisted: see docs/AI_LOG.md #28
+// Finished trips shown in the history and the earnings
+export const HISTORY_STATUSES = [TRIP_STATUS.COMPLETED, TRIP_STATUS.PAID];
+export const HISTORY_LIMIT = 20;
+
+// A trip completed a moment ago has completedAt = null in the local snapshot
+// until the server answers: "estimate" gives the phone's time meanwhile.
+const tripFromDoc = (tripDoc) => ({
+  id: tripDoc.id,
+  ...tripDoc.data({ serverTimestamps: "estimate" }),
+});
+
+/**
+ * Listens to the last HISTORY_LIMIT finished trips of the driver (completed or
+ * paid), newest first by completedAt. onTrips receives the list. Needs the
+ * composite index driverId ↑, status ↑, completedAt ↓ (see docs/APIS.md).
+ * Returns the unsubscribe function for the useEffect cleanup.
+ */
+export const subscribeToTripHistory = (uid, onTrips, onError) => {
+  const finishedTrips = query(
+    collection(db, "trips"),
+    where("driverId", "==", uid),
+    where("status", "in", HISTORY_STATUSES),
+    orderBy("completedAt", "desc"),
+    limit(HISTORY_LIMIT),
+  );
+  return onSnapshot(
+    finishedTrips,
+    (snapshot) => onTrips(snapshot.docs.map(tripFromDoc)),
+    onError,
+  );
+};
+
+/**
+ * Listens to all the finished trips of the driver (completed or paid) with
+ * completedAt since sinceMillis, newest first, without a limit: the earnings
+ * need every trip of the period. Uses the same composite index as the history.
+ */
+export const subscribeToTripsSince = (uid, sinceMillis, onTrips, onError) => {
+  const finishedTrips = query(
+    collection(db, "trips"),
+    where("driverId", "==", uid),
+    where("status", "in", HISTORY_STATUSES),
+    where("completedAt", ">=", Timestamp.fromMillis(sinceMillis)),
+    orderBy("completedAt", "desc"),
+  );
+  return onSnapshot(
+    finishedTrips,
+    (snapshot) => onTrips(snapshot.docs.map(tripFromDoc)),
+    onError,
+  );
+};
+
+/**
+ * Listens to one trip by id (for example, to see its payment status change).
+ * onTrip receives the trip, or null if it does not exist.
+ */
+export const subscribeToTrip = (tripId, onTrip, onError) =>
+  onSnapshot(
+    doc(db, "trips", tripId),
+    (tripDoc) => onTrip(tripDoc.exists() ? tripFromDoc(tripDoc) : null),
+    onError,
+  );

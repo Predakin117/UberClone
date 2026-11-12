@@ -95,6 +95,10 @@ qué paso se crea.
     se renombran.
   - Si cambia `firestore.rules`, hay que publicarlas a mano en la consola de
     Firebase (Firestore Database → Reglas → Publicar).
+  - El historial (`subscribeToTripHistory` en `src/services/tripRepository.js`)
+    necesita un índice compuesto en `trips`: `driverId` ↑, `status` ↑,
+    `completedAt` ↓. Se crea en Firestore Database → Índices, o con el link que
+    sale en la consola de Metro si falta.
 
 ### 6. Cloudinary
 
