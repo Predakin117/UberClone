@@ -712,6 +712,71 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Verificación: Jest pasa 155 pruebas, `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. Fast Refresh no aplica el cambio: hay que cerrar la app por completo o recargarla. [Completar con la prueba en el celular: el aviso "Could not reach Cloud Firestore backend" ya no aparece]
 - Aprendizaje: [Completar]
 
+### Entrada #23
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Publicar el contrato de `src/services/payments.js` (todavía sin implementar) para que Ximena pueda conectar los botones de pago del frontend mientras se hace el backend.
+- Prompt (mensaje completo; las entradas #24 a #27 son los puntos 2 a 5 de este mismo mensaje):
+  > Soy Tamiro. Sigo en una rama nueva tamiro/backend-pagos creada desde main
+  > actualizado. Ximena se encarga del frontend en ximena/frontend: no toques
+  > src/screens/main/, TripSummaryScreen.js, MainDrawer.js, useEarnings ni
+  > useTripHistory. Cada tarea con su commit y su entrada de bitácora, desde
+  > la #23. Muéstrame el diff antes de cada commit.
+  >
+  > 1. URGENTE, para desbloquear a Ximena: crea src/services/payments.js con
+  >    este contrato, por ahora sin implementar, y haz commit y push de
+  >    inmediato:
+  >    - startMercadoPagoPayment(tripId) → { ok, url } o { ok: false, codigoError }
+  >    - markCashReceived(tripId) → { ok } o { ok: false, codigoError }
+  >    Nunca lanzan errores, como routesApi.js.
+  >
+  > 2. Agrega ORS_API_KEY= sin valor a backend/.env.example, y en el README,
+  >    en Tecnologías, OpenRouteService y Nominatim con el crédito
+  >    "© OpenStreetMap contributors". Actualiza la sección Alcance con lo
+  >    que ya está hecho.
+  >
+  > 3. Simulador de viajes terminados para que Ximena pruebe historial y
+  >    ganancias: un script (npm run simular-historial -- <correo del
+  >    conductor>) que busque el uid con firebase-admin y cree unos 10 viajes
+  >    completed y paid a nombre de ese conductor, repartidos entre hoy, esta
+  >    semana y este mes, mezclando efectivo y mercadopago y las 3 categorías.
+  >    Los montos deben salir de calculateFare de src/config/pricing.js, sin
+  >    duplicar la fórmula si es posible (si no se puede, explícame por qué).
+  >    Todos con passengerId "pasajero-simulado". Agrega también
+  >    npm run limpiar-simulados, que borre solo los viajes con ese
+  >    passengerId, para dejar Firestore limpio antes del video. Los dos
+  >    scripts usan la misma protección de proyecto que el simulador.
+  >
+  > 4. Pago en efectivo, POST /api/v1/pagos/efectivo { tripId }: la app manda
+  >    el token de Firebase del conductor en Authorization: Bearer, y el
+  >    backend lo verifica con firebase-admin (verifyIdToken). Solo si el
+  >    viaje está completed, es de ese conductor y su paymentMethod es cash,
+  >    lo actualiza con paymentStatus "cash" y status "paid". Pruebas con
+  >    firebase-admin simulado. Luego implementa markCashReceived en
+  >    payments.js para llamar a esa ruta.
+  >
+  > 5. Ubicación a Firestore (sección 3): en useDriverLocation, mientras el
+  >    conductor está conectado, guarda en drivers/{uid} su ubicación
+  >    ({ lat, lng } y la hora del servidor) como máximo cada 10 segundos, y
+  >    un campo de disponibilidad. Al desconectarse o salir de la pantalla,
+  >    deja de guardar y marca no disponible. Revisa que firestore.rules lo
+  >    permita sin cambiar el status del conductor.
+  >
+  > 6. Mercado Pago: pregúntame antes de empezar. Necesitaré
+  >    MP_ACCESS_TOKEN y la URL pública del túnel de Cloudflare.
+  >
+  > Antes de cada commit: npm test en la raíz y en backend/, npx expo lint sin
+  > errores y npx tsc --noEmit.
+- Resumen de la respuesta: Claude avisó que la rama `tamiro/backend-pagos` no existía y que había 12 archivos del registro sin commit en `tamiro/fotos-documentos`; por decisión de Tamiro se guardaron en un commit WIP en esa rama (sin push) y se creó `tamiro/backend-pagos` desde `main`. Se creó `src/services/payments.js` con `startMercadoPagoPayment(tripId)` y `markCashReceived(tripId)`, que por ahora devuelven `{ ok: false, codigoError: "no_implementado" }` sin lanzar, y la lista `PAYMENT_ERROR_CODES` con los códigos que devolverán cuando estén implementadas, para que el frontend sepa cuáles traducir.
+- Qué se usó / modificó / descartó:
+  - Se usó: el mismo estilo de `routesApi.js` (nunca lanza, devuelve `codigoError`).
+  - Se descartó: agregar los textos `payment.error.<código>` a `strings.js` en este commit, para no chocar con los cambios de Ximena en el frontend.
+- Archivos y commit: `src/services/payments.js`, `src/services/payments.test.js` — ddd385f
+- Verificación: Jest pasa 158 pruebas (3 nuevas en `payments.test.js`), las 27 del backend pasan, `npx expo lint .` queda sin errores (3 avisos que ya existían) y `npx tsc --noEmit` no da errores.
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
