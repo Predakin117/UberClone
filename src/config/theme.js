@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #56, #59
+// AI-assisted: see docs/AI_LOG.md #56, #59, #60
 // Visual theme of the app: black and white with light gray surfaces, bold
 // type and pill-shaped secondary buttons. Screens and components take their
 // colors, sizes and spacing from here instead of writing them by hand.
@@ -21,6 +21,8 @@ export const colors = {
   // Background of the "In review" labels
   warningBackground: "#FFF4E5",
   success: "#05944F",
+  // Background of the green labels (paid, approved)
+  successBackground: "#E6F4EC",
   link: "#276EF1",
   backdrop: "rgba(0, 0, 0, 0.5)",
   // Welcome screen: dark gray shapes and secondary text on the black background

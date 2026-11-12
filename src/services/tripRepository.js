@@ -134,18 +134,25 @@ const tripFromDoc = (tripDoc) => ({
 });
 
 /**
- * Listens to the last HISTORY_LIMIT finished trips of the driver (completed or
+ * Listens to the last maxTrips finished trips of the driver (completed or
  * paid), newest first by completedAt. onTrips receives the list. Needs the
  * composite index driverId ↑, status ↑, completedAt ↓ (see docs/APIS.md).
  * Returns the unsubscribe function for the useEffect cleanup.
  */
-export const subscribeToTripHistory = (uid, onTrips, onError) => {
+// AI-assisted: see docs/AI_LOG.md #60
+// maxTrips grows by HISTORY_LIMIT with "Load more" (20 trips per load)
+export const subscribeToTripHistory = (
+  uid,
+  onTrips,
+  onError,
+  maxTrips = HISTORY_LIMIT,
+) => {
   const finishedTrips = query(
     collection(db, "trips"),
     where("driverId", "==", uid),
     where("status", "in", HISTORY_STATUSES),
     orderBy("completedAt", "desc"),
-    limit(HISTORY_LIMIT),
+    limit(maxTrips),
   );
   return onSnapshot(
     finishedTrips,

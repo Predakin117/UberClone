@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #28, #31
+// AI-assisted: see docs/AI_LOG.md #28, #31, #60
 // Formats for amounts and dates shown on screen, by language.
 
 const LOCALES = { es: "es-CO", en: "en-US" };
@@ -27,3 +27,21 @@ export const formatDecimal = (value, language) =>
   Number(value).toLocaleString(LOCALES[language] ?? LOCALES.es, {
     maximumFractionDigits: 1,
   });
+
+// AI-assisted: see docs/AI_LOG.md #60
+// Day header of the history, e.g. "mié, 12 nov" in Spanish
+export const formatDay = (millis, language) =>
+  new Date(millis).toLocaleDateString(LOCALES[language] ?? LOCALES.es, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+
+// Time of a trip, e.g. "3:05 p. m." in Spanish
+export const formatTime = (millis, language) =>
+  millis == null
+    ? ""
+    : new Date(millis).toLocaleTimeString(LOCALES[language] ?? LOCALES.es, {
+        hour: "numeric",
+        minute: "2-digit",
+      });

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56, #58, #59
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56, #58, #59, #60
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -566,6 +566,38 @@ export const strings = {
     "submitted.notice":
       "Mientras tu cuenta está en revisión no podrás ponerte Disponible.",
     "submitted.goHome": "Ir al inicio",
+    // AI-assisted: see docs/AI_LOG.md #60
+    "history.range": "Rango",
+    "history.from": "Desde",
+    "history.to": "Hasta",
+    "history.paymentAll": "Todos",
+    "history.yesterday": "Ayer",
+    "history.tripsCount": "{count} viajes",
+    "history.tripsCountOne": "1 viaje",
+    "history.loadMore": "Cargar más viajes",
+    "history.openTrip": "Ver el detalle del viaje",
+    "history.emptyFiltered": "No hay viajes con estos filtros.",
+    "errors.dateRangeRequired": "Elige la fecha",
+    "errors.dateRangeOrder": "Debe ser igual o posterior a la fecha de inicio",
+    "tripDetail.title": "Detalle del viaje",
+    "tripDetail.loading": "Cargando el viaje…",
+    "tripDetail.earned": "Ganaste",
+    "tripDetail.breakdown": "Detalle del cobro",
+    "tripDetail.ratings": "Calificaciones",
+    "tripDetail.riderRatedYou": "El pasajero te calificó",
+    "tripDetail.youRatedRider": "Calificaste al pasajero",
+    "tripDetail.notRated": "Sin calificar",
+    "tripDetail.approxRoute":
+      "Ruta aproximada: este viaje no tiene guardada la ruta real.",
+    // AI-assisted: see docs/AI_LOG.md #60
+    "activeTrip.swipeStart": "Desliza para iniciar el viaje",
+    "activeTrip.swipeFinish": "Desliza para finalizar el viaje",
+    "swipe.hint": "Desliza hacia la derecha para confirmar",
+    // AI-assisted: see docs/AI_LOG.md #60
+    "home.go": "IR",
+    "home.goOnline": "Conectarme",
+    "home.goOffline": "Desconectarme",
+    "home.searching": "Buscando viajes…",
   },
 
   en: {
@@ -1081,6 +1113,38 @@ export const strings = {
     "submitted.expires": "Expires on {date}",
     "submitted.notice": "While your account is under review you can't go online.",
     "submitted.goHome": "Go to home",
+    // AI-assisted: see docs/AI_LOG.md #60
+    "history.range": "Range",
+    "history.from": "From",
+    "history.to": "To",
+    "history.paymentAll": "All",
+    "history.yesterday": "Yesterday",
+    "history.tripsCount": "{count} trips",
+    "history.tripsCountOne": "1 trip",
+    "history.loadMore": "Load more trips",
+    "history.openTrip": "See the trip details",
+    "history.emptyFiltered": "There are no trips with these filters.",
+    "errors.dateRangeRequired": "Choose the date",
+    "errors.dateRangeOrder": "Must be on or after the start date",
+    "tripDetail.title": "Trip details",
+    "tripDetail.loading": "Loading the trip…",
+    "tripDetail.earned": "You earned",
+    "tripDetail.breakdown": "Fare breakdown",
+    "tripDetail.ratings": "Ratings",
+    "tripDetail.riderRatedYou": "The rider rated you",
+    "tripDetail.youRatedRider": "You rated the rider",
+    "tripDetail.notRated": "Not rated",
+    "tripDetail.approxRoute":
+      "Approximate route: this trip doesn't have the real route saved.",
+    // AI-assisted: see docs/AI_LOG.md #60
+    "activeTrip.swipeStart": "Swipe to start the trip",
+    "activeTrip.swipeFinish": "Swipe to end the trip",
+    "swipe.hint": "Swipe right to confirm",
+    // AI-assisted: see docs/AI_LOG.md #60
+    "home.go": "GO",
+    "home.goOnline": "Go online",
+    "home.goOffline": "Go offline",
+    "home.searching": "Finding trips…",
   },
 };
 

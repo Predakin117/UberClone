@@ -2,8 +2,10 @@
 import {
   formatCop,
   formatDateTime,
+  formatDay,
   formatDecimal,
   formatSignedCop,
+  formatTime,
 } from "./format";
 
 describe("formatCop", () => {
@@ -41,5 +43,19 @@ describe("formatDecimal", () => {
     expect(formatDecimal(2.44, "es")).toBe("2,4");
     expect(formatDecimal(2.44, "en")).toBe("2.4");
     expect(formatDecimal(3, "es")).toBe("3");
+  });
+});
+
+// AI-assisted: see docs/AI_LOG.md #60
+describe("formatDay and formatTime", () => {
+  const millis = new Date(2026, 10, 12, 15, 5).getTime();
+
+  it("shows the weekday, day and month of the history headers", () => {
+    expect(formatDay(millis, "en")).toMatch(/Thu.*Nov.*12|Thu.*12.*Nov/);
+  });
+
+  it("shows the hour and minutes of a trip", () => {
+    expect(formatTime(millis, "en")).toMatch(/3:05/);
+    expect(formatTime(null, "en")).toBe("");
   });
 });
