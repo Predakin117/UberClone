@@ -1,6 +1,37 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { crearSolicitud, RUTAS, LUGARES } = require("../scripts/simular-solicitud");
+const {
+  crearSolicitud,
+  leerVariableEnv,
+  revisarProyecto,
+  RUTAS,
+  LUGARES,
+} = require("../scripts/simular-solicitud");
+
+test("no deja escribir si la clave es de otro proyecto que la app", () => {
+  // Lo que pasó el 2026-11-11: la clave era de otro proyecto de Firebase
+  assert.match(
+    revisarProyecto("biblioteca-clase", "uber-clone-ba0e2"),
+    /biblioteca-clase.*uber-clone-ba0e2/,
+  );
+  assert.match(revisarProyecto("uber-clone-ba0e2", null), /no se puede comprobar/);
+  assert.equal(revisarProyecto("uber-clone-ba0e2", "uber-clone-ba0e2"), null);
+});
+
+test("lee el proyecto de la app del .env de la raíz", () => {
+  const env = [
+    "# comentario",
+    "EXPO_PUBLIC_FIREBASE_API_KEY=abc",
+    'EXPO_PUBLIC_FIREBASE_PROJECT_ID="uber-clone-ba0e2"',
+    "EXPO_PUBLIC_FIREBASE_PROJECT_ID_EXTRA=otro",
+  ].join("\r\n");
+  assert.equal(
+    leerVariableEnv(env, "EXPO_PUBLIC_FIREBASE_PROJECT_ID"),
+    "uber-clone-ba0e2",
+  );
+  assert.equal(leerVariableEnv(env, "NO_EXISTE"), null);
+  assert.equal(leerVariableEnv("EXPO_PUBLIC_FIREBASE_PROJECT_ID=", "EXPO_PUBLIC_FIREBASE_PROJECT_ID"), null);
+});
 
 // Campos de la tabla de la sección 6 del enunciado (los mismos de TRIP_FIELDS en
 // src/services/trips.js), más routePolyline para dibujar la ruta
