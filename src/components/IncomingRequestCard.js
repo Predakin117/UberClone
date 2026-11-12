@@ -1,9 +1,11 @@
 // AI-assisted: see docs/AI_LOG.md #4, #21, #29, #31, #59
 // New request card (section 3 of the project statement). HomeScreen shows it
 // on the map with the oldest request and the seconds left to answer; the
-// timer lives in useTripRequests. The countdown is also a
-// bar that shrinks from 15 to 0 seconds. On top, the straight-line time and
-// distance to the pickup point (no OpenRouteService call here, section 7).
+// timer lives in useTripRequests. The countdown is a ring around the accept
+// button that empties from 15 to 0 seconds. It also shows the straight-line
+// time and distance to the pickup point (no OpenRouteService call here,
+// section 7).
+import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Animated,
@@ -14,20 +16,17 @@ import {
   Vibration,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { calculateFare } from "../config/pricing";
-import {
-  CONTROL_HEIGHT,
-  colors,
-  radius,
-  spacing,
-  typography,
-} from "../config/theme";
+import { colors, radius, spacing, typography } from "../config/theme";
 import { useLanguage } from "../contexts/LanguageContext";
 import { REQUEST_SECONDS } from "../hooks/useTripRequests";
 import { formatDecimal } from "../i18n/format";
 import { pickupEstimate } from "../services/pickupEstimate";
 import { respondToRequest } from "../services/tripRepository";
 import { TRIP_STATUS } from "../services/trips";
+import CountdownRing from "./CountdownRing";
+import RouteStops from "./RouteStops";
 
 const formatCop = (amount) => `$${amount.toLocaleString("es-CO")} COP`;
 
@@ -44,10 +43,11 @@ export default function IncomingRequestCard({
   driverLocation,
 }) {
   const { t, language } = useLanguage();
+  const insets = useSafeAreaInsets();
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
   // Share of the time left, from 1 (15 s) to 0. Each second it slides to the
-  // next value, so the bar shrinks smoothly instead of jumping.
+  // next value, so the ring shrinks smoothly instead of jumping.
   const [progress] = useState(
     () => new Animated.Value(Math.min(timeLeft / REQUEST_SECONDS, 1)),
   );
@@ -71,11 +71,6 @@ export default function IncomingRequestCard({
     Vibration.vibrate(NEW_REQUEST_VIBRATION);
     return () => Vibration.cancel();
   }, []);
-
-  const barWidth = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0%", "100%"],
-  });
 
   // Straight line from the driver to the pickup point; null without location
   const toPickup = useMemo(
@@ -124,178 +119,230 @@ export default function IncomingRequestCard({
     }
   }, [trip.id, driverStatus]);
 
-  const rows = [
-    [t("request.origin"), trip.origin?.address],
-    [t("request.destination"), trip.destination?.address],
-    [t("request.distance"), t("request.km").replace("{km}", trip.distanceKm)],
-    [
-      t("request.duration"),
-      t("request.minutes").replace("{minutes}", trip.durationMin),
-    ],
-    [t("request.category"), t(`category.${trip.category}`)],
-    [t("request.paymentMethod"), t(`payment.${trip.paymentMethod}`)],
-  ];
-
+  // AI-assisted: see docs/AI_LOG.md #60
+  // Only the look changes, like Uber: a sheet from the bottom with the
+  // category, the fare in big numbers, the route and a round Accept button
+  // with the time left as a ring around it. Every field of section 3 is still
+  // here: origin, destination, distance, duration, category, payment method,
+  // estimated fare and net earnings, and the 15-second timer.
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
-        <TouchableOpacity
-          style={[styles.rejectButton, isSending && styles.disabled]}
-          onPress={handleReject}
-          disabled={isSending}
-          hitSlop={spacing.md}
-          accessibilityRole="button"
-          accessibilityLabel={t("request.reject")}
-        >
-          <View style={[styles.crossBar, styles.crossForward]} />
-          <View style={[styles.crossBar, styles.crossBack]} />
-        </TouchableOpacity>
-
-        {toPickup && (
-          <Text style={styles.pickupText}>
-            {t("request.pickupEstimate")
-              .replace("{minutes}", toPickup.minutes)
-              .replace("{km}", formatDecimal(toPickup.km, language))}
-          </Text>
-        )}
-        <Text style={styles.title}>{t("request.title")}</Text>
-
-        <View style={styles.timerRow}>
-          <View
-            style={styles.timerTrack}
-            accessibilityRole="progressbar"
-            accessibilityValue={{ min: 0, max: REQUEST_SECONDS, now: timeLeft }}
-          >
-            <Animated.View style={[styles.timerFill, { width: barWidth }]} />
+      <View
+        style={[
+          styles.card,
+          { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.sm },
+        ]}
+      >
+        <View style={styles.topRow}>
+          <View style={styles.categoryTag}>
+            <Ionicons name="car" size={14} color={colors.white} />
+            <Text style={styles.categoryText}>
+              {t(`category.${trip.category}`)}
+            </Text>
           </View>
-          <Text style={styles.timerText}>
-            {t("request.seconds").replace("{seconds}", timeLeft)}
-          </Text>
+          <View style={styles.paymentTag}>
+            <Ionicons
+              name={trip.paymentMethod === "cash" ? "cash-outline" : "card-outline"}
+              size={14}
+              color={colors.black}
+            />
+            <Text style={styles.paymentText}>
+              {t(`payment.${trip.paymentMethod}`)}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.rejectButton, isSending && styles.disabled]}
+            onPress={handleReject}
+            disabled={isSending}
+            hitSlop={spacing.md}
+            accessibilityRole="button"
+            accessibilityLabel={t("request.reject")}
+          >
+            <Ionicons name="close" size={22} color={colors.black} />
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.infoContainer}>
-          {rows.map(([label, value]) => (
-            <View key={label} style={styles.row}>
-              <Text style={styles.label}>{label}</Text>
-              <Text style={styles.value}>{value}</Text>
-            </View>
-          ))}
-          {estimate && (
-            <>
-              <View style={styles.row}>
-                <Text style={styles.label}>{t("request.fare")}</Text>
-                <Text style={[styles.value, styles.money]}>
-                  {formatCop(estimate.fare)}
-                </Text>
-              </View>
-              <View style={styles.row}>
-                <Text style={styles.label}>{t("request.earnings")}</Text>
-                <Text style={styles.earningsText}>
-                  {formatCop(estimate.driverEarnings)}
-                </Text>
-              </View>
-            </>
-          )}
+        <Text style={styles.title}>{t("request.title")}</Text>
+        {estimate && (
+          <>
+            <Text
+              style={styles.fare}
+              accessibilityLabel={`${t("request.fare")} ${formatCop(estimate.fare)}`}
+            >
+              {formatCop(estimate.fare)}
+            </Text>
+            <Text style={styles.earnings}>
+              {t("request.earnings")}: {formatCop(estimate.driverEarnings)}
+            </Text>
+          </>
+        )}
+
+        {toPickup && (
+          <View style={styles.pickupRow}>
+            <Ionicons name="person-outline" size={16} color={colors.black} />
+            <Text style={styles.pickupText}>
+              {t("request.pickupEstimate")
+                .replace("{minutes}", toPickup.minutes)
+                .replace("{km}", formatDecimal(toPickup.km, language))}
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.route}>
+          <RouteStops
+            origin={trip.origin?.address}
+            destination={trip.destination?.address}
+            originLabel={t("request.origin")}
+            destinationLabel={t("request.destination")}
+          />
+        </View>
+
+        <View style={styles.stats}>
+          <View style={styles.stat}>
+            <Ionicons name="navigate-outline" size={16} color={colors.black} />
+            <Text style={styles.statText}>
+              {t("request.distance")}:{" "}
+              {t("request.km").replace("{km}", trip.distanceKm)}
+            </Text>
+          </View>
+          <View style={styles.stat}>
+            <Ionicons name="time-outline" size={16} color={colors.black} />
+            <Text style={styles.statText}>
+              {t("request.duration")}:{" "}
+              {t("request.minutes").replace("{minutes}", trip.durationMin)}
+            </Text>
+          </View>
         </View>
 
         {error && <Text style={styles.errorText}>{t(error)}</Text>}
 
-        <TouchableOpacity
-          style={[styles.acceptButton, isSending && styles.disabled]}
-          onPress={handleAccept}
-          disabled={isSending}
-          accessibilityRole="button"
+        {/* Round Accept button; the ring around it is the time left */}
+        <View
+          style={styles.acceptArea}
+          accessibilityRole="progressbar"
+          accessibilityValue={{ min: 0, max: REQUEST_SECONDS, now: timeLeft }}
         >
-          <Text style={styles.acceptText}>{t("request.accept")}</Text>
-        </TouchableOpacity>
+          <CountdownRing progress={progress} size={RING_SIZE} strokeWidth={6}>
+            <TouchableOpacity
+              style={[styles.acceptButton, isSending && styles.disabled]}
+              onPress={handleAccept}
+              disabled={isSending}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+            >
+              <Text style={styles.acceptText}>{t("request.accept")}</Text>
+              <Text style={styles.secondsText}>
+                {t("request.seconds").replace("{seconds}", timeLeft)}
+              </Text>
+            </TouchableOpacity>
+          </CountdownRing>
+        </View>
       </View>
     </View>
   );
 }
 
-const CROSS_SIZE = 14;
+const RING_SIZE = 124;
+const ACCEPT_SIZE = RING_SIZE - 24;
 
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.backdrop,
-    justifyContent: "center",
-    padding: spacing.xl - 4,
+    justifyContent: "flex-end",
   },
   card: {
     backgroundColor: colors.background,
-    borderRadius: radius.lg,
-    padding: spacing.xl,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: spacing.xl - 4,
+    paddingTop: spacing.lg,
     elevation: 10,
   },
-  // Discreet X in the top right corner to decline
+  topRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  categoryTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    backgroundColor: colors.black,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 1,
+  },
+  categoryText: { color: colors.white, fontSize: 13, fontWeight: "700" },
+  paymentTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 1,
+  },
+  paymentText: { ...typography.label, fontSize: 13 },
+  // Decline: a discreet X on the right
   rejectButton: {
-    position: "absolute",
-    top: spacing.lg,
-    right: spacing.lg,
-    width: 32,
-    height: 32,
+    marginLeft: "auto",
+    width: 36,
+    height: 36,
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 1,
   },
-  crossBar: {
-    position: "absolute",
-    width: CROSS_SIZE,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: colors.textSecondary,
+  title: { ...typography.caption, fontSize: 14, marginTop: spacing.md },
+  fare: {
+    fontSize: 40,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    color: colors.textPrimary,
   },
-  crossForward: { transform: [{ rotate: "45deg" }] },
-  crossBack: { transform: [{ rotate: "-45deg" }] },
-  pickupText: {
-    ...typography.label,
-    fontSize: 16,
-    marginBottom: spacing.xs,
-    paddingRight: 40,
-  },
-  title: { ...typography.section, marginBottom: spacing.md, paddingRight: 40 },
-  timerRow: {
+  earnings: { fontSize: 16, fontWeight: "700", color: colors.success },
+  pickupRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
-    marginBottom: spacing.xl - 4,
+    gap: spacing.xs,
+    marginTop: spacing.md,
   },
-  timerTrack: {
-    flex: 1,
-    height: 6,
-    borderRadius: radius.pill,
+  pickupText: { ...typography.label, fontSize: 15 },
+  route: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  stats: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  stat: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
     backgroundColor: colors.surface,
-    overflow: "hidden",
-  },
-  timerFill: {
-    height: "100%",
     borderRadius: radius.pill,
-    backgroundColor: colors.black,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
   },
-  timerText: { ...typography.label, minWidth: 36, textAlign: "right" },
-  infoContainer: { marginBottom: spacing.xl - 4, gap: spacing.sm },
-  row: { flexDirection: "row", justifyContent: "space-between", gap: spacing.md },
-  label: { ...typography.caption, fontSize: 14 },
-  value: { ...typography.body, fontSize: 14, flex: 1, textAlign: "right" },
-  money: { color: colors.success, fontWeight: "600" },
-  earningsText: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.success,
-    textAlign: "right",
+  statText: { ...typography.label, fontSize: 13 },
+  errorText: {
+    ...typography.caption,
+    color: colors.error,
+    marginTop: spacing.md,
   },
-  errorText: { ...typography.caption, color: colors.error, marginBottom: spacing.md },
+  acceptArea: { alignItems: "center", marginTop: spacing.lg },
   acceptButton: {
-    minHeight: CONTROL_HEIGHT + 4,
-    borderRadius: radius.md,
+    width: ACCEPT_SIZE,
+    height: ACCEPT_SIZE,
+    borderRadius: ACCEPT_SIZE / 2,
     backgroundColor: colors.black,
     alignItems: "center",
     justifyContent: "center",
   },
   acceptText: { color: colors.white, fontSize: 18, fontWeight: "700" },
+  secondsText: { color: colors.textOnDark, fontSize: 13, marginTop: 2 },
   disabled: { opacity: 0.6 },
 });
