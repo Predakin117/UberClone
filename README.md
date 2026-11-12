@@ -85,15 +85,18 @@ Expo solo deja leer desde la app las variables con prefijo `EXPO_PUBLIC_`, y el 
 App.js                  Punto de entrada: proveedores de contexto y navegación
 app.json, app.config.js Configuración de Expo (permisos, plugins, Google Maps)
 src/
-  components/           Campos reutilizables del registro (texto, lista, foto)
+  components/           Campos reutilizables del registro (texto, lista, foto) y la
+                        tarjeta de solicitud entrante (IncomingRequestCard)
   config/               Tarifas y comisión (pricing.js) y variables de entorno (env.js)
-  contexts/             Sesión (Auth), registro (Registration) y viaje activo (Trip)
-  hooks/                useDriverLocation y useTripRequests (solicitudes nuevas y sus 15 s)
+  contexts/             Sesión (Auth), registro (Registration) y viaje en curso (Trip),
+                        leído en tiempo real de Firestore
+  hooks/                useDriverLocation, useTripRequests (solicitudes nuevas y sus 15 s)
+                        y useActiveTrip (viaje en curso)
   navigation/           AppNavigator, AuthTabs, MainDrawer y TripStack
   screens/auth/         Pestañas del registro: datos personales, vehículo y documentos
-  screens/trip/         Inicio (con la tarjeta de solicitud entrante), viaje en curso y resumen
-  services/             Firebase y Cloudinary, viajes (trips.js, tripRepository.js) y la
-                        fuente de solicitudes (tripRequestsSource.js)
+  screens/trip/         Inicio, viaje en curso con la ruta en el mapa y resumen del cobro
+  services/             Firebase y Cloudinary, viajes (trips.js, tripRepository.js), la
+                        fuente de solicitudes (tripRequestsSource.js) y la ruta (tripRoute.js)
   screens/main/         Ganancias
   validation/           Reglas de validación de cada pestaña y sus pruebas
 docs/AI_LOG.md          Bitácora de uso de IA

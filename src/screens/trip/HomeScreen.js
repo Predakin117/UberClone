@@ -1,23 +1,31 @@
 // AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21
 // src/screens/trip/HomeScreen.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView from "react-native-maps";
+import IncomingRequestCard from "../../components/IncomingRequestCard";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useTrip } from "../../contexts/TripContext";
 import { useDriverLocation } from "../../hooks/useDriverLocation";
 import { useDriverStatus } from "../../hooks/useDriverStatus";
 import { useTripRequests } from "../../hooks/useTripRequests";
-import { getAvailabilityBlock } from "../../services/driverStatus";
-import IncomingRequestScreen from "./IncomingRequestScreen";
+import {
+  canReceiveRequests,
+  getAvailabilityBlock,
+} from "../../services/driverStatus";
 
 // REGLA: AsyncStorage guarda el último estado de disponibilidad
 const AVAILABILITY_KEY = "@driver_availability";
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
   const { t } = useLanguage();
   const mapRef = useRef(null);
   const [isOnline, setIsOnline] = useState(false);
+  const activeTrip = useTrip();
+  const activeTripId = activeTrip.trip?.id ?? null;
 
   // Solo un conductor aprobado puede ponerse Disponible (sección 2 del enunciado).
   // Si la cuenta no está aprobada queda desconectado, aunque la última vez quedara conectado.
@@ -29,12 +37,23 @@ export default function HomeScreen() {
   // El rastreo de ubicación solo corre mientras el conductor está conectado
   const { location, errorMsg } = useDriverLocation(isActive);
 
-  // Solicitudes nuevas: solo mientras está conectado y aprobado
+  // Solicitudes nuevas: solo conectado, aprobado y sin viaje en curso. Este inicio
+  // sigue montado debajo del viaje, así que sin esta condición rechazaría
+  // solicitudes que el conductor no ve.
   const {
     request,
     timeLeft,
     error: requestsError,
-  } = useTripRequests(isActive, driverState.status);
+  } = useTripRequests(
+    canReceiveRequests({ isActive, activeTrip }),
+    driverState.status,
+  );
+
+  // El status del viaje en Firestore controla la pantalla (sección 3): con un
+  // viaje en curso se va a él, también al reabrir la app
+  useEffect(() => {
+    if (activeTripId) navigation.navigate("ActiveTrip");
+  }, [activeTripId, navigation]);
 
   useEffect(() => {
     AsyncStorage.getItem(AVAILABILITY_KEY)
@@ -102,9 +121,20 @@ export default function HomeScreen() {
         )}
       </View>
 
+      {/* Si el conductor volvió al inicio con un viaje en curso */}
+      {activeTripId && (
+        <TouchableOpacity
+          style={styles.backToTrip}
+          onPress={() => navigation.navigate("ActiveTrip")}
+          accessibilityRole="button"
+        >
+          <Text style={styles.backToTripText}>{t("home.backToTrip")}</Text>
+        </TouchableOpacity>
+      )}
+
       {/* La solicitud más antigua, sobre el mapa. key la reinicia con cada solicitud */}
       {request && (
-        <IncomingRequestScreen
+        <IncomingRequestCard
           key={request.id}
           trip={request}
           timeLeft={timeLeft}
@@ -152,4 +182,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
   },
+  backToTrip: {
+    position: "absolute",
+    bottom: 30,
+    backgroundColor: "#000",
+    padding: 15,
+    borderRadius: 10,
+    elevation: 5,
+  },
+  backToTripText: { color: "white", fontWeight: "bold" },
 });

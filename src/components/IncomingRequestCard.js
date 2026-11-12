@@ -2,21 +2,17 @@
 // Tarjeta de solicitud nueva (sección 3 del enunciado). HomeScreen la muestra
 // sobre el mapa con la solicitud más antigua y los segundos que quedan para
 // responder; el temporizador vive en useTripRequests.
-import { useNavigation } from "@react-navigation/native";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { calculateFare } from "../../config/pricing";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { TripContext } from "../../contexts/TripContext";
-import { respondToRequest } from "../../services/tripRepository";
-import { TRIP_STATUS } from "../../services/trips";
+import { calculateFare } from "../config/pricing";
+import { useLanguage } from "../contexts/LanguageContext";
+import { respondToRequest } from "../services/tripRepository";
+import { TRIP_STATUS } from "../services/trips";
 
 const formatCop = (amount) => `$${amount.toLocaleString("es-CO")} COP`;
 
-export default function IncomingRequestScreen({ trip, timeLeft, driverStatus }) {
-  const navigation = useNavigation();
+export default function IncomingRequestCard({ trip, timeLeft, driverStatus }) {
   const { t } = useLanguage();
-  const { acceptTrip } = useContext(TripContext);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
 
@@ -34,19 +30,19 @@ export default function IncomingRequestScreen({ trip, timeLeft, driverStatus }) 
     }
   }, [trip.distanceKm, trip.durationMin, trip.category]);
 
+  // Al aceptar no se navega desde aquí: el viaje pasa a "accepted" en Firestore y
+  // HomeScreen lleva al conductor al viaje según ese status
   const handleAccept = useCallback(async () => {
     setIsSending(true);
     setError(null);
     try {
       await respondToRequest(trip.id, TRIP_STATUS.ACCEPTED, driverStatus);
-      acceptTrip({ ...trip, status: TRIP_STATUS.ACCEPTED });
-      navigation.navigate("ActiveTrip");
     } catch (acceptError) {
       console.error("Error aceptando la solicitud:", acceptError.cause ?? acceptError);
       setError(acceptError.code ?? "trip.error.failed");
       setIsSending(false);
     }
-  }, [trip, driverStatus, acceptTrip, navigation]);
+  }, [trip.id, driverStatus]);
 
   // Al rechazar, la solicitud sale de la lista y HomeScreen deja de mostrarla
   const handleReject = useCallback(async () => {

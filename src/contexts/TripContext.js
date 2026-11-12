@@ -1,39 +1,23 @@
-import { createContext, useState } from "react";
+// AI-assisted: see docs/AI_LOG.md #21
+// Viaje en curso del conductor, leído en tiempo real de Firestore. Su status
+// controla la pantalla (sección 3 del enunciado), así que vive aquí, disponible
+// para toda la app: el inicio lo usa para ir al viaje y para no escuchar
+// solicitudes nuevas mientras haya uno.
+import { createContext, useContext } from "react";
+import { useActiveTrip } from "../hooks/useActiveTrip";
 
-export const TripContext = createContext();
+export const TripContext = createContext({
+  trip: null,
+  isLoading: false,
+  error: null,
+});
 
 export const TripProvider = ({ children }) => {
-  const [activeTrip, setActiveTrip] = useState(null);
-  const [tripStatus, setTripStatus] = useState("idle"); // Estados: idle, driver_arriving, in_progress, completed
-
-  // Función para iniciar un viaje al aceptar una solicitud
-  const acceptTrip = (tripData) => {
-    setActiveTrip(tripData);
-    setTripStatus("driver_arriving");
-  };
-
-  // Función para avanzar las etapas del viaje
-  const advanceTripState = (newStatus) => {
-    setTripStatus(newStatus);
-  };
-
-  // Función para limpiar la memoria al finalizar y cobrar
-  const finishTrip = () => {
-    setActiveTrip(null);
-    setTripStatus("idle");
-  };
+  const activeTrip = useActiveTrip();
 
   return (
-    <TripContext.Provider
-      value={{
-        activeTrip,
-        tripStatus,
-        acceptTrip,
-        advanceTripState,
-        finishTrip,
-      }}
-    >
-      {children}
-    </TripContext.Provider>
+    <TripContext.Provider value={activeTrip}>{children}</TripContext.Provider>
   );
 };
+
+export const useTrip = () => useContext(TripContext);

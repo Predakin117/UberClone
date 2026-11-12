@@ -4,6 +4,7 @@ import {
   canDriverChangeStatus,
   completionFields,
   PAYMENT_METHODS,
+  paymentStatusKey,
   sortOldestFirst,
   TRIP_ERROR_CODES,
   validateDriverUpdate,
@@ -175,6 +176,20 @@ describe("trips", () => {
       ...PAYMENT_METHODS.map((method) => `payment.${method}`),
     ];
     for (const key of keys) {
+      expect(strings.es[key]).toBeDefined();
+      expect(strings.en[key]).toBeDefined();
+    }
+  });
+
+  it("muestra el estado del pago: Efectivo, Aprobado, Rechazado o Pendiente", () => {
+    const cases = [
+      [{ paymentMethod: "cash", paymentStatus: null }, "summary.paymentStatus.cash"],
+      [{ paymentMethod: "mercadopago", paymentStatus: "approved" }, "summary.paymentStatus.approved"],
+      [{ paymentMethod: "mercadopago", paymentStatus: "rejected" }, "summary.paymentStatus.rejected"],
+      [{ paymentMethod: "stripe", paymentStatus: null }, "summary.paymentStatus.pending"],
+    ];
+    for (const [trip, key] of cases) {
+      expect(paymentStatusKey(trip)).toBe(key);
       expect(strings.es[key]).toBeDefined();
       expect(strings.en[key]).toBeDefined();
     }

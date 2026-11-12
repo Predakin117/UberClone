@@ -1,73 +1,73 @@
-// AI-assisted: see docs/AI_LOG.md #4
+// AI-assisted: see docs/AI_LOG.md #4, #21
+// Cobro y resumen del viaje (sección 3 del enunciado): tarifa final, comisión,
+// ganancia neta y estado del pago. Los montos son los que se guardaron al
+// completar el viaje, calculados con calculateFare.
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useContext, useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { calculateFare } from "../../config/pricing";
-import { TripContext } from "../../contexts/TripContext";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { paymentStatusKey } from "../../services/trips";
+
+const formatCop = (amount) => `$${amount.toLocaleString("es-CO")} COP`;
 
 export default function TripSummaryScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useLanguage();
+  const trip = route.params?.trip;
 
-  // Extraemos la función para limpiar el viaje global
-  const { finishTrip } = useContext(TripContext);
-
-  const { tripStats } = route.params || {};
-
-  // Calculamos la tarifa usando nuestra regla de negocio (pura matemática)
-  const fareDetails = useMemo(() => {
-    if (!tripStats) return null;
-    return calculateFare({
-      distanceKm: tripStats.distanceKm,
-      durationMin: tripStats.durationMin,
-      tip: tripStats.tip || 0,
-    });
-  }, [tripStats]);
-
-  const handleFinish = () => {
-    finishTrip(); // Limpiamos el estado global para no dejar "viajes fantasmas"
-    navigation.popToTop(); // Volvemos al mapa de inicio
-  };
-
-  if (!tripStats || !fareDetails) {
+  if (!trip) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>
-          Error al cargar el resumen del viaje.
-        </Text>
+        <Text style={styles.errorText}>{t("summary.error")}</Text>
       </View>
     );
   }
 
+  const commissionPercent = Math.round(trip.commissionRate * 100);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Resumen del Viaje</Text>
+      <Text style={styles.title}>{t("summary.title")}</Text>
 
       <View style={styles.card}>
         <Text style={styles.detailText}>
-          Distancia: {tripStats.distanceKm} km
+          {trip.origin.address} → {trip.destination.address}
         </Text>
         <Text style={styles.detailText}>
-          Tiempo: {tripStats.durationMin} min
+          {t("request.km").replace("{km}", trip.distanceKm)} ·{" "}
+          {t("request.minutes").replace("{minutes}", trip.durationMin)} ·{" "}
+          {t(`category.${trip.category}`)}
         </Text>
       </View>
 
       <View style={styles.receipt}>
         <Text style={styles.receiptText}>
-          Costo Total: ${fareDetails.fare.toLocaleString("es-CO")} COP
+          {t("summary.fare")}: {formatCop(trip.fare)}
         </Text>
         <Text style={styles.receiptText}>
-          Comisión (20%): -$
-          {fareDetails.commission.toLocaleString("es-CO")} COP
+          {t("summary.commission").replace("{percent}", commissionPercent)}: -
+          {formatCop(trip.commission)}
         </Text>
+        {trip.tip > 0 && (
+          <Text style={styles.receiptText}>
+            {t("summary.tip")}: +{formatCop(trip.tip)}
+          </Text>
+        )}
         <Text style={styles.earnText}>
-          Tu Ganancia: $
-          {fareDetails.driverEarnings.toLocaleString("es-CO")} COP
+          {t("summary.earnings")}: {formatCop(trip.driverEarnings)}
+        </Text>
+        <Text style={styles.receiptText}>
+          {t("summary.payment")}: {t(`payment.${trip.paymentMethod}`)} ·{" "}
+          {t(paymentStatusKey(trip))}
         </Text>
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleFinish}>
-        <Text style={styles.buttonText}>Volver al Mapa</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.popToTop()}
+        accessibilityRole="button"
+      >
+        <Text style={styles.buttonText}>{t("summary.backToMap")}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     color: "#2E7D32",
-    marginTop: 10,
+    marginVertical: 10,
   },
   errorText: { fontSize: 18, color: "red", textAlign: "center" },
   button: {

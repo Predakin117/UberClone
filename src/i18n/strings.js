@@ -216,8 +216,9 @@ export const strings = {
       "Tu registro fue rechazado. Comunícate con soporte para revisarlo.",
     "home.statusError":
       "No se pudo verificar el estado de tu cuenta. Revisa tu conexión.",
+    "home.backToTrip": "Volver al viaje en curso",
 
-    // Solicitud nueva ({seconds}, {km} y {minutes} los reemplaza IncomingRequestScreen)
+    // Solicitud nueva ({seconds}, {km} y {minutes} los reemplaza IncomingRequestCard)
     "request.title": "¡Nueva solicitud!",
     "request.seconds": "{seconds} s",
     "request.origin": "Origen",
@@ -235,6 +236,30 @@ export const strings = {
     "payment.mercadopago": "Mercado Pago",
     "payment.stripe": "Stripe",
     "payment.cash": "Efectivo",
+
+    // Viaje en curso
+    "activeTrip.loading": "Cargando el viaje en curso…",
+    "activeTrip.goingToPickup": "Recoge al pasajero en",
+    "activeTrip.goingToDestination": "Lleva al pasajero a",
+    "activeTrip.passengerOnBoard": "Pasajero a bordo",
+    "activeTrip.finish": "Finalizar viaje",
+    "activeTrip.cancel": "Cancelar viaje",
+    "activeTrip.straightLine":
+      "Ruta aproximada: no se pudo calcular la ruta por las calles.",
+
+    // Cobro y resumen ({percent} lo reemplaza TripSummaryScreen)
+    "summary.title": "Resumen del viaje",
+    "summary.fare": "Tarifa final",
+    "summary.commission": "Comisión ({percent} %)",
+    "summary.tip": "Propina",
+    "summary.earnings": "Tu ganancia neta",
+    "summary.payment": "Pago",
+    "summary.paymentStatus.approved": "Aprobado",
+    "summary.paymentStatus.pending": "Pendiente",
+    "summary.paymentStatus.rejected": "Rechazado",
+    "summary.paymentStatus.cash": "Efectivo: cobra al pasajero",
+    "summary.backToMap": "Volver al mapa",
+    "summary.error": "No se pudo cargar el resumen del viaje.",
 
     // Errores de los viajes (códigos de TRIP_ERROR_CODES en services/trips.js)
     "trip.error.invalidTransition":
@@ -520,6 +545,7 @@ export const strings = {
       "Your registration was rejected. Contact support to review it.",
     "home.statusError":
       "Your account status could not be checked. Check your connection.",
+    "home.backToTrip": "Back to the current trip",
 
     "request.title": "New request!",
     "request.seconds": "{seconds} s",
@@ -538,6 +564,28 @@ export const strings = {
     "payment.mercadopago": "Mercado Pago",
     "payment.stripe": "Stripe",
     "payment.cash": "Cash",
+
+    "activeTrip.loading": "Loading the current trip…",
+    "activeTrip.goingToPickup": "Pick up the passenger at",
+    "activeTrip.goingToDestination": "Take the passenger to",
+    "activeTrip.passengerOnBoard": "Passenger on board",
+    "activeTrip.finish": "End trip",
+    "activeTrip.cancel": "Cancel trip",
+    "activeTrip.straightLine":
+      "Approximate route: the street route could not be calculated.",
+
+    "summary.title": "Trip summary",
+    "summary.fare": "Final fare",
+    "summary.commission": "Fee ({percent}%)",
+    "summary.tip": "Tip",
+    "summary.earnings": "Your net earnings",
+    "summary.payment": "Payment",
+    "summary.paymentStatus.approved": "Approved",
+    "summary.paymentStatus.pending": "Pending",
+    "summary.paymentStatus.rejected": "Rejected",
+    "summary.paymentStatus.cash": "Cash: collect from the passenger",
+    "summary.backToMap": "Back to map",
+    "summary.error": "The trip summary could not be loaded.",
 
     "trip.error.invalidTransition":
       "That change is not allowed in the current trip status.",
