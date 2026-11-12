@@ -562,19 +562,57 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > en ese mismo commit y actualiza la sección Estructura del README.
   >
   > Después de los commits, haz push de tamiro/viajes-firestore.
+
+  > Revisé la rama y encontré un bug: cuando el conductor acepta, HomeScreen
+  > sigue montado debajo en el Stack, así que useTripRequests sigue
+  > escuchando. Mientras el conductor está en el viaje, la siguiente
+  > solicitud aparece oculta en el inicio y a los 15 s se rechaza sola, y
+  > así cada 15 s.
+  >
+  > En la parte 3, junto con la navegación según el estado:
+  > 1. useTripRequests escucha solo con el conductor conectado, aprobado y
+  >    SIN viaje activo (usa subscribeToActiveTrip, que ya existe). Con un
+  >    viaje activo, no hay cuenta regresiva ni rechazo automático.
+  > 2. Agrega una prueba que lo cubra.
+  > 3. Renombra IncomingRequestScreen.js a IncomingRequestCard.js y muévelo a
+  >    src/components/, ya que ahora es una tarjeta y no una pantalla.
+  >
+  > Lo demás de la parte 3 sigue igual: viaje en curso con la ruta (línea
+  > recta si routePolyline es null), botón "Pasajero a bordo" y la app
+  > vuelve al viaje al reabrirse.
+
+  > Sí, haz el commit de la parte 3 y completa la entrada #21.
+  >
+  > Luego, una parte 3b antes del README: la ruta hacia el punto de recogida
+  > es un requisito de la sección 3 ("ruta hacia el punto de recogida; al
+  > tocar Pasajero a bordo, la ruta cambia hacia el destino").
+  > 1. Backend: POST /api/v1/rutas { origen, destino } que use calcularRuta,
+  >    en el mismo estilo de app.js, con pruebas.
+  > 2. App: al aceptar (o al reabrir con un viaje en driver_arriving), pide
+  >    una vez la ruta desde la ubicación del conductor hasta el origen y
+  >    guárdala en TripContext, no en Firestore. Si falla, línea recta
+  >    punteada.
+  > 3. En driver_arriving muestra esa ruta; en in_progress, la de origen a
+  >    destino.
+  > Muéstrame el diff antes del commit. Después pásame los pasos para
+  > probar todo en el celular, y haz push.
 - Resumen de la respuesta:
   - Parte 1 (backend): `backend/src/rutas.js` es el único módulo que llama a OpenRouteService; `calcularRuta` devuelve la distancia con un decimal, la duración en minutos enteros y la polyline codificada. `backend/scripts/simular-solicitud.js` crea una solicitud `requested` con `firebase-admin`, con los campos de la sección 6 más `routePolyline`, eligiendo entre tres rutas de Medellín cuyas direcciones se consultaron una vez en Nominatim ("Parque Lleras" no aparece en Nominatim y se cambió por otros lugares). Recibe la categoría, el método de pago y el número de ruta como argumentos, y si ORS falla usa valores de respaldo.
   - Parte 2 (servicios y hook de la app): `src/services/tripRequestsSource.js` es el único módulo que sabe de dónde vienen las solicitudes y las entrega de la más antigua a la más nueva por `createdAt`, ordenadas en la app para no necesitar un índice compuesto. `useTripRequests` escucha solo con el conductor conectado y aprobado, con limpieza en el `useEffect`, y al vencerse los 15 segundos guarda `rejected` en el viaje. `src/services/tripRepository.js` acepta o rechaza con `runTransaction` y valida cada cambio con `validateDriverUpdate`. La tarjeta de solicitud muestra todos los datos que pide la sección 3, con la tarifa y la ganancia neta de `calculateFare`, aceptar y rechazar con `useCallback` y textos con `t()`.
+  - Parte 3 (pantallas y navegación según el estado): `TripContext` escucha en tiempo real el viaje en curso del conductor con `useActiveTrip`, y el inicio abre la pantalla del viaje según su status, también al reabrir la app. Se corrigió el bug que encontró Tamiro: el inicio sigue montado debajo del viaje y rechazaba solicitudes ocultas cada 15 segundos; ahora `canReceiveRequests` solo deja escuchar sin viaje en curso. La pantalla del viaje dibuja la ruta de OpenRouteService con `@mapbox/polyline` (una línea recta punteada si `routePolyline` es null), con marcadores de origen y destino; "Pasajero a bordo" pasa a `in_progress` y "Finalizar viaje" cierra con `completeTrip`. El resumen muestra el estado del pago. La tarjeta pasó a `src/components/IncomingRequestCard.js`.
 - Qué se usó / modificó / descartó:
   - Se usó: OpenRouteService con la llave en la cabecera `Authorization` y `firebase-admin` 14.5.
   - Se modificó: se agregó el número de ruta como argumento para probar cada ruta, y los valores de respaldo aproximados se reemplazaron por los reales de ORS. En la parte 2, la tarjeta de solicitud dejó de ser una ruta aparte y se muestra sobre el mapa del inicio, donde vive el hook; sin ese cambio la app quedaba rota hasta la parte 3. `IncomingRequestScreen.js` sigue en uso como esa tarjeta, así que no se borró; solo se quitó su ruta de `TripStack`. También se quitó el botón "Simular Solicitud".
   - Se descartó: un simulador más elaborado, por la instrucción de hacerlo mínimo; arreglar ahora la vulnerabilidad de `nodemailer`, que queda para después de la entrega; y las claves `category.*` que se habían repetido en `strings.js`, porque ya existían.
+  - Parte 3: se agregaron sin que se pidieran el paso automático de `accepted` a `driver_arriving` al abrir el viaje, el botón "Cancelar viaje" antes de que suba el pasajero y "Volver al viaje en curso" en el inicio. El primer commit de esta parte solo registró el cambio de nombre de la tarjeta, porque `git add` falló por una ruta que ya no existía; como no se había subido, se corrigió en ese mismo commit.
 - Archivos y commit:
   - Parte 1: `backend/src/rutas.js`, `backend/test/rutas.test.js`, `backend/scripts/simular-solicitud.js`, `backend/test/simular-solicitud.test.js`, `backend/package.json`, `backend/package-lock.json` — 7a14952
   - Parte 2: `src/services/tripRequestsSource.js`, `src/services/tripRepository.js`, `src/services/trips.js`, `src/services/trips.test.js`, `src/hooks/useTripRequests.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/IncomingRequestScreen.js`, `src/navigation/TripStack.js`, `src/i18n/strings.js`, `README.md` — 71fb093
+  - Parte 3: `src/contexts/TripContext.js`, `src/hooks/useActiveTrip.js`, `src/services/driverStatus.js`, `src/services/driverStatus.test.js`, `src/services/tripRoute.js`, `src/services/tripRoute.test.js`, `src/services/trips.js`, `src/services/trips.test.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js`, `src/screens/trip/TripSummaryScreen.js`, `src/components/IncomingRequestCard.js`, `src/i18n/strings.js`, `README.md`, `package.json`, `package-lock.json` — 9511707
 - Verificación:
   - Parte 1: `npm test` en `backend/` pasa 22 pruebas (9 nuevas). El simulador se ejecutó una vez por ruta: OpenRouteService respondió con la llave en `Authorization` (8,3 km y 13 min; 11 km y 19 min; 3,3 km y 6 min, sin tráfico) y las polylines guardadas empiezan y terminan junto al origen y el destino. Un intento anterior, con la llave todavía sin guardar en `backend/.env`, creó 3 solicitudes con los valores de respaldo; la comprobación de la llave no detuvo el comando, y se corrigió para que se detenga.
   - Parte 2: Jest pasa 143 pruebas (4 nuevas: orden por `createdAt` y textos de errores, categorías y métodos de pago en los dos idiomas), `npm test` en `backend/` pasa 22, `npx tsc --noEmit` no da errores, el bundle de Android se genera y `npx expo lint` queda sin errores (solo el aviso intencional de `emailVerification.test.js`). [Completar con la prueba en el celular: aparece la solicitud más antigua, el vencimiento de 15 s y el rechazo guardan `rejected`, aceptar guarda `accepted` con el `driverId`, y desconectado no se muestran solicitudes]
+  - Parte 3: Jest pasa 150 pruebas (7 nuevas: `canReceiveRequests` con el caso del bug, la ruta decodificada o en línea recta y el estado del pago), `npm test` en `backend/` pasa 22, `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. Con `firebase-admin` se comprobó que las consultas del viaje en curso y de las solicitudes no necesitan índice compuesto. [Completar con la prueba en el celular]
 - Aprendizaje: [Completar]
 
 ### Entrada #50
