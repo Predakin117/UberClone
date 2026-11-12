@@ -1,4 +1,4 @@
-<!-- AI-assisted: see docs/AI_LOG.md #51, #21 -->
+<!-- AI-assisted: see docs/AI_LOG.md #51, #21, #24 -->
 
 # UberClone — Versión Conductor
 
@@ -9,10 +9,19 @@ Aplicación móvil para iOS y Android, inspirada en Uber, desde el lado del cond
 ## Alcance
 
 - **Avance (5 de noviembre de 2026):** las pestañas 1 (Datos personales) y 2 (Vehículo) del registro del conductor, con todas sus validaciones.
-- **Proyecto final (12 de noviembre de 2026):** el resto del enunciado:
-  - la pestaña 3 del registro;
-  - las solicitudes en tiempo real, la navegación y el cobro con pasarela de pago;
+- **Proyecto final (12 de noviembre de 2026).** Ya está hecho:
+  - inicio de sesión con correo o celular y contraseña, y creación de la cuenta (Firebase Auth);
+  - las 3 pestañas del registro, incluida la pestaña 3 (Documentos), con las fotos en Cloudinary, los datos en Firestore y el correo confirmado con un código de 6 dígitos;
+  - el interruptor Disponible / No disponible, que solo se activa cuando el registro está aprobado;
+  - las solicitudes de viaje en tiempo real desde Firestore, con 15 segundos para aceptarlas o rechazarlas;
+  - el viaje en curso con sus estados (`accepted`, `driver_arriving`, `in_progress`, `completed`), la ruta hasta el punto de recogida y hasta el destino en el mapa, y el cierre con la tarifa, la comisión y la ganancia neta calculadas con `calculateFare`;
+  - el resumen del cobro con el estado del pago;
+  - un simulador de solicitudes en el backend (`npm run simular`) mientras llega la API del pasajero.
+- **En curso:**
+  - el pago en efectivo y con Mercado Pago (modo de prueba);
+  - la ubicación del conductor guardada en Firestore;
   - el historial y las ganancias.
+- **Pendiente:** las notificaciones push de solicitudes nuevas.
 
 ## Tecnologías
 
@@ -20,6 +29,13 @@ Aplicación móvil para iOS y Android, inspirada en Uber, desde el lado del cond
 - **React Navigation**: Tabs para el registro, Drawer para el menú principal y Stack para el flujo del viaje. El proyecto no usa Expo Router.
 - **Mapas y ubicación:** `react-native-maps` y `expo-location`.
 - **Fotos:** `expo-image-picker`.
+- **Cuentas y base de datos:** Firebase Auth (correo y contraseña) y Firestore, con el SDK web de Firebase. El backend usa `firebase-admin`.
+- **Fotos del registro:** Cloudinary, con un upload preset sin firma. En Firestore solo se guarda la URL.
+- **Backend:** Node.js con `node:http`, sin Express. Envía los códigos de verificación por correo con Nodemailer y calcula las rutas.
+- **Rutas:** [OpenRouteService](https://openrouteservice.org/), llamado desde el backend, calcula la distancia, la duración y el trazado de cada viaje. Google Maps solo muestra el mapa.
+- **Direcciones del simulador:** [Nominatim](https://nominatim.openstreetmap.org/). Se consultaron una sola vez y quedaron escritas en el código.
+- **Datos de mapas:** © OpenStreetMap contributors. OpenRouteService y Nominatim usan datos de [OpenStreetMap](https://www.openstreetmap.org/copyright).
+- **Pagos:** Mercado Pago Checkout Pro, en integración (modo de prueba).
 - **Fechas:** `@react-native-community/datetimepicker`.
 - **Preferencias y sesión:** `@react-native-async-storage/async-storage`. No guarda datos sensibles.
 - **Pruebas:** Jest con `jest-expo`.
