@@ -1,18 +1,21 @@
-// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29
+// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29, #31
 // Cobro y resumen del viaje (sección 3 del enunciado): tarifa final, comisión,
 // ganancia neta y estado del pago. Los montos son los que se guardaron al
 // completar el viaje, calculados con calculateFare. The trip is listened to in
 // real time so the payment status changes on screen when the backend writes it.
+// The driver can also rate the passenger once (PassengerRating).
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import FieldMessage from "../../components/FieldMessage";
+import PassengerRating from "../../components/PassengerRating";
 import {
   CONTROL_HEIGHT,
   colors,
@@ -61,7 +64,10 @@ export default function TripSummaryScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+    >
       <Text style={styles.title}>{t("summary.title")}</Text>
 
       <View style={styles.card}>
@@ -123,6 +129,8 @@ export default function TripSummaryScreen() {
         </View>
       )}
 
+      <PassengerRating trip={trip} />
+
       <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.popToTop()}
@@ -130,13 +138,14 @@ export default function TripSummaryScreen() {
       >
         <Text style={styles.buttonText}>{t("summary.backToMap")}</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1, backgroundColor: colors.background },
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: spacing.xl - 4,
     backgroundColor: colors.background,
     justifyContent: "center",

@@ -8,6 +8,7 @@ import {
   sortOldestFirst,
   TRIP_ERROR_CODES,
   validateDriverUpdate,
+  validatePassengerRating,
 } from "./trips";
 
 const ME = "driver-1";
@@ -234,5 +235,49 @@ describe("trips", () => {
         ).toBe("invalidAmounts");
       }
     });
+  });
+});
+
+// AI-assisted: see docs/AI_LOG.md #31
+describe("validatePassengerRating", () => {
+  const finished = (status, extra = {}) => ({ ...myTrip(status), ...extra });
+
+  it("lets the driver rate the passenger once the trip is completed or paid", () => {
+    expect(validatePassengerRating(finished("completed"), 5, ME)).toBeNull();
+    expect(validatePassengerRating(finished("paid"), 1, ME)).toBeNull();
+  });
+
+  it("only on the driver's own trip", () => {
+    expect(validatePassengerRating(finished("paid"), 4, OTHER)).toBe(
+      "notYourTrip",
+    );
+  });
+
+  it("not before the trip ends", () => {
+    for (const status of ["accepted", "driver_arriving", "in_progress", "cancelled"]) {
+      expect(validatePassengerRating(finished(status), 4, ME)).toBe(
+        "notFinished",
+      );
+    }
+  });
+
+  it("only once", () => {
+    expect(
+      validatePassengerRating(finished("paid", { passengerRating: 3 }), 5, ME),
+    ).toBe("alreadyRated");
+  });
+
+  it("with an integer from 1 to 5", () => {
+    for (const rating of [0, 6, 4.5, "5", null]) {
+      expect(validatePassengerRating(finished("paid"), rating, ME)).toBe(
+        "invalidRating",
+      );
+    }
+  });
+
+  it("does not depend on the driver's own rating", () => {
+    expect(
+      validatePassengerRating(finished("paid", { rating: 5 }), 4, ME),
+    ).toBeNull();
   });
 });

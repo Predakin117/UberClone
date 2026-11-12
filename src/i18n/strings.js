@@ -321,6 +321,11 @@ export const strings = {
     "summary.paymentStatus.cashReceived": "Efectivo recibido",
     "summary.cashReceived": "Recibí efectivo",
     "summary.confirmingCash": "Confirmando…",
+    "summary.ratePassenger": "Califica al pasajero",
+    "summary.sendRating": "Enviar calificación",
+    "summary.sendingRating": "Enviando…",
+    "summary.ratedPassenger": "Calificaste al pasajero con {stars} de 5",
+    "summary.starLabel": "{stars} de 5 estrellas",
 
     // Errores de pago (códigos de PAYMENT_ERROR_CODES en services/payments.js)
     "payment.error.no_implementado":
@@ -413,6 +418,10 @@ export const strings = {
       "No se pudo guardar el cambio. Revisa tu conexión e inténtalo de nuevo.",
     "trip.error.loadFailed":
       "No se pudieron cargar las solicitudes. Revisa tu conexión.",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "trip.error.notFinished": "El viaje todavía no ha terminado.",
+    "trip.error.alreadyRated": "Ya calificaste a este pasajero.",
+    "trip.error.invalidRating": "Elige de 1 a 5 estrellas.",
 
     // Guardado en Firestore
     "save.saving": "Guardando…",
@@ -778,6 +787,11 @@ export const strings = {
     "summary.paymentStatus.cashReceived": "Cash received",
     "summary.cashReceived": "I received the cash",
     "summary.confirmingCash": "Confirming…",
+    "summary.ratePassenger": "Rate the passenger",
+    "summary.sendRating": "Send rating",
+    "summary.sendingRating": "Sending…",
+    "summary.ratedPassenger": "You rated the passenger {stars} out of 5",
+    "summary.starLabel": "{stars} out of 5 stars",
 
     "payment.error.no_implementado":
       "This payment method is not available yet.",
@@ -862,6 +876,10 @@ export const strings = {
       "The change could not be saved. Check your connection and try again.",
     "trip.error.loadFailed":
       "The requests could not be loaded. Check your connection.",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "trip.error.notFinished": "The trip has not ended yet.",
+    "trip.error.alreadyRated": "You already rated this passenger.",
+    "trip.error.invalidRating": "Choose from 1 to 5 stars.",
 
     "save.saving": "Saving…",
     "save.notConfigured":

@@ -93,6 +93,11 @@ qué paso se crea.
   - Tiempo real con `onSnapshot`, siempre con limpieza en el `useEffect`.
   - Los campos y estados de `trips` son el contrato con la API del pasajero: no
     se renombran.
+  - `passengerRating` (entero de 1 a 5) es un campo extra de `trips`, fuera de la
+    tabla de la sección 6: la calificación que el conductor le da al pasajero.
+    Lo escribe el conductor del viaje una sola vez, con el viaje `completed` o
+    `paid` (`firestore.rules` y `validatePassengerRating` en `src/services/trips.js`).
+    `rating` sigue siendo la calificación del conductor, que él nunca escribe.
   - Si cambia `firestore.rules`, hay que publicarlas a mano en la consola de
     Firebase (Firestore Database → Reglas → Publicar).
   - El historial (`subscribeToTripHistory` en `src/services/tripRepository.js`)

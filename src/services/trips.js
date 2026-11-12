@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #18, #21
+// AI-assisted: see docs/AI_LOG.md #18, #21, #31
 // Colección trips (sección 6 del enunciado): un documento por viaje, en la raíz de
 // Firestore. Estas funciones puras repiten lo que permiten firestore.rules para que
 // la app no intente un cambio que la base de datos va a rechazar.
@@ -93,6 +93,10 @@ export const TRIP_ERROR_CODES = [
   "permissionDenied",
   "failed",
   "loadFailed",
+  // validatePassengerRating
+  "notFinished",
+  "alreadyRated",
+  "invalidRating",
 ];
 
 // Timestamp de Firestore en milisegundos. Una solicitud recién creada puede
@@ -193,4 +197,27 @@ export const completionFields = (trip, tip = 0) => {
     driverEarnings,
     commissionRate,
   };
+};
+
+// AI-assisted: see docs/AI_LOG.md #31
+// The driver rates the passenger in passengerRating, an extra field that is not
+// in the table of section 6. rating is the driver's own rating (the profile
+// shows its average) and the driver never writes it.
+export const PASSENGER_RATING_FIELD = "passengerRating";
+const RATABLE_STATUSES = [TRIP_STATUS.COMPLETED, TRIP_STATUS.PAID];
+
+/**
+ * Checks that the driver uid can rate the passenger of trip with rating, the
+ * same as firestore.rules: their own trip, already finished (completed or
+ * paid), not rated yet, and an integer from 1 to 5. Returns null if allowed or
+ * the reason (a TRIP_ERROR_CODES code) if not.
+ */
+export const validatePassengerRating = (trip, rating, uid) => {
+  if (trip.driverId !== uid) return "notYourTrip";
+  if (!RATABLE_STATUSES.includes(trip.status)) return "notFinished";
+  if (trip[PASSENGER_RATING_FIELD] != null) return "alreadyRated";
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return "invalidRating";
+  }
+  return null;
 };

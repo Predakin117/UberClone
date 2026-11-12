@@ -18,9 +18,11 @@ import {
 import { auth, db } from "../config/firebase";
 import {
   ACTIVE_STATUSES,
+  PASSENGER_RATING_FIELD,
   TRIP_STATUS,
   completionFields,
   validateDriverUpdate,
+  validatePassengerRating,
 } from "./trips";
 
 // code es una clave de src/i18n/strings.js ("trip.error.<código>")
@@ -182,3 +184,22 @@ export const subscribeToTrip = (tripId, onTrip, onError) =>
     (tripDoc) => onTrip(tripDoc.exists() ? tripFromDoc(tripDoc) : null),
     onError,
   );
+
+// AI-assisted: see docs/AI_LOG.md #31
+/**
+ * Saves the driver's rating of the passenger (1 to 5) in passengerRating,
+ * once, after the trip ends. Checked first with validatePassengerRating, the
+ * same as firestore.rules. Throws a TripError.
+ */
+export const ratePassenger = async (trip, rating) => {
+  try {
+    const uid = currentUid();
+    const problem = validatePassengerRating(trip, rating, uid);
+    if (problem) throw new TripError(problem);
+    await updateDoc(doc(db, "trips", trip.id), {
+      [PASSENGER_RATING_FIELD]: rating,
+    });
+  } catch (error) {
+    throw toTripError(error);
+  }
+};
