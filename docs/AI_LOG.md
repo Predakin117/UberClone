@@ -960,6 +960,44 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - La aprobación del conductor sigue siendo manual en la consola de Firebase, como pide la sección 2.
 - Aprendizaje: [Completar]
 
+### Entrada #29
+
+- Fecha: 2026-11-12
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Pulir el diseño de la solicitud entrante, el viaje en curso y el resumen con el tema de Ximena, sin cambiar la lógica ni los textos que ya existían, y agregar un botón para navegar con Google Maps.
+- Prompt:
+  > Pulido visual final, sin cambiar la lógica ni los textos existentes
+  > (entrada nueva de bitácora). Usa src/config/theme.js de Ximena.
+  >
+  > 1. IncomingRequestCard, ActiveTripScreen y TripSummaryScreen: reemplaza
+  >    todos los colores escritos a mano (#4CAF50, #F44336, #FF9800, #2E7D32,
+  >    #E53935, #e8f5e9, grises sueltos) por colors de theme.js. Botón
+  >    principal en negro con texto blanco; verde (colors.success) solo para
+  >    montos de dinero; rojo (colors.error) solo para errores y cancelar.
+  >    Usa radius, spacing y typography del tema.
+  > 2. IncomingRequestCard: la cuenta regresiva como una barra horizontal que
+  >    se achica de 15 a 0 segundos (además del número), "Aceptar" como botón
+  >    grande negro a todo el ancho y "Rechazar" como una X discreta arriba a
+  >    la derecha. Mantén useCallback y los mismos manejadores.
+  > 3. ActiveTripScreen: botón secundario "Navegar" que abre Google Maps con
+  >    Linking hacia el punto de recogida (driver_arriving) o el destino
+  >    (in_progress): https://www.google.com/maps/dir/?api=1&destination=LAT,LNG
+  >    Texto con t() en español e inglés.
+  >
+  > Lint, tsc y pruebas sin errores.
+- Resumen de la respuesta: Los tres archivos toman colores, radios, espacios y tipografía de `theme.js`. El botón principal ("Aceptar", "Pasajero a bordo", "Finalizar viaje", "Volver al mapa") es negro con texto blanco; el verde quedó solo en los montos (tarifa estimada, ganancia neta) y el rojo solo en los errores y en "Cancelar viaje". En `IncomingRequestCard` la cuenta regresiva es una barra que se achica con `Animated` (cada segundo se desliza al siguiente valor, para que baje sin saltos) junto al número de segundos, "Aceptar" es un botón negro a todo el ancho y "Rechazar" es una X dibujada con dos barras en una esquina, con `accessibilityLabel` "Rechazar"; `handleAccept` y `handleReject` siguen iguales con `useCallback`. En `ActiveTripScreen`, `navigationUrl(trip)` (nueva función pura en `src/services/tripRoute.js`) arma el enlace de Google Maps hacia el origen en `driver_arriving` o hacia el destino en `in_progress`, y el botón secundario "Navegar" (contorno negro, forma de píldora) lo abre con `Linking.openURL`.
+- Qué se usó / modificó / descartó:
+  - Se usó: `REQUEST_SECONDS` de `useTripRequests` para la barra, las formas de `Chevron.js` de Ximena como ejemplo para dibujar la X sin librería de íconos, y `CONTROL_HEIGHT` del tema para la altura de los botones.
+  - Se modificó: además de "Navegar" se agregó el texto `activeTrip.navigateFailed`, que se muestra debajo como los demás errores si el celular no puede abrir el enlace. El pin del punto de recogida pasó de `"green"` a `colors.success`: en Android los pines solo aceptan un tono de color y el negro saldría rojo, así que es la única excepción a "verde solo para dinero". La línea de la ruta pasó de azul a negro. La tarifa estimada de la solicitud también quedó en verde, porque es un monto.
+  - Se descartó: animar la barra con el driver nativo (un ancho en porcentaje no se puede animar así) y cambiar los textos existentes; los que ya había quedaron iguales.
+- Archivos y commit: `src/components/IncomingRequestCard.js`, `src/screens/trip/ActiveTripScreen.js`, `src/screens/trip/TripSummaryScreen.js`, `src/services/tripRoute.js`, `src/services/tripRoute.test.js`, `src/i18n/strings.js` — fc7bd5a
+- Verificación:
+  - Jest de la raíz pasa 212 (3 nuevas en `tripRoute.test.js` para `navigationUrl`: recogida en `driver_arriving`, destino en `in_progress`, y `null` en otros estados o sin coordenadas). `npx expo lint` queda sin errores y `npx tsc --noEmit` no da errores.
+  - Se revisó que no quedara ningún color escrito a mano en los tres archivos.
+  - [Pendiente: revisar en el celular la barra de 15 s, la X de rechazar, los colores y que "Navegar" abra Google Maps hacia la recogida y hacia el destino]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
