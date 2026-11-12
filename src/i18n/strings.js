@@ -301,6 +301,11 @@ export const strings = {
     // AI-assisted: see docs/AI_LOG.md #29
     "activeTrip.navigate": "Navegar",
     "activeTrip.navigateFailed": "No se pudo abrir Google Maps.",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "activeTrip.passenger": "Pasajero",
+    "activeTrip.call": "Llamar al pasajero",
+    "activeTrip.message": "Enviar un mensaje al pasajero",
+    "activeTrip.contactFailed": "No se pudo abrir el teléfono ni los mensajes.",
     "activeTrip.noLocation":
       "No hay ubicación del conductor: no se puede trazar la ruta hasta el pasajero.",
 
@@ -777,6 +782,11 @@ export const strings = {
     // AI-assisted: see docs/AI_LOG.md #29
     "activeTrip.navigate": "Navigate",
     "activeTrip.navigateFailed": "Google Maps could not be opened.",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "activeTrip.passenger": "Passenger",
+    "activeTrip.call": "Call the passenger",
+    "activeTrip.message": "Text the passenger",
+    "activeTrip.contactFailed": "The phone or messages app could not be opened.",
     "activeTrip.noLocation":
       "No driver location: the route to the passenger cannot be drawn.",
 

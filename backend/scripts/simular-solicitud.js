@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #21, #25
+// AI-assisted: see docs/AI_LOG.md #21, #25, #31
 // Simulador mínimo: crea UNA solicitud "requested" en trips para probar la app
 // mientras llega la API del pasajero de la profesora.
 //
@@ -22,6 +22,11 @@ const CATEGORIAS = ["economy", "xl", "premium"];
 const METODOS_DE_PAGO = ["mercadopago", "stripe", "cash"];
 // Pasajero de todos los viajes simulados: npm run limpiar-simulados borra los suyos
 const PASAJERO_SIMULADO = "pasajero-simulado";
+// Name and phone of the example passenger: extra fields (passengerName and
+// passengerPhone), outside the table of section 6, for the call and message
+// buttons of the trip. The number is made up; to test a real call, change it
+// to your own.
+const PASAJERO_DE_EJEMPLO = { name: "Laura Gómez", phone: "+573000000000" };
 
 // Lugares de Medellín. Coordenadas y direcciones consultadas una sola vez en
 // Nominatim (© OpenStreetMap contributors), como pide docs/APIS.md.
@@ -65,13 +70,16 @@ const aOrs = ({ lat, lng }) => [lng, lat];
 
 /**
  * Arma el documento del viaje con los campos de la sección 6 del enunciado, más
- * routePolyline para dibujar la ruta. Los montos quedan vacíos: la app los
+ * routePolyline para dibujar la ruta y passengerName y passengerPhone del
+ * pasajero de ejemplo. Los montos quedan vacíos: la app los
  * calcula con calculateFare al cerrar el viaje.
  */
 function crearSolicitud({ ruta, categoria, metodoDePago, calculada, ahora }) {
   return {
     driverId: null,
     passengerId: PASAJERO_SIMULADO,
+    passengerName: PASAJERO_DE_EJEMPLO.name,
+    passengerPhone: PASAJERO_DE_EJEMPLO.phone,
     origin: LUGARES[ruta.origen],
     destination: LUGARES[ruta.destino],
     distanceKm: calculada.distanceKm,
@@ -163,4 +171,5 @@ module.exports = {
   CATEGORIAS,
   METODOS_DE_PAGO,
   PASAJERO_SIMULADO,
+  PASAJERO_DE_EJEMPLO,
 };

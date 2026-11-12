@@ -1,8 +1,10 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #21, #29
+// AI-assisted: see docs/AI_LOG.md #6, #4, #21, #29, #31
 // Viaje en curso (sección 3 del enunciado). El viaje viene de Firestore por
 // TripContext y su status decide qué se muestra: la ruta hacia el punto de
 // recogida (driver_arriving) o la ruta hacia el destino (in_progress).
-// "Navigate" opens Google Maps towards the point of the current step.
+// "Navigate" opens Google Maps towards the point of the current step. If the
+// trip has passengerPhone, the passenger can be called or texted.
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -16,6 +18,7 @@ import {
 } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
+import { passengerContact } from "../../services/passengerContact";
 import { advanceTrip, completeTrip } from "../../services/tripRepository";
 import { navigationUrl, tripRoute } from "../../services/tripRoute";
 import { completionFields, TRIP_STATUS } from "../../services/trips";
@@ -122,6 +125,17 @@ export default function ActiveTripScreen() {
     }
   }, [trip]);
 
+  // Opens the phone or the messages app with the passenger's number
+  const openContact = useCallback(async (url) => {
+    setError(null);
+    try {
+      await Linking.openURL(url);
+    } catch (contactError) {
+      console.warn("Could not contact the passenger:", contactError);
+      setError("activeTrip.contactFailed");
+    }
+  }, []);
+
   if (!trip) {
     return (
       <View style={styles.loading}>
@@ -132,6 +146,7 @@ export default function ActiveTripScreen() {
 
   const canAdvance =
     trip.status === TRIP_STATUS.DRIVER_ARRIVING || isInProgress;
+  const contact = passengerContact(trip);
 
   return (
     <View style={styles.container}>
@@ -177,6 +192,29 @@ export default function ActiveTripScreen() {
       </MapView>
 
       <View style={styles.panel}>
+        {contact && (
+          <View style={styles.passengerRow}>
+            <Text style={styles.passengerName} numberOfLines={1}>
+              {contact.name ?? t("activeTrip.passenger")}
+            </Text>
+            <TouchableOpacity
+              style={styles.contactButton}
+              onPress={() => openContact(contact.callUrl)}
+              accessibilityRole="button"
+              accessibilityLabel={t("activeTrip.call")}
+            >
+              <Ionicons name="call" size={20} color={colors.black} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.contactButton}
+              onPress={() => openContact(contact.smsUrl)}
+              accessibilityRole="button"
+              accessibilityLabel={t("activeTrip.message")}
+            >
+              <Ionicons name="chatbubble-ellipses" size={20} color={colors.black} />
+            </TouchableOpacity>
+          </View>
+        )}
         <Text style={styles.stepText}>
           {isInProgress
             ? t("activeTrip.goingToDestination")
@@ -263,6 +301,22 @@ const styles = StyleSheet.create({
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.2,
+  },
+  // Passenger's name with round call and message buttons
+  passengerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  passengerName: { ...typography.label, fontSize: 16, flex: 1 },
+  contactButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
   },
   stepText: { ...typography.caption, fontSize: 14 },
   addressText: { ...typography.section, marginVertical: spacing.xs + 2 },

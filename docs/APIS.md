@@ -160,6 +160,11 @@ qué paso se crea.
 - **Para qué:** simular los viajes del lado del pasajero.
 - **Dónde:** todavía no sabemos cómo funciona.
 - **Reglas:**
+  - `passengerName` y `passengerPhone` son campos extra y opcionales de `trips`,
+    fuera de la tabla de la sección 6. El simulador (`backend/scripts/simular-solicitud.js`)
+    los llena con un pasajero de ejemplo de número inventado. En el viaje en curso, los
+    botones de llamar (`tel:`) y de mensaje (`sms:`) solo aparecen si existe
+    `passengerPhone`. Cuando llegue la API del pasajero, hay que ver si los manda.
   - Solo `src/services/tripRequestsSource.js` sabe de dónde vienen las
     solicitudes. Cuando llegue la API, se cambia ese archivo y las pantallas
     quedan igual.
