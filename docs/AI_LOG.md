@@ -998,6 +998,46 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - [Pendiente: revisar en el celular la barra de 15 s, la X de rechazar, los colores y que "Navegar" abra Google Maps hacia la recogida y hacia el destino]
 - Aprendizaje: [Completar]
 
+### Entrada #30
+
+- Fecha: 2026-11-12
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Perfil y Configuración del conductor (sección 3: datos editables, vehículo, documentos, idioma y cierre de sesión).
+- Prompt (se omite la línea sobre la rama):
+  > Perfil y Configuración (sección 3: "datos editables, vehículo, documentos,
+  > idioma y cierre de sesión"). [...] Usa theme.js y t() en español e inglés.
+  > Siguiente entrada de bitácora.
+  >
+  > 1. ProfileScreen en src/screens/main/ (hoy es un mock en MainDrawer): lee
+  >    drivers/{uid} en tiempo real y muestra foto, nombre, estado de la cuenta
+  >    y calificación promedio de sus viajes; secciones Datos personales,
+  >    Vehículo (con su foto) y Documentos (licencia, SOAT y tecnomecánica con
+  >    vencimiento y aviso si vence en menos de 30 días).
+  > 2. Editables: nombre, correo de Mercado Pago y foto de perfil (Cloudinary,
+  >    como en el registro), con las mismas validaciones de src/validation/ y
+  >    los errores debajo del campo. Celular, correo de la cuenta, vehículo y
+  >    documentos de solo lectura, con una nota de que cambiarlos requiere
+  >    nueva aprobación. Comprueba que firestore.rules permite la escritura
+  >    sin tocar status.
+  > 3. SettingsScreen: selector de idioma (LanguageContext), comisión de la
+  >    plataforma desde pricing.js como información, versión de la app y
+  >    cerrar sesión.
+  > 4. Conéctalas en MainDrawer sin cambiar el resto de su diseño.
+  >
+  > Lint, tsc y pruebas sin errores.
+- Resumen de la respuesta: `ProfileScreen` usa el hook `useDriverProfile`, que escucha `drivers/{uid}` con `onSnapshot` (`subscribeToDriver` en `driverRepository.js`) y los viajes terminados del conductor para la calificación promedio (`subscribeToTripsSince` desde el inicio, con el índice que ya existía). Arriba muestra la foto, el nombre, el estado de la cuenta y la calificación; luego las secciones Datos personales, Vehículo (con su foto), Documentos y Pagos. El nombre, la foto de perfil y el correo de Mercado Pago se editan con `FormField` y `PhotoField` del registro; el resto se muestra como texto con la nota "Cambiar estos datos requiere una nueva aprobación de tu cuenta". Al guardar, `profileUpdate` arma solo los campos que cambiaron con rutas como `personal.name` (nunca `status`) y `updateDriverProfile` sube antes la foto nueva a Cloudinary y escribe con `updateDoc`. `SettingsScreen` tiene el selector de idioma, la comisión desde `COMMISSION_RATE`, la versión de `expo-constants` y "Cerrar sesión". Las dos reemplazan los mocks de `MainDrawer`.
+- Qué se usó / modificó / descartó:
+  - Se usó: las etiquetas que ya existían del registro (`personal.*`, `vehicle.*`, `documents.*`, `category.*`, `color.*`), `FormField`, `PhotoField` y `NextButton` de Ximena, `formatDisplayDate` y `LANGUAGE_OPTIONS`.
+  - Se modificó: para usar "las mismas validaciones", la regla del nombre pasó a `validateName` (en `personalInfo.js`) y la del correo de Mercado Pago a `validateMercadoPagoEmail` (en `documents.js`); el registro las sigue usando igual y sus pruebas no cambiaron. `validateProfile` las combina con la foto obligatoria. Después de guardar un nombre nuevo se llama a `login()` de `AuthContext` con el nombre actualizado, para que el saludo del menú lateral cambie sin volver a iniciar sesión. El vencimiento muestra "Vencido" (rojo) o "Vence en N días" / "Vence hoy" (color de aviso) si faltan menos de 30 días.
+  - Se descartó: cambiar `firestore.rules` (no hizo falta) y guardar el idioma de Configuración en Firestore: se queda en el celular con `LanguageContext`.
+- Archivos y commit: `src/screens/main/ProfileScreen.js`, `src/screens/main/SettingsScreen.js`, `src/hooks/useDriverProfile.js`, `src/services/driverProfile.js`, `src/services/driverProfile.test.js`, `src/services/driverRepository.js`, `src/validation/profile.js`, `src/validation/profile.test.js`, `src/validation/personalInfo.js`, `src/validation/documents.js`, `src/navigation/MainDrawer.js`, `src/i18n/strings.js` — 6ad6bc4
+- Verificación:
+  - Jest de la raíz pasa 226 (4 en `profile.test.js`, que comprueban que el nombre y el correo de Mercado Pago dan los mismos errores que en las pestañas 1 y 3; 10 en `driverProfile.test.js`: promedio con un decimal y sin calificaciones, vencido, vence hoy, a 29 y a 30 días, fecha inválida, y que la actualización solo tenga los campos cambiados y nunca `status`). Las 90 pruebas de `src/validation/` del registro siguen pasando. `npx expo lint` queda sin errores y `npx tsc --noEmit` no da errores.
+  - `firestore.rules` ya permite que el dueño actualice `drivers/{uid}` si `status` queda igual. Se comprobó con las reglas publicadas en `uber-clone-ba0e2`: con un token real de la cuenta de Tamiro y la API REST de Firestore se escribieron `personal.name` y `documents.mercadoPagoEmail` con los mismos valores que ya tenían; respondió 200 y `status` siguió en `approved`.
+  - [Pendiente: probar en el celular editar el nombre, la foto y el correo de Mercado Pago, los errores debajo de cada campo, el aviso de vencimiento, el cambio de idioma y cerrar sesión]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
