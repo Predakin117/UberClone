@@ -29,15 +29,25 @@ qué paso se crea.
 
 - **Para qué:** calcular la ruta, la distancia y la duración de un viaje. Google
   Maps solo muestra el mapa.
-- **Dónde:** backend, en `backend/src/rutas.js` (se crea en el paso 5).
+- **Dónde:** backend, en `backend/src/rutas.js`. Lo usan el simulador
+  (`backend/scripts/simular-solicitud.js`) y la ruta `POST /api/v1/rutas`
+  (`backend/src/app.js`), que la app llama desde `src/services/routesApi.js` para
+  la ruta del conductor hasta el punto de recogida.
 - **Variable:** `ORS_API_KEY` en `backend/.env`.
 - **Uso:** `calcularRuta(origen, destino)` devuelve
   `{ distanceKm, durationMin, encodedPolyline }`. Recibe las coordenadas como
   `[longitud, latitud]`, al revés de Google y de `react-native-maps`.
+  `POST /api/v1/rutas` recibe `{ origen: { lat, lng }, destino: { lat, lng } }`.
 - **Límites:** cupo diario gratuito. El plan gratuito de rutas permite unas
   2.000 peticiones al día y 40 por minuto.
-- **Si falla:** el simulador usa valores fijos de respaldo.
+- **Si falla:** el simulador usa valores fijos de respaldo, y la app dibuja una
+  línea recta punteada.
 - **Crédito obligatorio:** "© OpenStreetMap contributors".
+- **Mejora pendiente (después de la entrega):** proteger `POST /api/v1/rutas`. Hoy
+  no exige sesión, así que cualquiera que llegue al backend puede pedir rutas y
+  gastar el cupo diario de ORS. Es un riesgo sobre todo si el backend se publica
+  con el túnel de Cloudflare. Opciones: exigir el token de Firebase Auth del
+  conductor (verificado con `firebase-admin`) y limitar las peticiones por usuario.
 
 ### 2. @mapbox/polyline (librería)
 

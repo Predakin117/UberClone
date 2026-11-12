@@ -246,6 +246,9 @@ export const strings = {
     "activeTrip.cancel": "Cancelar viaje",
     "activeTrip.straightLine":
       "Ruta aproximada: no se pudo calcular la ruta por las calles.",
+    "activeTrip.loadingRoute": "Calculando la ruta hasta el pasajero…",
+    "activeTrip.noLocation":
+      "No hay ubicación del conductor: no se puede trazar la ruta hasta el pasajero.",
 
     // Cobro y resumen ({percent} lo reemplaza TripSummaryScreen)
     "summary.title": "Resumen del viaje",
@@ -573,6 +576,9 @@ export const strings = {
     "activeTrip.cancel": "Cancel trip",
     "activeTrip.straightLine":
       "Approximate route: the street route could not be calculated.",
+    "activeTrip.loadingRoute": "Calculating the route to the passenger…",
+    "activeTrip.noLocation":
+      "No driver location: the route to the passenger cannot be drawn.",
 
     "summary.title": "Trip summary",
     "summary.fare": "Final fare",

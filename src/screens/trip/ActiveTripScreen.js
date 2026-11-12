@@ -1,7 +1,7 @@
 // AI-assisted: see docs/AI_LOG.md #6, #4, #21
 // Viaje en curso (sección 3 del enunciado). El viaje viene de Firestore por
-// TripContext y su status decide qué se muestra: hacia el punto de recogida
-// (driver_arriving) o hacia el destino (in_progress).
+// TripContext y su status decide qué se muestra: la ruta hacia el punto de
+// recogida (driver_arriving) o la ruta hacia el destino (in_progress).
 import { useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -9,7 +9,7 @@ import MapView, { Marker, Polyline } from "react-native-maps";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
 import { advanceTrip, completeTrip } from "../../services/tripRepository";
-import { hasRealRoute, routeCoordinates } from "../../services/tripRoute";
+import { tripRoute } from "../../services/tripRoute";
 import { completionFields, TRIP_STATUS } from "../../services/trips";
 
 const MAP_PADDING = { top: 80, right: 50, bottom: 300, left: 50 };
@@ -17,16 +17,33 @@ const MAP_PADDING = { top: 80, right: 50, bottom: 300, left: 50 };
 export default function ActiveTripScreen() {
   const navigation = useNavigation();
   const { t } = useLanguage();
-  const { trip, isLoading } = useTrip();
+  const { trip, isLoading, pickupRoute } = useTrip();
   const mapRef = useRef(null);
   // Evita volver al inicio mientras se abre el resumen del viaje terminado
   const isFinishing = useRef(false);
   const advancedTripId = useRef(null);
+  const [isMapReady, setIsMapReady] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
 
-  // La ruta de OpenRouteService, o una línea recta si routePolyline es null
-  const coordinates = useMemo(() => (trip ? routeCoordinates(trip) : []), [trip]);
+  const isInProgress = trip?.status === TRIP_STATUS.IN_PROGRESS;
+
+  // Hacia el pasajero: la ruta desde el conductor (TripContext), o nada mientras
+  // se calcula. Con el pasajero a bordo: la ruta del viaje. Las dos son líneas
+  // rectas si OpenRouteService no respondió.
+  const route = useMemo(() => {
+    if (!trip) return null;
+    return isInProgress ? tripRoute(trip) : pickupRoute;
+  }, [trip, isInProgress, pickupRoute]);
+
+  // Encuadra el mapa en la ruta que se muestra, y otra vez cuando cambia
+  useEffect(() => {
+    if (!isMapReady || !route || route.coordinates.length < 2) return;
+    mapRef.current?.fitToCoordinates(route.coordinates, {
+      edgePadding: MAP_PADDING,
+      animated: true,
+    });
+  }, [isMapReady, route]);
 
   // Al aceptar, el viaje queda "accepted": el conductor ya va por el pasajero
   useEffect(() => {
@@ -44,14 +61,6 @@ export default function ActiveTripScreen() {
     if (isLoading || trip || isFinishing.current) return;
     navigation.popToTop();
   }, [isLoading, trip, navigation]);
-
-  const fitRoute = useCallback(() => {
-    if (coordinates.length < 2) return;
-    mapRef.current?.fitToCoordinates(coordinates, {
-      edgePadding: MAP_PADDING,
-      animated: false,
-    });
-  }, [coordinates]);
 
   // "Pasajero a bordo" pasa a in_progress; "Finalizar viaje" cierra con los
   // montos de calculateFare y abre el resumen
@@ -100,7 +109,6 @@ export default function ActiveTripScreen() {
     );
   }
 
-  const isInProgress = trip.status === TRIP_STATUS.IN_PROGRESS;
   const canAdvance =
     trip.status === TRIP_STATUS.DRIVER_ARRIVING || isInProgress;
 
@@ -110,7 +118,7 @@ export default function ActiveTripScreen() {
         ref={mapRef}
         style={StyleSheet.absoluteFill}
         showsUserLocation
-        onMapReady={fitRoute}
+        onMapReady={() => setIsMapReady(true)}
         initialRegion={{
           latitude: trip.origin.lat,
           longitude: trip.origin.lng,
@@ -119,23 +127,30 @@ export default function ActiveTripScreen() {
         }}
       >
         <Marker
-          coordinate={coordinates[0]}
+          coordinate={{ latitude: trip.origin.lat, longitude: trip.origin.lng }}
           title={t("request.origin")}
           description={trip.origin.address}
           pinColor="green"
         />
-        <Marker
-          coordinate={coordinates[coordinates.length - 1]}
-          title={t("request.destination")}
-          description={trip.destination.address}
-        />
-        <Polyline
-          coordinates={coordinates}
-          strokeWidth={5}
-          strokeColor="#1a56db"
-          // La línea recta de respaldo va punteada: no es la ruta real
-          lineDashPattern={hasRealRoute(trip) ? undefined : [10, 10]}
-        />
+        {isInProgress && (
+          <Marker
+            coordinate={{
+              latitude: trip.destination.lat,
+              longitude: trip.destination.lng,
+            }}
+            title={t("request.destination")}
+            description={trip.destination.address}
+          />
+        )}
+        {route?.coordinates.length >= 2 && (
+          <Polyline
+            coordinates={route.coordinates}
+            strokeWidth={5}
+            strokeColor="#1a56db"
+            // La línea recta de respaldo va punteada: no es la ruta real
+            lineDashPattern={route.isReal ? undefined : [10, 10]}
+          />
+        )}
       </MapView>
 
       <View style={styles.panel}>
@@ -152,7 +167,13 @@ export default function ActiveTripScreen() {
           {t("request.minutes").replace("{minutes}", trip.durationMin)} ·{" "}
           {t(`category.${trip.category}`)} · {t(`payment.${trip.paymentMethod}`)}
         </Text>
-        {!hasRealRoute(trip) && (
+        {!route && (
+          <Text style={styles.hintText}>{t("activeTrip.loadingRoute")}</Text>
+        )}
+        {route?.coordinates.length === 0 && (
+          <Text style={styles.hintText}>{t("activeTrip.noLocation")}</Text>
+        )}
+        {route?.coordinates.length >= 2 && !route.isReal && (
           <Text style={styles.hintText}>{t("activeTrip.straightLine")}</Text>
         )}
 
