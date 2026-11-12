@@ -20,6 +20,24 @@ export const strings = {
     "tabs.vehicle": "2. Vehículo",
     "tabs.documents": "3. Docs",
 
+    // Barra de progreso y encabezado de cada paso del registro
+    "register.stepOf": "Paso {step} de {total}",
+    "register.percent": "{percent} % completado",
+    "register.stepDone": "{label}, completo",
+    "register.stepPending": "{label}, pendiente",
+    "register.step.PersonalInfo": "Datos",
+    "register.step.Vehicle": "Vehículo",
+    "register.step.Documents": "Documentos",
+    "register.title.PersonalInfo": "Cuéntanos sobre ti",
+    "register.subtitle.PersonalInfo":
+      "Usaremos estos datos para verificar tu identidad. Solo te tomará unos minutos.",
+    "register.title.Vehicle": "Tu vehículo",
+    "register.subtitle.Vehicle":
+      "Registra el vehículo con el que vas a conducir. Los datos deben coincidir con la tarjeta de propiedad.",
+    "register.title.Documents": "Documentos y pagos",
+    "register.subtitle.Documents":
+      "Sube tus documentos vigentes y elige dónde recibirás tus ganancias.",
+
     // Componentes compartidos
     "common.next": "Siguiente",
     "common.done": "Listo",
@@ -27,6 +45,8 @@ export const strings = {
     "date.placeholder": "Selecciona una fecha",
     "photo.takePhoto": "Tomar foto",
     "photo.chooseFromGallery": "Elegir de galería",
+    "photo.emptyHint": "Toma una foto clara, con buena luz y sin reflejos.",
+    "photo.added": "Foto agregada",
     "photo.permissionDenied": "Debes conceder el permiso para agregar la foto.",
     "photo.pickError": "No se pudo obtener la foto. Inténtalo de nuevo.",
 
@@ -379,12 +399,31 @@ export const strings = {
     "tabs.vehicle": "2. Vehicle",
     "tabs.documents": "3. Documents",
 
+    "register.stepOf": "Step {step} of {total}",
+    "register.percent": "{percent}% complete",
+    "register.stepDone": "{label}, complete",
+    "register.stepPending": "{label}, pending",
+    "register.step.PersonalInfo": "Personal",
+    "register.step.Vehicle": "Vehicle",
+    "register.step.Documents": "Documents",
+    "register.title.PersonalInfo": "Tell us about yourself",
+    "register.subtitle.PersonalInfo":
+      "We'll use this information to verify your identity. It only takes a few minutes.",
+    "register.title.Vehicle": "Your vehicle",
+    "register.subtitle.Vehicle":
+      "Add the vehicle you'll drive. The details must match the registration card.",
+    "register.title.Documents": "Documents and payments",
+    "register.subtitle.Documents":
+      "Upload your valid documents and choose where you'll receive your earnings.",
+
     "common.next": "Next",
     "common.done": "Done",
     "select.placeholder": "Select an option",
     "date.placeholder": "Select a date",
     "photo.takePhoto": "Take photo",
     "photo.chooseFromGallery": "Choose from gallery",
+    "photo.emptyHint": "Take a clear photo, in good light and without glare.",
+    "photo.added": "Photo added",
     "photo.permissionDenied": "You must grant permission to add the photo.",
     "photo.pickError": "The photo could not be loaded. Please try again.",
 

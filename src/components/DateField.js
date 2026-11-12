@@ -17,7 +17,9 @@ import {
   parseISODate,
   toISODate,
 } from "../validation/dates";
+import { colors, radius, spacing } from "../config/theme";
 import { useLanguage } from "../contexts/LanguageContext";
+import Chevron from "./Chevron";
 import { formStyles } from "./formStyles";
 
 export default function DateField({
@@ -70,20 +72,31 @@ export default function DateField({
     <View style={formStyles.field}>
       <Text style={formStyles.label}>{label}</Text>
       <TouchableOpacity
-        style={[formStyles.input, error && formStyles.inputError]}
+        style={[
+          formStyles.input,
+          formStyles.inputRow,
+          isIOSPickerOpen && formStyles.inputFocused,
+          error && formStyles.inputError,
+        ]}
         onPress={open}
+        activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel={label}
       >
-        <Text style={value === "" && styles.placeholder}>
+        <Text
+          style={
+            value === "" ? formStyles.placeholderText : formStyles.valueText
+          }
+        >
           {value === ""
             ? (placeholder ?? t("date.placeholder"))
             : formatDisplayDate(value)}
         </Text>
+        <Chevron />
       </TouchableOpacity>
 
       {isIOSPickerOpen && (
-        <View>
+        <View style={styles.iosPicker}>
           <DateTimePicker
             value={pickerDate}
             mode="date"
@@ -105,7 +118,11 @@ export default function DateField({
 }
 
 const styles = StyleSheet.create({
-  placeholder: { color: "#888" },
-  doneButton: { alignSelf: "flex-end", padding: 10 },
-  doneText: { fontSize: 16, fontWeight: "bold" },
+  iosPicker: {
+    marginTop: spacing.sm,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  doneButton: { alignSelf: "flex-end", padding: spacing.md },
+  doneText: { fontSize: 16, fontWeight: "700", color: colors.textPrimary },
 });

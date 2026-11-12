@@ -1,5 +1,7 @@
 // AI-assisted: see docs/AI_LOG.md #7, #54
+import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
+import { colors } from "../config/theme";
 import FieldMessage from "./FieldMessage";
 import { formStyles } from "./formStyles";
 
@@ -10,6 +12,7 @@ export default function FormField({
   label,
   value,
   onChangeText,
+  onFocus,
   onBlur,
   error,
   hint,
@@ -17,6 +20,18 @@ export default function FormField({
   ...inputProps
 }) {
   const isLocked = inputProps.editable === false;
+  // Only for the look: the field gets a black border while typing
+  const [isFocused, setIsFocused] = useState(false);
+
+  const handleFocus = (event) => {
+    setIsFocused(true);
+    onFocus?.(event);
+  };
+
+  const handleBlur = (event) => {
+    setIsFocused(false);
+    onBlur?.(event);
+  };
 
   return (
     <View style={formStyles.field}>
@@ -24,12 +39,16 @@ export default function FormField({
       <TextInput
         style={[
           formStyles.input,
+          isFocused && formStyles.inputFocused,
           isLocked && formStyles.inputLocked,
           error && formStyles.inputError,
         ]}
         value={value}
         onChangeText={onChangeText}
-        onBlur={onBlur}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholderTextColor={colors.placeholder}
+        selectionColor={colors.black}
         accessibilityLabel={label}
         accessibilityState={{ disabled: isLocked }}
         {...inputProps}
