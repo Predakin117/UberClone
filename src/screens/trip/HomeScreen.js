@@ -1,14 +1,20 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #16
+// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21
 // src/screens/trip/HomeScreen.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView from "react-native-maps";
+import IncomingRequestCard from "../../components/IncomingRequestCard";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useTrip } from "../../contexts/TripContext";
 import { useDriverLocation } from "../../hooks/useDriverLocation";
 import { useDriverStatus } from "../../hooks/useDriverStatus";
-import { getAvailabilityBlock } from "../../services/driverStatus";
+import { useTripRequests } from "../../hooks/useTripRequests";
+import {
+  canReceiveRequests,
+  getAvailabilityBlock,
+} from "../../services/driverStatus";
 
 // REGLA: AsyncStorage guarda el último estado de disponibilidad
 const AVAILABILITY_KEY = "@driver_availability";
@@ -18,15 +24,36 @@ export default function HomeScreen() {
   const { t } = useLanguage();
   const mapRef = useRef(null);
   const [isOnline, setIsOnline] = useState(false);
+  const activeTrip = useTrip();
+  const activeTripId = activeTrip.trip?.id ?? null;
 
   // Solo un conductor aprobado puede ponerse Disponible (sección 2 del enunciado).
   // Si la cuenta no está aprobada queda desconectado, aunque la última vez quedara conectado.
-  const blockKey = getAvailabilityBlock(useDriverStatus());
+  const driverState = useDriverStatus();
+  const blockKey = getAvailabilityBlock(driverState);
   const canGoOnline = blockKey === null;
   const isActive = isOnline && canGoOnline;
 
   // El rastreo de ubicación solo corre mientras el conductor está conectado
   const { location, errorMsg } = useDriverLocation(isActive);
+
+  // Solicitudes nuevas: solo conectado, aprobado y sin viaje en curso. Este inicio
+  // sigue montado debajo del viaje, así que sin esta condición rechazaría
+  // solicitudes que el conductor no ve.
+  const {
+    request,
+    timeLeft,
+    error: requestsError,
+  } = useTripRequests(
+    canReceiveRequests({ isActive, activeTrip }),
+    driverState.status,
+  );
+
+  // El status del viaje en Firestore controla la pantalla (sección 3): con un
+  // viaje en curso se va a él, también al reabrir la app
+  useEffect(() => {
+    if (activeTripId) navigation.navigate("ActiveTrip");
+  }, [activeTripId, navigation]);
 
   useEffect(() => {
     AsyncStorage.getItem(AVAILABILITY_KEY)
@@ -54,11 +81,6 @@ export default function HomeScreen() {
     AsyncStorage.setItem(AVAILABILITY_KEY, String(next)).catch((error) =>
       console.error("Error guardando la disponibilidad:", error),
     );
-  };
-
-  const handleSimulateRequest = () => {
-    // La solicitud y su temporizador de 15 s viven en IncomingRequestScreen
-    navigation.navigate("IncomingRequest");
   };
 
   return (
@@ -89,21 +111,35 @@ export default function HomeScreen() {
           accessibilityState={{ checked: isActive, disabled: !canGoOnline }}
         >
           <Text style={styles.onlineText}>
-            {isActive ? "CONECTADO" : "DESCONECTADO"}
+            {isActive ? t("home.online") : t("home.offline")}
           </Text>
         </TouchableOpacity>
         {blockKey && <Text style={styles.noticeText}>{t(blockKey)}</Text>}
         {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
+        {requestsError && (
+          <Text style={styles.errorText}>{t(requestsError)}</Text>
+        )}
       </View>
 
-      {/* Botón de simulación (Solo visible si estás conectado) */}
-      {isActive && (
+      {/* Si el conductor volvió al inicio con un viaje en curso */}
+      {activeTripId && (
         <TouchableOpacity
-          style={styles.simulateBtn}
-          onPress={handleSimulateRequest}
+          style={styles.backToTrip}
+          onPress={() => navigation.navigate("ActiveTrip")}
+          accessibilityRole="button"
         >
-          <Text style={styles.simulateBtnText}>Simular Solicitud</Text>
+          <Text style={styles.backToTripText}>{t("home.backToTrip")}</Text>
         </TouchableOpacity>
+      )}
+
+      {/* La solicitud más antigua, sobre el mapa. key la reinicia con cada solicitud */}
+      {request && (
+        <IncomingRequestCard
+          key={request.id}
+          trip={request}
+          timeLeft={timeLeft}
+          driverStatus={driverState.status}
+        />
       )}
     </View>
   );
@@ -146,8 +182,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
   },
-
-  simulateBtn: {
+  backToTrip: {
     position: "absolute",
     bottom: 30,
     backgroundColor: "#000",
@@ -155,5 +190,5 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     elevation: 5,
   },
-  simulateBtnText: { color: "white", fontWeight: "bold" },
+  backToTripText: { color: "white", fontWeight: "bold" },
 });

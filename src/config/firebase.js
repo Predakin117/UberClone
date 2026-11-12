@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #10
+// AI-assisted: see docs/AI_LOG.md #10, #22
 // Firebase con el SDK web (funciona en Expo Go). La sesión de Auth se guarda en
 // AsyncStorage para que el conductor siga siendo el mismo al reabrir la app.
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -9,7 +9,7 @@ import {
   initializeAuth,
   signInAnonymously,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { env } from "./env";
 
 const firebaseConfig = {
@@ -39,7 +39,12 @@ const createFirebase = () => {
   const auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage),
   });
-  return { auth, db: getFirestore(app) };
+  // Long polling en vez del streaming por defecto: en React Native algunas redes
+  // cortan esa conexión y Firestore queda "sin conexión" ("Could not reach Cloud
+  // Firestore backend"). Solo se configura aquí, al crear la app: con Fast Refresh
+  // se reutiliza la instancia de arriba con getFirestore.
+  const db = initializeFirestore(app, { experimentalForceLongPolling: true });
+  return { auth, db };
 };
 
 export const { auth, db } = createFirebase();

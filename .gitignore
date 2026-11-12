@@ -56,3 +56,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+# Local files that never go to Git
+docs/enunciado.pdf
+CLAUDE.local.md

@@ -232,6 +232,486 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Verificación: Jest pasa 126 pruebas, `npx tsc --noEmit` no da errores y el bundle de Android se genera. [Completar con la prueba en el celular: con el estado `pending` el interruptor está bloqueado y, al cambiarlo a `approved` en la consola, se habilita sin reiniciar la app]
 - Aprendizaje: [Completar]
 
+### Entrada #17
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Traducir el interruptor "CONECTADO / DESCONECTADO" de la pantalla de inicio.
+- Prompt:
+  > 1. Entrada #54 de la bitácora (fila 96) · 20 min
+  > El código la cita en 4 archivos y no existe. Está en tu rango de números.
+  >
+  > 2. Hashes de la bitácora (fila 97) · 15 min
+  > Cambiar “el commit siguiente” por el hash real en las entradas #50, #51 y #52, y quitar PrimaryButton.js de la #53.
+  >
+  > 3. “CONECTADO / DESCONECTADO” traducido (fila 22) · 10 min
+  > Dos claves en strings.js. Opcional, pero se nota si la profe cambia a inglés.
+  >
+  > Después, la cadena principal (en este orden)
+  >
+  > 4. Colección trips y sus reglas (filas 82 y 74) · 1 hora · lo más importante ahora
+  > Sin esto no hay dónde guardar viajes, y de ahí cuelgan historial, ganancias y pagos. Pónganse de acuerdo primero en los campos (tabla de la sección 6 del PDF) pa’ poder trabajar en paralelo.
+  >
+  > 5. Solicitud real desde Firestore (filas 48, 86, 39, 72 y 50) · 2 horas
+  > Script en el backend que crea la solicitud, la app la escucha con onSnapshot, los estados se guardan en el viaje, y la tarjeta muestra distancia, duración, categoría y ganancia neta calculadas con calculateFare (no los 75.000 fijos).
+  >
+  > 6. Ubicación a Firestore (fila 37) · 30 min
+  > Ya tienen el patrón de useDriverStatus; es guardar la ubicación en drivers/{uid} cada pocos segundos dentro de useDriverLocation.
+
+  > Correcciones a lo que te pasé. Soy Tamiro José Solano Muriel.
+  >
+  > 1. NO hagas los pasos 1 y 2: son entradas de Ximena (#50 a #54) y las
+  >    arregla ella en su rama. No toques esas entradas de docs/AI_LOG.md.
+  > 2. Haz el paso 3 y luego los pasos 4, 5 y 6, en ese orden, cada uno en su
+  >    propio commit, en la rama tamiro/viajes-firestore.
+  > 3. Paso 4: la colección trips es de primer nivel (no subcolección), con los
+  >    campos exactos de la tabla de la sección 6 de docs/enunciado.pdf. Agrega
+  >    sus reglas a firestore.rules y avísame para publicarlas en la consola.
+  > 4. Paso 5: el script del backend usa firebase-admin con
+  >    backend/serviceAccountKey.json, que yo descargo; no me pidas su contenido.
+  > 5. Antes de cada commit, muéstrame el diff para revisarlo.
+  > 6. Mis entradas de bitácora siguen desde la #17. Este mensaje y el anterior
+  >    van copiados tal cual en la entrada que corresponda.
+- Resumen de la respuesta: Se agregaron las claves `home.online` y `home.offline` en español e inglés, y `HomeScreen` las usa con `t()` en vez del texto fijo. Antes de la corrección, Claude ya había hecho los pasos 1 y 2 en una rama local (`tamiro/viajes`); con la corrección se rehízo solo el paso 3 en `tamiro/viajes-firestore` y ese trabajo no se subió.
+- Qué se usó / modificó / descartó:
+  - Se usó: el cambio de traducción tal cual.
+  - Se descartó: los pasos 1 y 2 (las entradas #50 a #54 son de Ximena) y la rama local `tamiro/viajes`.
+- Archivos y commit: `src/i18n/strings.js`, `src/screens/trip/HomeScreen.js` — 41568ea
+- Verificación: las pruebas de `src/i18n` pasan, incluida la que exige las mismas claves en los dos idiomas. [Completar con la prueba en el celular cambiando el idioma a inglés]
+- Aprendizaje: [Completar]
+
+### Entrada #18
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Crear la colección `trips` con los campos y estados del enunciado, y sus reglas de Firestore.
+- Prompt:
+  > Sí, haz el commit del paso 3. Recuerda que la entrada #17 debe existir
+  > antes de cualquier push.
+  >
+  > Para el paso 4, ten en cuenta en firestore.rules:
+  > - Un conductor puede leer los viajes donde driverId es su uid, y también
+  >   los que están en status "requested" (todavía sin conductor), o nunca
+  >   verá las solicitudes nuevas. Las consultas de la app deben filtrar igual
+  >   que las reglas.
+  > - Aceptar: solo de "requested" a "accepted", poniendo driverId igual a su
+  >   propio uid, con runTransaction desde la app.
+  > - El conductor solo avanza status en este orden: accepted → driver_arriving
+  >   → in_progress → completed. Puede pasar a "cancelled" antes de
+  >   in_progress, y a "rejected" si rechaza o se vencen los 15 segundos.
+  > - paymentStatus, paymentId y el status "paid" solo los escribe el backend
+  >   con firebase-admin; la app no puede.
+  > - Nadie borra viajes.
+  > Agrega pruebas para las funciones puras que valides los cambios de estado
+  > y muéstrame el diff antes del commit. Avísame cuando haya que publicar las
+  > reglas en la consola.
+
+  > Cambio de plan: la profesora nos va a dar una API del pasajero para simular
+  > los viajes. Todavía no sabemos cómo funciona.
+  >
+  > - En el paso 4, respeta exactamente los nombres de campos y estados del
+  >   enunciado (sección 6 y sección 3): son el contrato con esa API.
+  > - En el paso 5, separa la fuente de las solicitudes en un solo módulo
+  >   (por ejemplo src/services/tripRequestsSource.js) con una función para
+  >   suscribirse a solicitudes nuevas. Por ahora la implementas con onSnapshot
+  >   sobre trips en "requested". Así, cuando llegue la API, solo cambiamos ese
+  >   archivo y las pantallas quedan igual.
+  > - No hagas un script elaborado de solicitudes: solo un simulador mínimo que
+  >   cree un viaje "requested" con los campos del enunciado, para probar.
+
+  > Antes del commit del paso 4, aplica los dos cambios de firestore.rules que
+  > te pedí: exigir conductor aprobado (get() de drivers/{uid}) para aceptar o
+  > rechazar, y verificar la coherencia de los montos al completar. Ajusta
+  > validateDriverUpdate y sus pruebas, muéstrame el diff y luego haz el commit.
+  >
+  > El plan del paso 5 me parece bien, con estos ajustes:
+  > 1. La suscripción a solicitudes nuevas va dentro de useTripRequests (hook
+  >    obligatorio del enunciado), activa solo mientras el conductor está
+  >    conectado y aprobado, con limpieza en el useEffect.
+  > 2. El status del viaje en Firestore controla la pantalla (sección 3): escucha
+  >    con onSnapshot el viaje activo del conductor y navega según su status.
+  >    Si la app se reabre en medio de un viaje, debe volver a esa pantalla.
+  > 3. Si hay varias solicitudes, muestra la más antigua por createdAt. Si
+  >    Firestore pide un índice compuesto, avísame con el link.
+  > 4. En IncomingRequestScreen, usa useCallback para aceptar y rechazar.
+  > 5. El simulador puede elegir entre unas pocas rutas de ejemplo de Medellín
+  >    con distancia y duración fijas, y recibir la categoría como argumento.
+  >
+  > Cada paso con su commit y su entrada de bitácora (desde la #17).
+- Resumen de la respuesta: `trips` es una colección de primer nivel con los 19 campos de la sección 6 y los estados de la sección 3 (incluido `rejected`, que la sección 3 menciona al explicar `accepted`). En `firestore.rules`, el conductor lee sus viajes y las solicitudes en `requested`; solo un conductor aprobado puede aceptar o rechazar una solicitud sin conductor, y queda a su nombre; después avanza en orden y puede cancelar antes de `in_progress`. Al completar, los montos deben coincidir con `calculateFare`. Nadie crea ni borra viajes desde la app, y el pago queda para el backend. `src/services/trips.js` repite esas reglas como funciones puras.
+- Qué se usó / modificó / descartó:
+  - Se usó: los nombres exactos de la sección 6 y la sección 3 como contrato con la API del pasajero.
+  - Se modificó: las reglas repiten los valores de `pricing.js` para recalcular la tarifa, y `pricing.js` tiene un comentario que avisa que hay que cambiarlos en los dos lugares.
+  - Se descartó: pasar una solicitud rechazada al siguiente conductor; queda `rejected` para todos, que basta para la demostración con un conductor.
+- Archivos y commit: `firestore.rules`, `src/services/trips.js`, `src/services/trips.test.js`, `src/config/pricing.js` — abe1511
+- Verificación: Jest pasa 139 pruebas, con las nuevas de `trips.test.js` (orden de estados, conductor no aprobado, solicitud ya tomada, campos del pago y montos alterados), y `npx tsc --noEmit` no da errores. La cuenta de las reglas da el ejemplo del enunciado con aritmética de doble precisión (19.200, 26.900 y 34.600). [Completar: la consola de Firebase acepta las reglas al publicarlas]
+- Aprendizaje: [Completar]
+
+### Entrada #19
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Corregir el error de lint de `AuthContext.js` que reportaba `npx expo lint`.
+- Prompt:
+  > corre esto en todo el proyecto npx expo lint
+
+  > Sí: arregla AuthContext.js en un commit aparte (fix: lint), antes del
+  > paso 5, y muéstrame el diff. El de useTripRequests se resuelve en el paso
+  > 5 como dijiste. El aviso del test déjalo así: es intencional.
+  > Al terminar el paso 5, npx expo lint debe quedar sin errores.
+- Resumen de la respuesta: `npx expo lint` reportó 2 errores y 1 aviso, todos anteriores: `AuthContext.js` usaba `checkSession` antes de declararla, `useTripRequests.js` cambiaba el estado dentro de un `useEffect` y `emailVerification.test.js` tiene un `import` después de los `jest.mock`. Se movió `checkSession` dentro del `useEffect` de `AuthContext`, sin cambiar lo que hace.
+- Qué se usó / modificó / descartó:
+  - Se usó: el arreglo de `AuthContext.js` tal cual.
+  - Se dejó para el paso 5: el error de `useTripRequests.js`, porque ese hook se reescribe.
+  - Se descartó: cambiar el aviso del test, que es intencional.
+- Archivos y commit: `src/contexts/AuthContext.js` — dce30f5
+- Verificación: `npx expo lint` ya no reporta el error de `AuthContext.js`; Jest pasa 139 pruebas y `npx tsc --noEmit` no da errores.
+- Aprendizaje: [Completar]
+
+### Entrada #20
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Crear `docs/APIS.md`, la guía de las APIs y servicios externos del proyecto, para que los dos integrantes y cualquier sesión de Claude Code trabajen con las mismas reglas.
+- Prompt:
+  > Aclaraciones antes de la tarea:
+  > - CLAUDE.md ya existe y ya tiene la línea @docs/APIS.md: no lo reescribas,
+  >   solo inclúyelo en el commit tal como está.
+  > - Esta tarea es la entrada #20 de la bitácora.
+
+  > La tarea #20 es crear docs/APIS.md: la guía de las APIs y servicios
+  > externos del proyecto, para que cualquier sesión de Claude Code y los dos
+  > integrantes trabajen con las mismas reglas. CLAUDE.md ya existe y ya
+  > tiene la línea @docs/APIS.md: no lo reescribas, solo inclúyelo en el
+  > commit tal como está.
+  >
+  > Para cada servicio escribe: para qué lo usamos, estado (Activa, Pendiente
+  > o En veremos), dónde se llama (app o backend) y en qué archivo, la
+  > variable de entorno si tiene, y las reglas o límites.
+  >
+  > ## Reglas generales
+  > - Toda llave secreta va solo en backend/.env. En la app solo van variables
+  >   EXPO_PUBLIC_ que no son secretas. Cada variable nueva se agrega sin valor
+  >   al .env.example que corresponda.
+  > - Cada API externa se usa desde un solo módulo, para poder cambiar de
+  >   proveedor sin tocar las pantallas.
+  > - Preferimos lo que funciona en Expo Go. Cualquier librería con código
+  >   nativo necesita aprobación del equipo porque obliga a un development build.
+  > - Las llamadas de rutas se hacen una vez al crear la solicitud y una vez al
+  >   aceptarla, nunca en cada actualización de ubicación (sección 7 del
+  >   enunciado). La ruta se guarda en el viaje para no volver a pedirla.
+  >
+  > ## Activas
+  > 1. OpenRouteService (rutas) — backend, backend/src/rutas.js, ORS_API_KEY.
+  >    calcularRuta(origen, destino) devuelve { distanceKm, durationMin,
+  >    encodedPolyline }. Recibe coordenadas como [longitud, latitud]. Cupo
+  >    diario gratuito. Si falla, el simulador usa valores fijos de respaldo.
+  >    Crédito obligatorio: "© OpenStreetMap contributors".
+  > 2. @mapbox/polyline (librería) — app. Decodifica routePolyline del viaje
+  >    para dibujarlo con Polyline de react-native-maps. decode devuelve
+  >    [lat, lng].
+  > 3. reverseGeocodeAsync de expo-location — app. Convierte la ubicación del
+  >    conductor en dirección. Solo cuando cambia el punto que se muestra.
+  > 4. Nominatim (OpenStreetMap) — solo backend, en el simulador. Máximo 1
+  >    petición por segundo, User-Agent propio obligatorio, prohibido para
+  >    autocompletar. Las direcciones de las rutas de ejemplo se consultan una
+  >    vez y quedan escritas en el código.
+  > 5. Firebase Auth y Firestore — app y backend. Colecciones drivers,
+  >    accounts, loginIndex y trips. Tiempo real con onSnapshot, siempre con
+  >    limpieza en el useEffect. El backend usa firebase-admin con
+  >    backend/serviceAccountKey.json (en .gitignore). Los campos y estados de
+  >    trips son el contrato con la API del pasajero: no se renombran. Si
+  >    cambia firestore.rules, hay que publicarlas a mano en la consola.
+  > 6. Cloudinary — app. Fotos del registro con upload preset sin firma; en
+  >    Firestore solo se guarda la URL.
+  > 7. Gmail con contraseña de aplicación — backend, backend/src/mailer.js,
+  >    MAIL_USER y MAIL_PASS. Códigos de verificación.
+  > 8. Cloudflare Quick Tunnel — herramienta, no código. Da una URL pública
+  >    https al backend (cloudflared tunnel --url http://localhost:3000). La
+  >    URL cambia cada vez: la app la lee de EXPO_PUBLIC_BACKEND_API_URL y el
+  >    backend de PUBLIC_BACKEND_URL. Nunca se escribe en el código.
+  >
+  > ## Pendientes
+  > 9. Mercado Pago Checkout Pro (modo prueba) — backend, MP_ACCESS_TOKEN (el
+  >    token de prueba empieza por APP_USR). Lo implementa Ximena. Crea la
+  >    preferencia con external_reference = tripId, confirma el pago
+  >    consultando a Mercado Pago y actualiza el viaje con firebase-admin. La
+  >    app nunca escribe paymentStatus, paymentId ni el status paid.
+  > 10. Notificaciones push (servicio de Expo o FCM) — app y backend. Avisan de
+  >    solicitudes nuevas con la app en segundo plano. No funcionan en Expo
+  >    Go: requieren development build. Se hace al final si alcanza el tiempo.
+  > 11. API del pasajero de la profesora — todavía no sabemos cómo funciona.
+  >    Solo src/services/tripRequestsSource.js sabe de dónde vienen las
+  >    solicitudes; al llegar la API se cambia ese archivo.
+  >
+  > ## En veremos
+  > 12. Google Routes API — reemplazaría a OpenRouteService dentro de
+  >    backend/src/rutas.js. Requiere facturación activa en Google Cloud,
+  >    restringir la llave y alertas de presupuesto.
+  >
+  > No cambies código en esta tarea: solo docs/APIS.md y CLAUDE.md. Muéstrame
+  > el diff antes del commit y registra este prompt tal cual en la entrada #20.
+  > El paso 5 (entrada #21) lo hacemos después, en commits aparte.
+  >
+  > Sobre docs/enunciado.pdf: lo copio yo ahora a docs/ y queda fuera de Git.
+- Resumen de la respuesta: Se escribió `docs/APIS.md` con las reglas generales y los 12 servicios en el formato pedido. Para los archivos que todavía no existen (`backend/src/rutas.js` y el simulador) se indica que se crean en el paso 5. Se agregaron los nombres exactos de las variables de Firebase y Cloudinary del `.env.example`, el cupo del plan gratuito de OpenRouteService (unas 2.000 rutas al día y 40 por minuto) y que el backend solo lee `MAIL_PASS` al arrancar. `CLAUDE.md` se incluyó tal como lo dejó el equipo.
+- Qué se usó / modificó / descartó:
+  - Se usó: la estructura y el contenido del prompt.
+  - Se modificó: nada de `CLAUDE.md`.
+  - Se descartó: cambiar `.gitignore` en esta tarea; se hizo después en un commit aparte (4824141) para ignorar `docs/enunciado.pdf` y `CLAUDE.local.md`.
+- Archivos y commit: `docs/APIS.md`, `CLAUDE.md` — 66703e6
+- Verificación: se revisó que los nombres de las variables coincidan con `.env.example` y `backend/.env.example`, y que `backend/serviceAccountKey.json` esté en `.gitignore`.
+- Aprendizaje: [Completar]
+
+### Entrada #21
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Paso 5 del plan: solicitudes reales desde Firestore, rutas con OpenRouteService y un simulador mínimo de solicitudes, en cuatro partes con su propio commit (backend; servicios y hook de la app; pantallas y navegación; README y `.env.example`).
+- Prompt:
+  > Paso 5 (entrada #21). Ya publiqué las reglas en la consola. Sigue
+  > docs/APIS.md para todo lo de APIs.
+  >
+  > Solicitudes:
+  > 1. src/services/tripRequestsSource.js es el único lugar que sabe de dónde
+  >    vienen las solicitudes: subscribeToNewRequests(onRequests, onError) con
+  >    onSnapshot sobre trips en "requested". Muestra la más antigua por
+  >    createdAt; si Firestore pide un índice compuesto, dame el link.
+  > 2. La suscripción vive dentro de useTripRequests, activa solo con el
+  >    conductor conectado y aprobado, con limpieza en el useEffect. El
+  >    vencimiento de 15 s guarda "rejected" en el viaje (así se va el error de
+  >    lint de ese hook).
+  > 3. src/services/tripRepository.js: aceptar o rechazar con runTransaction,
+  >    avanzar de estado y cerrar con completionFields, validando antes con
+  >    validateDriverUpdate.
+  > 4. El status del viaje en Firestore controla la pantalla: escucha el viaje
+  >    activo del conductor y navega según su status, también al reabrir la app.
+  > 5. IncomingRequestScreen: muestra origen, destino, distancia, duración,
+  >    categoría, método de pago, tarifa y ganancia neta con calculateFare.
+  >    Aceptar y rechazar con useCallback. Todo texto con t().
+  >
+  > Rutas y mapa:
+  > 6. backend/src/rutas.js con calcularRuta(origen, destino) usando
+  >    OpenRouteService, como dice docs/APIS.md. Pruebas con fetch simulado.
+  > 7. backend/scripts/simular-solicitud.js: crea UN viaje "requested" con
+  >    firebase-admin, eligiendo entre unas pocas rutas de Medellín, con la
+  >    categoría como argumento. Usa calcularRuta para distanceKm, durationMin y
+  >    routePolyline; si ORS falla, valores fijos de respaldo. Las direcciones
+  >    sácalas una vez con Nominatim y déjalas escritas en el código. Agrega un
+  >    script en backend/package.json para correrlo.
+  > 8. ActiveTripScreen: dibuja routePolyline con @mapbox/polyline (instálalo
+  >    con npx expo install) y marcadores de origen y destino. El botón que
+  >    cambia a in_progress dice "Pasajero a bordo", como el enunciado.
+  >
+  > Al terminar: README con OpenRouteService y Nominatim y el crédito
+  > "© OpenStreetMap contributors"; ORS_API_KEY= en backend/.env.example.
+  > Corre npm test en la raíz y en backend/, npx expo lint sin errores y
+  > npx tsc --noEmit. Muéstrame el diff antes del commit.
+
+  > Sí, haz el commit de las entradas #19 y #20.
+  >
+  > Paso 5: siguen siendo los 8 puntos, sin cambios. Ya tengo en backend/ la
+  > serviceAccountKey.json y la ORS_API_KEY en backend/.env, y ya publiqué las
+  > reglas en la consola.
+  >
+  > Divídelo en commits que pueda revisar por separado, en este orden:
+  > 1. backend: rutas.js y el simulador, con sus pruebas;
+  > 2. app: tripRequestsSource, tripRepository y useTripRequests;
+  > 3. app: pantallas (solicitud, viaje en curso con la ruta) y navegación
+  >    según el estado;
+  > 4. README y .env.example.
+  > Muéstrame el diff de cada uno antes de su commit. Todo va en la entrada #21.
+
+  > Listo: serviceAccountKey.json ya está en backend/ y ORS_API_KEY en
+  > backend/.env. Haz la prueba real: ejecuta el simulador una vez por ruta,
+  > confirma que la llave en la cabecera Authorization funciona y reemplaza
+  > los valores de respaldo por los reales de ORS. No me muestres la llave ni
+  > el contenido de esos archivos. Después muéstrame el diff final y haz el
+  > commit.
+  >
+  > Para la parte 3: como routePolyline puede ser null cuando ORS falla,
+  > ActiveTripScreen debe dibujar una línea recta entre origen y destino en
+  > ese caso.
+  >
+  > La vulnerabilidad de nodemailer la dejamos para después de la entrega.
+
+  > Listo: la clave ya está en backend/ y ORS_API_KEY en backend/.env.
+  > Ejecuta el simulador una vez por ruta.
+
+  > Listo, ORS_API_KEY ya está guardada en backend/.env. Revisa sin mostrarme
+  > la llave que solo haya una línea ORS_API_KEY con valor (borra cualquier
+  > línea vacía de antes) y ejecuta el simulador una vez por ruta. Reemplaza
+  > los valores de respaldo por los reales de ORS, muéstrame el diff y haz el
+  > commit de la parte 1.
+
+  > Sigue con la parte 2. Dos ajustes:
+  >
+  > 1. Escribe la entrada #21 en la bitácora desde ya, con la parte 1 y sus
+  >    commits, y complétala al terminar cada parte. Así nunca hay commits
+  >    que citen una entrada inexistente.
+  > 2. Cuando termine la parte 2, dime cómo probarla en el celular paso a
+  >    paso. Ya [publiqué / todavía no publiqué] las reglas en la consola.
+
+  > Sí, haz los tres commits en ese orden. Antes del segundo: si
+  > IncomingRequestScreen.js y su ruta en TripStack ya no se usan, bórralos
+  > en ese mismo commit y actualiza la sección Estructura del README.
+  >
+  > Después de los commits, haz push de tamiro/viajes-firestore.
+
+  > Revisé la rama y encontré un bug: cuando el conductor acepta, HomeScreen
+  > sigue montado debajo en el Stack, así que useTripRequests sigue
+  > escuchando. Mientras el conductor está en el viaje, la siguiente
+  > solicitud aparece oculta en el inicio y a los 15 s se rechaza sola, y
+  > así cada 15 s.
+  >
+  > En la parte 3, junto con la navegación según el estado:
+  > 1. useTripRequests escucha solo con el conductor conectado, aprobado y
+  >    SIN viaje activo (usa subscribeToActiveTrip, que ya existe). Con un
+  >    viaje activo, no hay cuenta regresiva ni rechazo automático.
+  > 2. Agrega una prueba que lo cubra.
+  > 3. Renombra IncomingRequestScreen.js a IncomingRequestCard.js y muévelo a
+  >    src/components/, ya que ahora es una tarjeta y no una pantalla.
+  >
+  > Lo demás de la parte 3 sigue igual: viaje en curso con la ruta (línea
+  > recta si routePolyline es null), botón "Pasajero a bordo" y la app
+  > vuelve al viaje al reabrirse.
+
+  > Sí, haz el commit de la parte 3 y completa la entrada #21.
+  >
+  > Luego, una parte 3b antes del README: la ruta hacia el punto de recogida
+  > es un requisito de la sección 3 ("ruta hacia el punto de recogida; al
+  > tocar Pasajero a bordo, la ruta cambia hacia el destino").
+  > 1. Backend: POST /api/v1/rutas { origen, destino } que use calcularRuta,
+  >    en el mismo estilo de app.js, con pruebas.
+  > 2. App: al aceptar (o al reabrir con un viaje en driver_arriving), pide
+  >    una vez la ruta desde la ubicación del conductor hasta el origen y
+  >    guárdala en TripContext, no en Firestore. Si falla, línea recta
+  >    punteada.
+  > 3. En driver_arriving muestra esa ruta; en in_progress, la de origen a
+  >    destino.
+  > Muéstrame el diff antes del commit. Después pásame los pasos para
+  > probar todo en el celular, y haz push.
+
+  > Sí: haz el commit, completa la entrada #21 con la parte 3b, pásame los
+  > pasos para probar todo en el celular y haz push. La protección de
+  > POST /rutas queda para después de la entrega; anótala como mejora
+  > pendiente en docs/APIS.md (servicio 1).
+
+  > Antes de que pruebe: en firestore.rules, en isExpectedFare, reemplaza
+  > math.round(subtotal * multiplier / 100) por
+  > math.floor(subtotal * multiplier / 100 + 0.5), que para números positivos
+  > es exactamente lo que hace Math.round de JavaScript. Así no dependemos de
+  > cómo redondee math.round de las reglas en los empates como el 214,5 de la
+  > ruta 2. Deja un comentario explicándolo. Haz commit y push, y avísame
+  > para publicar las reglas otra vez.
+
+  > Console Error
+  >
+  > Error leyendo el viaje en curso: FirebaseError: Missing or insufficient permissions.
+  >
+  > Source:
+  > D:\Projects\uberclone-driver\src\hooks\useActiveTrip.js (35:23)
+  >
+  > Call Stack:
+  > addLog (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\LogBox\Data\LogBoxData.js:235)
+  > addConsoleLog (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\LogBox\LogBox.js:213)
+  > reactConsoleErrorHandler (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\Core\ExceptionsManager.js:248)
+  > console.level (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\Core\setUpDeveloperTools.js:42)
+  > subscribeToActiveTrip$argument_2 (D:\Projects\uberclone-driver\src\hooks\useActiveTrip.js:35)
+  > setTimeout$argument_0 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:25120)
+
+  > 1. Sí, borra las 6 solicitudes de biblioteca-clase, pero solo las de
+  >    trips con passengerId == "pasajero-simulado". Antes de borrar, muéstrame
+  >    la lista de ids y espera mi sí. No toques nada más de ese proyecto.
+  > 2. Sí, agrega la protección al simulador: que compare el project_id de la
+  >    clave con EXPO_PUBLIC_FIREBASE_PROJECT_ID del .env de la raíz y no
+  >    escriba nada si no coinciden. Haz lo mismo para el endpoint de rutas
+  >    solo si usa Firebase (si no, no). Muéstrame el diff antes del commit.
+  > 3. Sí, corrige la #21 con una nota que explique lo que pasó.
+  > Cuando termines el punto 1, te aviso para cambiar la clave.
+
+  > Sí a todo:
+  > 1. Borra esos 6 documentos y confirma que quedan 0.
+  > 2. Haz los commits de la protección del simulador y de la #21, agrega el
+  >    hash a la #21 y haz push.
+  > Te aviso cuando haya cambiado la clave.
+- Resumen de la respuesta:
+  - Parte 1 (backend): `backend/src/rutas.js` es el único módulo que llama a OpenRouteService; `calcularRuta` devuelve la distancia con un decimal, la duración en minutos enteros y la polyline codificada. `backend/scripts/simular-solicitud.js` crea una solicitud `requested` con `firebase-admin`, con los campos de la sección 6 más `routePolyline`, eligiendo entre tres rutas de Medellín cuyas direcciones se consultaron una vez en Nominatim ("Parque Lleras" no aparece en Nominatim y se cambió por otros lugares). Recibe la categoría, el método de pago y el número de ruta como argumentos, y si ORS falla usa valores de respaldo.
+  - Parte 2 (servicios y hook de la app): `src/services/tripRequestsSource.js` es el único módulo que sabe de dónde vienen las solicitudes y las entrega de la más antigua a la más nueva por `createdAt`, ordenadas en la app para no necesitar un índice compuesto. `useTripRequests` escucha solo con el conductor conectado y aprobado, con limpieza en el `useEffect`, y al vencerse los 15 segundos guarda `rejected` en el viaje. `src/services/tripRepository.js` acepta o rechaza con `runTransaction` y valida cada cambio con `validateDriverUpdate`. La tarjeta de solicitud muestra todos los datos que pide la sección 3, con la tarifa y la ganancia neta de `calculateFare`, aceptar y rechazar con `useCallback` y textos con `t()`.
+  - Parte 3 (pantallas y navegación según el estado): `TripContext` escucha en tiempo real el viaje en curso del conductor con `useActiveTrip`, y el inicio abre la pantalla del viaje según su status, también al reabrir la app. Se corrigió el bug que encontró Tamiro: el inicio sigue montado debajo del viaje y rechazaba solicitudes ocultas cada 15 segundos; ahora `canReceiveRequests` solo deja escuchar sin viaje en curso. La pantalla del viaje dibuja la ruta de OpenRouteService con `@mapbox/polyline` (una línea recta punteada si `routePolyline` es null), con marcadores de origen y destino; "Pasajero a bordo" pasa a `in_progress` y "Finalizar viaje" cierra con `completeTrip`. El resumen muestra el estado del pago. La tarjeta pasó a `src/components/IncomingRequestCard.js`.
+  - Parte 3b (ruta hacia el punto de recogida): el backend tiene `POST /api/v1/rutas`, que usa `calcularRuta` para que la llave de ORS nunca salga del backend y no muestra el error interno si ORS falla. La app la llama desde `src/services/routesApi.js`: al aceptar, o al reabrir con el viaje en `accepted` o `driver_arriving`, `usePickupRoute` lee la ubicación del conductor, pide la ruta una sola vez por viaje y la guarda en `TripContext`, no en Firestore. Si falla, se dibuja una línea recta punteada; sin permiso de ubicación, la pantalla lo explica. En `driver_arriving` se muestra esa ruta y en `in_progress` la de origen a destino. `docs/APIS.md` anota como mejora pendiente proteger `POST /api/v1/rutas`.
+  - Corrección de las reglas: en `isExpectedFare` se cambió `math.round(x)` por `math.floor(x + 0.5)`, que con números positivos redondea los empates hacia arriba igual que `Math.round` de JavaScript. Así la ruta 2 en Económico (subtotal 21.450, es decir 214,5 centenas) da 21.500 en la app y en las reglas.
+  - Corrección del proyecto de Firebase: la app mostró "Missing or insufficient permissions" al leer el viaje en curso. Al revisarlo se encontró que `backend/serviceAccountKey.json` era del proyecto `biblioteca-clase`, mientras la app usa `uber-clone-ba0e2`: el simulador había escrito las 6 solicitudes de prueba en el proyecto equivocado, y Claude no comprobó el proyecto de la clave antes de ejecutarlo. Se agregó al simulador una protección que compara el `project_id` de la clave con `EXPO_PUBLIC_FIREBASE_PROJECT_ID` del `.env` de la raíz y no escribe nada (ni pide la ruta a ORS) si no coinciden. `POST /api/v1/rutas` no usa Firebase, así que no la necesita. Las 6 solicitudes se borraron de `biblioteca-clase` (solo las de `trips` con `passengerId == "pasajero-simulado"`; la consulta posterior devolvió 0), y queda pendiente descargar la clave de `uber-clone-ba0e2`.
+- Qué se usó / modificó / descartó:
+  - Se usó: OpenRouteService con la llave en la cabecera `Authorization` y `firebase-admin` 14.5.
+  - Se modificó: se agregó el número de ruta como argumento para probar cada ruta, y los valores de respaldo aproximados se reemplazaron por los reales de ORS. En la parte 2, la tarjeta de solicitud dejó de ser una ruta aparte y se muestra sobre el mapa del inicio, donde vive el hook; sin ese cambio la app quedaba rota hasta la parte 3. `IncomingRequestScreen.js` sigue en uso como esa tarjeta, así que no se borró; solo se quitó su ruta de `TripStack`. También se quitó el botón "Simular Solicitud".
+  - Se descartó: un simulador más elaborado, por la instrucción de hacerlo mínimo; arreglar ahora la vulnerabilidad de `nodemailer`, que queda para después de la entrega; y las claves `category.*` que se habían repetido en `strings.js`, porque ya existían.
+  - Parte 3: se agregaron sin que se pidieran el paso automático de `accepted` a `driver_arriving` al abrir el viaje, el botón "Cancelar viaje" antes de que suba el pasajero y "Volver al viaje en curso" en el inicio. El primer commit de esta parte solo registró el cambio de nombre de la tarjeta, porque `git add` falló por una ruta que ya no existía; como no se había subido, se corrigió en ese mismo commit.
+  - Parte 3b: se agregó, sin que se pidiera, el aviso cuando no hay ubicación del conductor, para que la pantalla no se quedara "calculando la ruta". Se descartó proteger ahora `POST /api/v1/rutas` (queda para después de la entrega).
+- Archivos y commit:
+  - Parte 1: `backend/src/rutas.js`, `backend/test/rutas.test.js`, `backend/scripts/simular-solicitud.js`, `backend/test/simular-solicitud.test.js`, `backend/package.json`, `backend/package-lock.json` — 7a14952
+  - Parte 2: `src/services/tripRequestsSource.js`, `src/services/tripRepository.js`, `src/services/trips.js`, `src/services/trips.test.js`, `src/hooks/useTripRequests.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/IncomingRequestScreen.js`, `src/navigation/TripStack.js`, `src/i18n/strings.js`, `README.md` — 71fb093
+  - Parte 3: `src/contexts/TripContext.js`, `src/hooks/useActiveTrip.js`, `src/services/driverStatus.js`, `src/services/driverStatus.test.js`, `src/services/tripRoute.js`, `src/services/tripRoute.test.js`, `src/services/trips.js`, `src/services/trips.test.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js`, `src/screens/trip/TripSummaryScreen.js`, `src/components/IncomingRequestCard.js`, `src/i18n/strings.js`, `README.md`, `package.json`, `package-lock.json` — 9511707
+  - Parte 3b: `backend/src/app.js`, `backend/test/rutas-api.test.js`, `src/services/routesApi.js`, `src/services/routesApi.test.js`, `src/hooks/usePickupRoute.js`, `src/contexts/TripContext.js`, `src/services/tripRoute.js`, `src/services/tripRoute.test.js`, `src/screens/trip/ActiveTripScreen.js`, `src/i18n/strings.js`, `docs/APIS.md` — 5025661
+  - Corrección de las reglas: `firestore.rules` — b87b241
+  - Protección del simulador: `backend/scripts/simular-solicitud.js`, `backend/test/simular-solicitud.test.js` — 4c2963f
+- Verificación:
+  - Parte 1: `npm test` en `backend/` pasa 22 pruebas (9 nuevas). El simulador se ejecutó una vez por ruta: OpenRouteService respondió con la llave en `Authorization` (8,3 km y 13 min; 11 km y 19 min; 3,3 km y 6 min, sin tráfico) y las polylines guardadas empiezan y terminan junto al origen y el destino. Un intento anterior, con la llave todavía sin guardar en `backend/.env`, creó 3 solicitudes con los valores de respaldo; la comprobación de la llave no detuvo el comando, y se corrigió para que se detenga.
+  - Parte 2: Jest pasa 143 pruebas (4 nuevas: orden por `createdAt` y textos de errores, categorías y métodos de pago en los dos idiomas), `npm test` en `backend/` pasa 22, `npx tsc --noEmit` no da errores, el bundle de Android se genera y `npx expo lint` queda sin errores (solo el aviso intencional de `emailVerification.test.js`). [Completar con la prueba en el celular: aparece la solicitud más antigua, el vencimiento de 15 s y el rechazo guardan `rejected`, aceptar guarda `accepted` con el `driverId`, y desconectado no se muestran solicitudes]
+  - Parte 3: Jest pasa 150 pruebas (7 nuevas: `canReceiveRequests` con el caso del bug, la ruta decodificada o en línea recta y el estado del pago), `npm test` en `backend/` pasa 22, `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. Con `firebase-admin` se comprobó que las consultas del viaje en curso y de las solicitudes no necesitan índice compuesto. [Completar con la prueba en el celular]
+  - Parte 3b: Jest pasa 155 pruebas (5 nuevas: `fetchRoute` y la ruta de recogida real o en línea recta), `npm test` en `backend/` pasa 25 (3 nuevas: respuesta correcta, puntos inválidos sin llamar a ORS y error de ORS sin detalles), `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. `POST /api/v1/rutas` se probó con la llave real: respondió 200 con 3,5 km, 5 min y una polyline de 212 caracteres. [Completar con la prueba en el celular]
+  - Corrección de las reglas: la fórmula nueva da lo mismo que `calculateFare` en 21 casos (las 7 distancias y duraciones del simulador y del enunciado, en las 3 categorías). [Completar: la consola acepta las reglas al publicarlas y la ruta 2 en Económico se completa sin "permiso denegado"]
+  - Nota (corrección): las comprobaciones de la parte 1 que tocaron Firestore (las solicitudes creadas, las polylines guardadas) y la de la parte 3 sobre los índices se hicieron en `biblioteca-clase`, no en el proyecto de la app. Siguen siendo válidas las respuestas de OpenRouteService, que no dependen de Firebase, y la conclusión de los índices, que depende de la forma de la consulta y no del proyecto. La prueba en el celular de las partes 2, 3 y 3b debe hacerse con solicitudes creadas en `uber-clone-ba0e2`. La protección se probó con la clave equivocada: el simulador se negó antes de llamar a ORS y sin escribir nada; `npm test` en `backend/` pasa 27 pruebas (2 nuevas).
+- Aprendizaje: [Completar]
+
+### Entrada #22
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Evitar que Firestore se quede "sin conexión" en el celular cuando la red corta la conexión de streaming que usa por defecto.
+- Prompt:
+  > Console Error
+  >
+  > [2026-11-12T01:37:09.059Z]  @firebase/firestore: Firestore (13.2.0): Could not reach Cloud Firestore backend. Backend didn't respond within 10 seconds.
+  > This typically indicates that your device does not have a healthy Internet connection at the moment. The client will operate in offline mode until it is able to successfully connect to the backend.
+  >
+  > Source:
+  > D:\Projects\uberclone-driver\node_modules\@firebase\logger\dist\esm\index.esm.js (78:23)
+  >
+  > Call Stack:
+  > addLog (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\LogBox\Data\LogBoxData.js:235)
+  > addConsoleLog (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\LogBox\LogBox.js:213)
+  > reactConsoleErrorHandler (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\Core\ExceptionsManager.js:248)
+  > console.level (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\Core\setUpDeveloperTools.js:42)
+  > defaultLogHandler (D:\Projects\uberclone-driver\node_modules\@firebase\logger\dist\esm\index.esm.js:78)
+  > Logger#error (D:\Projects\uberclone-driver\node_modules\@firebase\logger\dist\esm\index.esm.js:161)
+  > __PRIVATE_logError (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:104)
+  > __PRIVATE_OnlineStateTracker#du (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:24528)
+  > asyncQueue.enqueueAfterDelay$argument_2 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:24498)
+  > asyncQueue.enqueueAndForget$argument_0 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:25204)
+  > IE$argument_0 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:28803)
+  > TE.then$argument_0 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:28836)
+
+  > Sí, prepara el cambio de long polling en src/config/firebase.js:
+  > usa initializeFirestore(app, { experimentalForceLongPolling: true }) al
+  > crear la app, y conserva getFirestore(app) en la rama que reutiliza la app
+  > ya creada (Fast Refresh), para no inicializar Firestore dos veces.
+  > Commit aparte, muéstrame el diff antes. Va en mi siguiente entrada de
+  > bitácora (#22).
+- Resumen de la respuesta: Claude explicó que el aviso no era de permisos ni de código, sino que el celular no llegaba al servidor de Firestore en 10 segundos, y que Firestore seguía funcionando desde el PC. Propuso revisar la conexión del celular y, si se repetía con buena conexión, forzar long polling. En `src/config/firebase.js`, Firestore se crea con `initializeFirestore(app, { experimentalForceLongPolling: true })` al iniciar la app, y con Fast Refresh se reutiliza esa instancia con `getFirestore(app)`.
+- Qué se usó / modificó / descartó:
+  - Se usó: la opción `experimentalForceLongPolling`, que se confirmó en los tipos de Firebase 13.2.0 instalado.
+  - Se descartó: pasar a datos móviles como solución, porque el celular dejaría de llegar al backend del PC (código por correo y ruta hasta el pasajero).
+- Archivos y commit: `src/config/firebase.js` — e6ecc93
+- Verificación: Jest pasa 155 pruebas, `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. Fast Refresh no aplica el cambio: hay que cerrar la app por completo o recargarla. [Completar con la prueba en el celular: el aviso "Could not reach Cloud Firestore backend" ya no aparece]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
