@@ -1,5 +1,10 @@
-// AI-assisted: see docs/AI_LOG.md #28
-import { formatCop, formatDateTime, formatSignedCop } from "./format";
+// AI-assisted: see docs/AI_LOG.md #28, #31
+import {
+  formatCop,
+  formatDateTime,
+  formatDecimal,
+  formatSignedCop,
+} from "./format";
 
 describe("formatCop", () => {
   it("shows integer pesos with dots for thousands", () => {
@@ -28,5 +33,13 @@ describe("formatDateTime", () => {
     const millis = new Date(2026, 10, 12, 15, 5).getTime();
     expect(formatDateTime(millis, "es")).toContain("12");
     expect(formatDateTime(millis, "en")).toContain("12");
+  });
+});
+
+describe("formatDecimal", () => {
+  it("uses a comma in Spanish and a dot in English, with one decimal", () => {
+    expect(formatDecimal(2.44, "es")).toBe("2,4");
+    expect(formatDecimal(2.44, "en")).toBe("2.4");
+    expect(formatDecimal(3, "es")).toBe("3");
   });
 });

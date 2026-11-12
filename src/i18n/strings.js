@@ -269,6 +269,8 @@ export const strings = {
 
     // Solicitud nueva ({seconds}, {km} y {minutes} los reemplaza IncomingRequestCard)
     "request.title": "¡Nueva solicitud!",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "request.pickupEstimate": "{minutes} min · {km} km de distancia",
     "request.seconds": "{seconds} s",
     "request.origin": "Origen",
     "request.destination": "Destino",
@@ -726,6 +728,8 @@ export const strings = {
     "drawer.greeting": "Hi, {name}",
 
     "request.title": "New request!",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "request.pickupEstimate": "{minutes} min · {km} km away",
     "request.seconds": "{seconds} s",
     "request.origin": "Pickup",
     "request.destination": "Destination",

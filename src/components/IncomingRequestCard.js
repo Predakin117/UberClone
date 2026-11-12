@@ -1,8 +1,9 @@
-// AI-assisted: see docs/AI_LOG.md #4, #21, #29
+// AI-assisted: see docs/AI_LOG.md #4, #21, #29, #31
 // Tarjeta de solicitud nueva (sección 3 del enunciado). HomeScreen la muestra
 // sobre el mapa con la solicitud más antigua y los segundos que quedan para
 // responder; el temporizador vive en useTripRequests. The countdown is also a
-// bar that shrinks from 15 to 0 seconds.
+// bar that shrinks from 15 to 0 seconds. On top, the straight-line time and
+// distance to the pickup point (no OpenRouteService call here, section 7).
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Animated,
@@ -22,13 +23,20 @@ import {
 } from "../config/theme";
 import { useLanguage } from "../contexts/LanguageContext";
 import { REQUEST_SECONDS } from "../hooks/useTripRequests";
+import { formatDecimal } from "../i18n/format";
+import { pickupEstimate } from "../services/pickupEstimate";
 import { respondToRequest } from "../services/tripRepository";
 import { TRIP_STATUS } from "../services/trips";
 
 const formatCop = (amount) => `$${amount.toLocaleString("es-CO")} COP`;
 
-export default function IncomingRequestCard({ trip, timeLeft, driverStatus }) {
-  const { t } = useLanguage();
+export default function IncomingRequestCard({
+  trip,
+  timeLeft,
+  driverStatus,
+  driverLocation,
+}) {
+  const { t, language } = useLanguage();
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
   // Share of the time left, from 1 (15 s) to 0. Each second it slides to the
@@ -52,6 +60,12 @@ export default function IncomingRequestCard({ trip, timeLeft, driverStatus }) {
     inputRange: [0, 1],
     outputRange: ["0%", "100%"],
   });
+
+  // Straight line from the driver to the pickup point; null without location
+  const toPickup = useMemo(
+    () => pickupEstimate(driverLocation, trip.origin),
+    [driverLocation, trip.origin],
+  );
 
   // La misma función que cierra el viaje: la estimación coincide con el cobro.
   // Con una categoría desconocida no hay estimación.
@@ -121,6 +135,13 @@ export default function IncomingRequestCard({ trip, timeLeft, driverStatus }) {
           <View style={[styles.crossBar, styles.crossBack]} />
         </TouchableOpacity>
 
+        {toPickup && (
+          <Text style={styles.pickupText}>
+            {t("request.pickupEstimate")
+              .replace("{minutes}", toPickup.minutes)
+              .replace("{km}", formatDecimal(toPickup.km, language))}
+          </Text>
+        )}
         <Text style={styles.title}>{t("request.title")}</Text>
 
         <View style={styles.timerRow}>
@@ -213,6 +234,12 @@ const styles = StyleSheet.create({
   },
   crossForward: { transform: [{ rotate: "45deg" }] },
   crossBack: { transform: [{ rotate: "-45deg" }] },
+  pickupText: {
+    ...typography.label,
+    fontSize: 16,
+    marginBottom: spacing.xs,
+    paddingRight: 40,
+  },
   title: { ...typography.section, marginBottom: spacing.md, paddingRight: 40 },
   timerRow: {
     flexDirection: "row",

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #28
+// AI-assisted: see docs/AI_LOG.md #28, #31
 // Formats for amounts and dates shown on screen, by language.
 
 const LOCALES = { es: "es-CO", en: "en-US" };
@@ -21,3 +21,9 @@ export const formatDateTime = (millis, language) =>
         hour: "numeric",
         minute: "2-digit",
       });
+
+// Number with at most one decimal in the language's format: 2,4 or 2.4
+export const formatDecimal = (value, language) =>
+  Number(value).toLocaleString(LOCALES[language] ?? LOCALES.es, {
+    maximumFractionDigits: 1,
+  });

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21, #27, #57
+// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21, #27, #57, #31
 // src/screens/trip/HomeScreen.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
@@ -199,6 +199,7 @@ export default function HomeScreen() {
           trip={request}
           timeLeft={timeLeft}
           driverStatus={driverState.status}
+          driverLocation={location}
         />
       )}
     </View>
