@@ -1361,3 +1361,47 @@ Separación de incumbencias y cumplimiento de reglas de equipo: Reemplazar llama
 Mejora de la experiencia sensorial y de notificaciones: Integrar retroalimentación háptica nativa (Vibration) al recibir nuevas alertas de viajes en el mapa incrementa la inmediatez y la atención del conductor sin necesidad de instalar dependencias de terceros ni comprometer el rendimiento.
 
 Estandarización de calidad de código y localización: Mantener el estándar de desarrollo en un entorno multilingüe implica no solo traducir las cadenas visibles a los usuarios, sino también estandarizar los comentarios, registros de consola (console.error) y documentación interna al inglés, asegurando la mantenibilidad a largo plazo del repositorio.
+
+### Entrada #60
+
+- Fecha: 2026-11-12
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Completar el historial de la sección 6 (filtro por rango de fechas y por método de pago, detalle del viaje con la ruta en el mapa y 20 viajes por carga) y darles el estilo de Uber al viaje en curso, al inicio y a la solicitud nueva, sin tocar el backend. Tamiro dio permiso para cambiar sus pantallas.
+- Prompt: "Quiero implementar todas estas sugerencias, que me encantan, y sí, Tamiro me dio permiso para tocar sus pantallas, así que comencemos a implementar todo: primero el 1 (Historial), porque suma puntos del enunciado, seguir con el 2 (Viaje en curso), y pasamos con esta: 🚗 Lo más característico de Uber. 2. Viaje en curso: un botón “Desliza para iniciar el viaje” / “Desliza para finalizar” en lugar de un toque. Es el sello de Uber y evita finalizar por accidente. Una franja negra arriba con la dirección y el botón Navegar. Abajo, el pasajero con su inicial y los botones redondos de llamar y escribir. 3. Inicio: el botón redondo y grande para conectarse, como el “GO” de Uber, junto al interruptor. Mientras estás conectado, una barra animada que dice “Buscando viajes…”. 4. Solicitud nueva: el tiempo en un anillo alrededor del botón “Aceptar”. La tarifa grande arriba y la categoría como etiqueta."
+- Resumen de la respuesta:
+  - Historial: tiene los filtros Hoy, Esta semana, Este mes y Rango (con fechas Desde y Hasta) y el filtro por método de pago (Todos, Efectivo, Mercado Pago, Stripe). Muestra el total de viajes y la ganancia de lo filtrado, agrupa los viajes por día ("Hoy", "Ayer" o la fecha) y carga 20 viajes más con "Cargar más viajes". Al tocar un viaje se abre `TripDetailScreen`, con la ruta guardada dibujada en el mapa, la ganancia, la duración, la distancia, el desglose (tarifa, comisión y propina), el estado del pago y las dos calificaciones.
+  - Viaje en curso: tiene una franja negra arriba con la parada y "Navegar", el pasajero abajo con su inicial y los botones de llamar y escribir, y un botón deslizable para iniciar el viaje (negro) o finalizarlo (rojo).
+  - Inicio: tiene el botón redondo "IR", que palpita mientras el conductor está desconectado, y la barra animada "Buscando viajes…" mientras está conectado.
+  - Solicitud nueva: es una hoja que sube desde abajo, con la categoría y el método de pago como etiquetas, la tarifa en grande, la ruta y el botón redondo "Aceptar" con el tiempo en un anillo.
+- Qué se usó / modificó / descartó:
+  - Se usó:
+    - De Tamiro: `filterTripsByPeriod`, `summarizeTrips` y `completedAtMillis` de `src/services/earnings.js`, `useTrip` y `subscribeToTrip` para leer el viaje en tiempo real, `tripRoute` para decodificar `routePolyline` sin pedir otra ruta (sección 7), `useNightMap` y `paymentStatusKey`.
+    - De la app: `DateField` del registro y los íconos `Ionicons` de `@expo/vector-icons`, que ya venía con Expo y Tamiro ya usaba.
+    - De React Native: `PanResponder` y `Animated` para el botón deslizable, el pulso del botón "IR" y la barra animada.
+  - Se modificó:
+    - Historial: `subscribeToTripHistory` recibe cuántos viajes traer y `useTripHistory` suma 20 con cada "Cargar más" (`hasMore` y `loadMore`). Las funciones nuevas están en `src/services/historyFilters.js` (rango, método de pago, agrupar por día y "Hoy" / "Ayer") y `validateDateRange` en `src/validation/dateRange.js`, con 14 pruebas nuevas entre esos archivos y `format.test.js`. `formatDay` y `formatTime` están en `src/i18n/format.js`.
+    - Navegación: el historial ahora es `HistoryStack` (lista y detalle). En `MainDrawer` el encabezado solo sale en la lista y `popToTopOnBlur` hace que el historial siempre abra en la lista. Además, el encabezado del menú se oculta también en el viaje en curso, porque lo reemplaza la franja negra.
+    - Pantallas: en `ActiveTripScreen`, `HomeScreen` e `IncomingRequestCard` solo cambiaron el JSX y los estilos. Avanzar, finalizar, cancelar, navegar, llamar, aceptar, rechazar, el temporizador de 15 segundos y la disponibilidad siguen igual.
+    - Componentes nuevos: `SwipeButton`, `CountdownRing`, `GoButton`, `SearchingBar`, `RouteStops` y `PaymentStatusChip`. El tema tiene el color nuevo `successBackground`.
+    - Comentarios: se tradujeron al inglés los comentarios en español de esas pantallas.
+  - Se descartó:
+    - Instalar `react-native-svg` para el anillo, porque es una librería nueva; el anillo se dibuja con dos medios círculos que giran.
+    - Pedir a Firestore el rango de fechas con una consulta nueva: los filtros trabajan sobre los viajes ya cargados y "Cargar más" trae los anteriores.
+    - Quitar el interruptor Disponible / No disponible, porque lo pide el enunciado: el botón "IR" hace lo mismo.
+    - Usar `useRef` en el botón deslizable, porque la regla `react-hooks/refs` del lint no deja leerlo durante el render; se usa `useMemo`.
+- Archivos y commit: `src/services/historyFilters.js`, `src/services/historyFilters.test.js`, `src/validation/dateRange.js`, `src/validation/dateRange.test.js`, `src/services/tripRepository.js`, `src/hooks/useTripHistory.js`, `src/i18n/format.js`, `src/i18n/format.test.js`, `src/components/RouteStops.js`, `src/components/PaymentStatusChip.js`, `src/screens/main/HistoryScreen.js`, `src/screens/main/TripDetailScreen.js`, `src/navigation/HistoryStack.js`, `src/navigation/MainDrawer.js`, `src/components/SwipeButton.js`, `src/screens/trip/ActiveTripScreen.js`, `src/components/GoButton.js`, `src/components/SearchingBar.js`, `src/screens/trip/HomeScreen.js`, `src/components/CountdownRing.js`, `src/components/IncomingRequestCard.js`, `src/config/theme.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — los commits siguientes
+- Verificación: `npx jest` pasa 274 tests (14 nuevos), `npm test` en `backend/` no tiene fallos, `npx tsc --noEmit` no da errores, `npx expo lint` no reporta errores (solo el aviso que ya existía en `emailVerification.test.js`) y `npx expo export --platform android` genera el bundle.
+    - Historial: cada filtro, un rango con la fecha inicial después de la final, el método de pago, "Cargar más" y el detalle de un viaje con ruta real y con línea recta.
+    - Viaje en curso: deslizar a medias (debe volver), deslizar completo para iniciar y para finalizar, y "Navegar".
+    - Inicio: el botón "IR" conectado y desconectado, cuenta sin aprobar y la barra "Buscando viajes…".
+    - Solicitud nueva: el anillo durante los 15 segundos, aceptar, rechazar y que el tiempo se acabe.
+    - Textos en inglés.
+- Aprendizaje:
+Evolución y unificación de interfaces en código heredado: Rediseñar componentes clave creados inicialmente por compañeros (como el flujo del viaje en curso, las solicitudes y la pantalla de inicio) exige coordinar con el equipo permisos de modificación y respetar la lógica subyacente de negocio. Aislar el refactor exclusivamente en la capa de vista (JSX y estilos) permite adoptar la identidad visual de Uber ("GO", botones deslizables con PanResponder, anillos de tiempo y barras animadas de búsqueda) sin alterar las máquinas de estados ni los servicios de backend.
+
+Optimización de consultas y paginación en historiales: Implementar filtros avanzados por rangos de fechas (fromDate, toDate) y métodos de pago sin sobrecargar el servidor se beneficia de combinar una carga por lotes eficiente (paginación de 20 en 20 con loadMore) junto con funciones puros de filtrado y ordenamiento en cliente (historyFilters.js), garantizando respuestas fluidas y soporte completo mediante pruebas unitarias exhaustivas en Jest.
+
+Soluciones nativas y animadas sin dependencias externas: Resolver interacciones complejas —como el botón de "deslizar para iniciar/finalizar", el pulso de conexión del botón "GO" y el anillo dinámico de cuenta regresiva de 15 segundos— utilizando herramientas nativas de React Native (Animated, PanResponder) en lugar de instalar librerías externas de terceros previene conflictos de compatibilidad en nativo (como react-native-svg), reduce el peso del bundle y asegura la estabilidad del linter (react-hooks/refs).
+
+Consistencia en la experiencia de navegación (Stacks y Drawers): Gestionar adecuadamente la navegación anidada (como la transición entre la lista de historial y el detalle con HistoryStack, o el comportamiento del menú lateral mediante popToTopOnBlur) es indispensable para que la aplicación mantenga un flujo de usuario intuitivo, limpio y libre de pantallas huérfanas al cambiar de sección.
