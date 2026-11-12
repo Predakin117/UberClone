@@ -1,20 +1,14 @@
-// AI-assisted: see docs/AI_LOG.md #55
+// AI-assisted: see docs/AI_LOG.md #55, #58
 // Paso 3 del login: la contraseña ya fue correcta, ahora se confirma con un código
 // que llega al correo de la cuenta. Solo con el código correcto se entra a la app
 // (o se vuelve a las pestañas si el registro no se había enviado).
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useContext, useEffect, useRef, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import FormField from "../../components/FormField";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import CodeInput from "../../components/CodeInput";
 import NextButton from "../../components/NextButton";
+import StepLayout from "../../components/StepLayout";
+import { colors, spacing, typography } from "../../config/theme";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useEmailVerification } from "../../hooks/useEmailVerification";
@@ -103,52 +97,15 @@ export default function VerifyLoginScreen() {
     intro = t("verifyLogin.notSent").replace("{email}", driver.email);
   }
 
+  // AI-assisted: see docs/AI_LOG.md #58
+  // Only the look changes: the code in 6 boxes and the button fixed at the
+  // bottom (StepLayout), with the error under it
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View>
-          <Text style={styles.title}>{t("verifyLogin.heading")}</Text>
-          <Text style={styles.text}>{intro}</Text>
-
-          {isSent && (
-            <>
-              <FormField
-                label={t("verify.code")}
-                value={code}
-                onChangeText={(text) => setCode(text.replace(/\D/g, ""))}
-                placeholder="123456"
-                keyboardType="number-pad"
-                textContentType="oneTimeCode"
-                autoComplete="one-time-code"
-                maxLength={6}
-                autoFocus
-                onSubmitEditing={handleConfirm}
-              />
-              <TouchableOpacity
-                onPress={sendCode}
-                disabled={cooldown > 0 || isSending}
-                accessibilityRole="button"
-              >
-                <Text
-                  style={[styles.link, cooldown > 0 && styles.linkDisabled]}
-                >
-                  {cooldown > 0
-                    ? t("verify.resendIn").replace("{seconds}", cooldown)
-                    : t("verify.resend")}
-                </Text>
-              </TouchableOpacity>
-              <Text style={styles.hint}>{t("verifyLogin.checkSpam")}</Text>
-            </>
-          )}
-        </View>
-
-        {isSent ? (
+    <StepLayout
+      title={t("verifyLogin.heading")}
+      subtitle={intro}
+      footer={
+        isSent ? (
           <NextButton
             label={t("verifyLogin.confirm")}
             onPress={handleConfirm}
@@ -166,19 +123,45 @@ export default function VerifyLoginScreen() {
             error={errorText}
             style={styles.button}
           />
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+        )
+      }
+    >
+      {isSent && (
+        <View>
+          <CodeInput
+            label={t("verify.code")}
+            value={code}
+            onChangeText={(text) => setCode(text.replace(/\D/g, ""))}
+            hasError={Boolean(error)}
+            autoFocus
+            onSubmitEditing={handleConfirm}
+          />
+          <TouchableOpacity
+            onPress={sendCode}
+            disabled={cooldown > 0 || isSending}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.link, cooldown > 0 && styles.linkDisabled]}>
+              {cooldown > 0
+                ? t("verify.resendIn").replace("{seconds}", cooldown)
+                : t("verify.resend")}
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.hint}>{t("verifyLogin.checkSpam")}</Text>
+        </View>
+      )}
+    </StepLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: "#fff" },
-  container: { flexGrow: 1, padding: 20, justifyContent: "space-between" },
-  title: { fontSize: 28, fontWeight: "bold", marginBottom: 8 },
-  text: { fontSize: 16, color: "#555", lineHeight: 22, marginBottom: 24 },
-  link: { fontWeight: "bold", textDecorationLine: "underline", marginTop: 5 },
-  linkDisabled: { color: "#888", textDecorationLine: "none" },
-  hint: { color: "#888", fontSize: 13, marginTop: 15 },
-  button: { marginBottom: 10 },
+  link: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.textPrimary,
+    textDecorationLine: "underline",
+  },
+  linkDisabled: { color: colors.disabledText, textDecorationLine: "none" },
+  hint: { ...typography.caption, marginTop: spacing.lg },
+  button: { marginTop: 0 },
 });

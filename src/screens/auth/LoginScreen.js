@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #52, #53, #54
+// AI-assisted: see docs/AI_LOG.md #52, #53, #54, #58
 import { useNavigation } from "@react-navigation/native";
 import { useMemo, useState } from "react";
 import {
@@ -12,8 +12,16 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FormField from "../../components/FormField";
+import { formStyles } from "../../components/formStyles";
 import PhoneField from "../../components/PhoneField";
 import NextButton from "../../components/NextButton";
+import {
+  colors,
+  CONTROL_HEIGHT,
+  radius,
+  spacing,
+  typography,
+} from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { findAccount } from "../../services/accountService";
 import {
@@ -97,6 +105,9 @@ export default function LoginScreen() {
     }
   };
 
+  // AI-assisted: see docs/AI_LOG.md #58
+  // Only the look changes: the app name on top, the Phone | Email switch, the
+  // Continue button and "Create account" as a gray button below a divider
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -108,7 +119,16 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View>
-            <Text style={styles.title}>{t("login.title")}</Text>
+            <View style={styles.brand}>
+              <Text style={styles.wordmark}>{t("app.name")}</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{t("app.driverBadge")}</Text>
+              </View>
+            </View>
+
+            <Text style={styles.title} accessibilityRole="header">
+              {t("login.title")}
+            </Text>
             <Text style={styles.subtitle}>{t("login.subtitle")}</Text>
 
             {/* Phone | Email switch */}
@@ -171,13 +191,16 @@ export default function LoginScreen() {
                     ? t("login.notFoundPhone")
                     : t("login.notFoundEmail")}
                 </Text>
-                <TouchableOpacity onPress={goToCreateAccount}>
+                <TouchableOpacity
+                  onPress={goToCreateAccount}
+                  accessibilityRole="button"
+                >
                   <Text style={styles.link}>{t("login.createAccount")}</Text>
                 </TouchableOpacity>
               </View>
             )}
             {lookupResult && lookupResult !== "notFound" && (
-              <Text style={styles.errorText}>{t(lookupResult)}</Text>
+              <Text style={formStyles.errorText}>{t(lookupResult)}</Text>
             )}
           </View>
 
@@ -188,12 +211,23 @@ export default function LoginScreen() {
               isSaving={isChecking}
               loadingLabel={t("login.checking")}
             />
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>{t("login.noAccount")} </Text>
-              <TouchableOpacity onPress={goToCreateAccount}>
-                <Text style={styles.link}>{t("login.createAccount")}</Text>
-              </TouchableOpacity>
+
+            <View style={styles.divider}>
+              <View style={styles.line} />
+              <Text style={styles.dividerText}>{t("login.noAccount")}</Text>
+              <View style={styles.line} />
             </View>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={goToCreateAccount}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+            >
+              <Text style={styles.secondaryText}>
+                {t("login.createAccount")}
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -202,41 +236,84 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fff" },
+  safeArea: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  container: { flexGrow: 1, padding: 20, justifyContent: "space-between" },
-  title: { fontSize: 28, fontWeight: "bold", marginTop: 20, marginBottom: 8 },
-  subtitle: { fontSize: 16, color: "#555", marginBottom: 24 },
+  container: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.xl - 4,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
+    justifyContent: "space-between",
+  },
+  brand: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.xxl + 8,
+  },
+  wordmark: {
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    color: colors.textPrimary,
+  },
+  badge: {
+    backgroundColor: colors.black,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md - 2,
+    paddingVertical: 3,
+  },
+  badgeText: { color: colors.white, fontSize: 12, fontWeight: "700" },
+  title: { ...typography.title, marginBottom: spacing.sm },
+  subtitle: { ...typography.subtitle, marginBottom: spacing.xl },
   segment: {
     flexDirection: "row",
-    backgroundColor: "#eee",
-    borderRadius: 25,
-    padding: 4,
-    marginBottom: 24,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    padding: spacing.xs,
+    marginBottom: spacing.xl,
   },
   segmentOption: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 21,
+    minHeight: 40,
+    borderRadius: radius.pill,
     alignItems: "center",
-  },
-  segmentSelected: { backgroundColor: "#000" },
-  segmentText: { fontSize: 15, fontWeight: "bold", color: "#555" },
-  segmentTextSelected: { color: "#fff" },
-  notice: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    padding: 15,
-    marginTop: 5,
-  },
-  noticeText: { fontSize: 15, marginBottom: 8 },
-  link: { fontWeight: "bold", textDecorationLine: "underline" },
-  errorText: { color: "red", fontSize: 14, marginTop: 5 },
-  footer: {
-    flexDirection: "row",
     justifyContent: "center",
-    marginTop: 16,
-    marginBottom: 10,
   },
-  footerText: { color: "#555" },
+  segmentSelected: { backgroundColor: colors.black },
+  segmentText: { fontSize: 15, fontWeight: "600", color: colors.textSecondary },
+  segmentTextSelected: { color: colors.white },
+  notice: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  noticeText: { ...typography.body, lineHeight: 22 },
+  link: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.textPrimary,
+    textDecorationLine: "underline",
+  },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginVertical: spacing.lg,
+  },
+  line: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+  },
+  dividerText: typography.caption,
+  secondaryButton: {
+    minHeight: CONTROL_HEIGHT + 4,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  secondaryText: { fontSize: 17, fontWeight: "600", color: colors.textPrimary },
 });

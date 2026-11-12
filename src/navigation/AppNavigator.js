@@ -2,6 +2,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useContext } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { colors } from "../config/theme";
 import { AuthContext } from "../contexts/AuthContext";
 import CreateAccountScreen from "../screens/auth/CreateAccountScreen";
 import LoginPasswordScreen from "../screens/auth/LoginPasswordScreen";
@@ -25,8 +26,16 @@ export const AppNavigator = () => {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0000ff" />
+      // AI-assisted: see docs/AI_LOG.md #58
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.black} />
       </View>
     );
   }

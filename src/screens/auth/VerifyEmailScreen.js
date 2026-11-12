@@ -1,11 +1,13 @@
-// AI-assisted: see docs/AI_LOG.md #13, #14
+// AI-assisted: see docs/AI_LOG.md #13, #14, #58
 // Último paso del registro: confirma con un código que el correo de la pestaña 1 es
 // del conductor. Solo con el código correcto se guarda el registro como Pendiente.
 import { useNavigation } from "@react-navigation/native";
 import { useContext, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
-import FormField from "../../components/FormField";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import CodeInput from "../../components/CodeInput";
 import NextButton from "../../components/NextButton";
+import StepLayout from "../../components/StepLayout";
+import { colors, spacing } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { RegistrationContext } from "../../contexts/RegistrationContext";
 import { useEmailVerification } from "../../hooks/useEmailVerification";
@@ -49,48 +51,52 @@ export default function VerifyEmailScreen() {
   const changeEmail = () =>
     navigation.navigate("RegistrationTabs", { screen: "PersonalInfo" });
 
-  return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={styles.title}>{t("verify.heading")}</Text>
-      <Text style={styles.text}>
-        {(isSent ? t("verify.sentTo") : t("verify.willSendTo")).replace(
-          "{email}",
-          email,
-        )}
-        {isSent && minutes
-          ? ` ${t("verify.expiresIn").replace("{minutes}", minutes)}`
-          : null}
-      </Text>
+  // AI-assisted: see docs/AI_LOG.md #58
+  // Only the look changes: the code in 6 boxes and the main button fixed at
+  // the bottom (StepLayout), with the error under it
+  let intro = (isSent ? t("verify.sentTo") : t("verify.willSendTo")).replace(
+    "{email}",
+    email,
+  );
+  if (isSent && minutes) {
+    intro += ` ${t("verify.expiresIn").replace("{minutes}", minutes)}`;
+  }
 
-      {!isSent ? (
-        <NextButton
-          label={t("verify.sendCode")}
-          onPress={sendCode}
-          isSaving={isSending}
-          loadingLabel={t("verify.sending")}
-          error={errorText}
-        />
-      ) : (
-        <>
-          <FormField
-            label={t("verify.code")}
-            value={code}
-            onChangeText={(text) => setCode(text.replace(/\D/g, ""))}
-            placeholder="123456"
-            keyboardType="number-pad"
-            maxLength={6}
-            editable={!isVerified}
+  return (
+    <StepLayout
+      title={t("verify.heading")}
+      subtitle={intro}
+      footer={
+        !isSent ? (
+          <NextButton
+            label={t("verify.sendCode")}
+            onPress={sendCode}
+            isSaving={isSending}
+            loadingLabel={t("verify.sending")}
+            error={errorText}
+            style={styles.button}
           />
+        ) : (
           <NextButton
             label={t("verify.confirm")}
             onPress={handleConfirm}
             isSaving={isVerifying || isSaving}
             loadingLabel={isVerifying ? t("verify.verifying") : undefined}
             error={errorText || (saveError && t(saveError.code))}
+            style={styles.button}
+          />
+        )
+      }
+    >
+      {isSent && (
+        <>
+          <CodeInput
+            label={t("verify.code")}
+            value={code}
+            onChangeText={(text) => setCode(text.replace(/\D/g, ""))}
+            hasError={Boolean(error)}
+            editable={!isVerified}
+            autoFocus
           />
           {!isVerified && (
             <TouchableOpacity
@@ -110,23 +116,23 @@ export default function VerifyEmailScreen() {
 
       {canChangeEmail && (
         <TouchableOpacity onPress={changeEmail} accessibilityRole="button">
-          <Text style={styles.link}>{t("verify.changeEmail")}</Text>
+          <Text style={[styles.link, styles.changeEmail]}>
+            {t("verify.changeEmail")}
+          </Text>
         </TouchableOpacity>
       )}
-    </ScrollView>
+    </StepLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  content: { padding: 20 },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
-  text: { fontSize: 15, color: "#444", lineHeight: 22, marginBottom: 20 },
   link: {
-    fontSize: 14,
-    color: "#1a56db",
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.textPrimary,
     textDecorationLine: "underline",
-    marginTop: 15,
   },
-  linkDisabled: { color: "#888", textDecorationLine: "none" },
+  linkDisabled: { color: colors.disabledText, textDecorationLine: "none" },
+  changeEmail: { marginTop: spacing.lg },
+  button: { marginTop: 0 },
 });

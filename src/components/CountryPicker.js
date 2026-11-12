@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #52
+// AI-assisted: see docs/AI_LOG.md #52, #58
 import { useMemo, useState } from "react";
 import {
   FlatList,
@@ -8,8 +8,18 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  colors,
+  CONTROL_HEIGHT,
+  radius,
+  spacing,
+  typography,
+} from "../config/theme";
 import { useLanguage } from "../contexts/LanguageContext";
+import Chevron from "./Chevron";
 import { COUNTRIES, findCountry } from "../validation/phone";
 
 // Button with flag and dial code (🇨🇴 +57) that opens the searchable country list
@@ -17,6 +27,7 @@ export default function CountryPicker({ countryCode, onChange, hasError }) {
   const { language, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const insets = useSafeAreaInsets();
 
   const selected = findCountry(countryCode);
 
@@ -53,30 +64,38 @@ export default function CountryPicker({ countryCode, onChange, hasError }) {
         <Text style={styles.buttonText}>
           {selected ? `${selected.flag} ${selected.dialCode}` : "🌐"}
         </Text>
-        <Text style={styles.arrow}>▾</Text>
+        <Chevron />
       </TouchableOpacity>
 
       <Modal
         visible={isOpen}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={close}
       >
         <Pressable style={styles.backdrop} onPress={close}>
           {/* This Pressable keeps a tap inside the list from closing the modal */}
-          <Pressable style={styles.sheet}>
+          <Pressable
+            style={[
+              styles.sheet,
+              { paddingBottom: Math.max(insets.bottom, spacing.lg) },
+            ]}
+          >
+            <View style={styles.handle} />
             <Text style={styles.sheetTitle}>{t("login.country")}</Text>
             <TextInput
               style={styles.search}
               value={search}
               onChangeText={setSearch}
               placeholder={t("login.searchCountry")}
+              placeholderTextColor={colors.placeholder}
               autoCorrect={false}
             />
             <FlatList
               data={countries}
               keyExtractor={(country) => country.code}
               keyboardShouldPersistTaps="handled"
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
               ListEmptyComponent={
                 <Text style={styles.empty}>{t("login.noCountries")}</Text>
               }
@@ -105,44 +124,62 @@ export default function CountryPicker({ countryCode, onChange, hasError }) {
   );
 }
 
+// AI-assisted: see docs/AI_LOG.md #58
+// Same look as the other inputs, and the list opens from the bottom like
+// SelectField
 const styles = StyleSheet.create({
   button: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginRight: 10,
+    gap: spacing.sm,
+    minHeight: CONTROL_HEIGHT,
+    borderRadius: radius.sm,
+    borderWidth: 2,
+    borderColor: "transparent",
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
   },
-  buttonError: { borderColor: "red" },
-  buttonText: { fontSize: 16 },
-  arrow: { marginLeft: 6, color: "#555" },
+  buttonError: { borderColor: colors.error },
+  buttonText: { fontSize: 16, color: colors.textPrimary },
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    padding: 20,
+    backgroundColor: colors.backdrop,
+    justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    maxHeight: "80%",
+    backgroundColor: colors.background,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    paddingHorizontal: spacing.xl - 4,
+    paddingTop: spacing.sm,
+    height: "75%",
   },
-  sheetTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 10 },
+  handle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.border,
+    marginBottom: spacing.lg,
+  },
+  sheetTitle: { ...typography.section, marginBottom: spacing.md },
   search: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
+    minHeight: 48,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.lg,
+    fontSize: 16,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
   },
-  option: { flexDirection: "row", alignItems: "center", paddingVertical: 12 },
-  flag: { fontSize: 22, marginRight: 12 },
-  optionName: { flex: 1, fontSize: 16 },
-  optionSelected: { fontWeight: "bold" },
-  dialCode: { fontSize: 16, color: "#555" },
-  empty: { color: "#888", paddingVertical: 12 },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+  },
+  option: { flexDirection: "row", alignItems: "center", minHeight: 56 },
+  flag: { fontSize: 22, marginRight: spacing.md },
+  optionName: { flex: 1, fontSize: 16, color: colors.textPrimary },
+  optionSelected: { fontWeight: "700" },
+  dialCode: { fontSize: 16, color: colors.textSecondary },
+  empty: { ...typography.caption, paddingVertical: spacing.md },
 });
