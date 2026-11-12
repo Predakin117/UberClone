@@ -1,10 +1,42 @@
-// AI-assisted: see docs/AI_LOG.md #4
+// AI-assisted: see docs/AI_LOG.md #4, #27
+// Mientras el conductor está conectado (isAvailable), rastrea su ubicación y la
+// guarda en drivers/{uid} como máximo cada 10 segundos (src/services/driverLocation.js).
+// Con un viaje en curso (hasActiveTrip) sigue guardando la ubicación, pero queda
+// no disponible para solicitudes nuevas. Al desconectarse o salir de la pantalla
+// deja de rastrear y lo marca no disponible.
 import * as Location from "expo-location";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  availabilityOnTripChange,
+  isDriverAvailable,
+  markDriverUnavailable,
+  saveDriverLocation,
+  setDriverAvailability,
+  shouldSaveLocation,
+} from "../services/driverLocation";
 
-export const useDriverLocation = (isAvailable) => {
+export const useDriverLocation = (isAvailable, hasActiveTrip = false) => {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+
+  // Disponibilidad actual, leída en cada ubicación sin reiniciar el rastreo
+  const availableRef = useRef(false);
+  // Si había un viaje en curso la última vez, para notar cuándo empieza o termina
+  const hadActiveTripRef = useRef(hasActiveTrip);
+  useEffect(() => {
+    availableRef.current = isDriverAvailable({
+      isOnline: isAvailable,
+      hasActiveTrip,
+    });
+    // Al empezar o terminar un viaje estando conectado, se guarda de una vez
+    const update = availabilityOnTripChange({
+      hadActiveTrip: hadActiveTripRef.current,
+      hasActiveTrip,
+      isOnline: isAvailable,
+    });
+    hadActiveTripRef.current = hasActiveTrip;
+    if (update !== null) setDriverAvailability(update);
+  }, [isAvailable, hasActiveTrip]);
 
   useEffect(() => {
     // Solo se rastrea cuando el conductor está "Disponible"
@@ -13,6 +45,8 @@ export const useDriverLocation = (isAvailable) => {
     let locationSubscription = null;
     // Evita dejar una suscripción viva si la limpieza ocurre antes de que termine el await
     let cancelled = false;
+    // Hora (ms) de la última ubicación enviada a Firestore
+    let lastSavedMs = null;
 
     const startTracking = async () => {
       try {
@@ -33,11 +67,16 @@ export const useDriverLocation = (isAvailable) => {
             distanceInterval: 5, // O cada 5 metros
           },
           (newLocation) => {
+            if (cancelled) return;
             const { latitude, longitude } = newLocation.coords;
             setLocation({ latitude, longitude });
 
-            // TODO: Aquí irá el fetch a tu backend/Firebase para actualizar la posición en tiempo real
-            console.log(`[BD UPDATE] Lat: ${latitude}, Lng: ${longitude}`);
+            // El mapa se mueve con cada lectura, pero Firestore recibe como máximo una cada 10 s
+            const now = Date.now();
+            if (shouldSaveLocation(lastSavedMs, now)) {
+              lastSavedMs = now;
+              saveDriverLocation({ latitude, longitude }, availableRef.current);
+            }
           },
         );
 
@@ -59,8 +98,9 @@ export const useDriverLocation = (isAvailable) => {
       cancelled = true;
       if (locationSubscription) {
         locationSubscription.remove();
-        console.log("Rastreo detenido (Limpieza de useEffect ejecutada).");
       }
+      // Desconectado o fuera de la pantalla: deja de estar disponible en Firestore
+      markDriverUnavailable();
     };
   }, [isAvailable]); // Se re-ejecuta si el conductor cambia su estado de disponibilidad
 

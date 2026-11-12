@@ -150,9 +150,17 @@ qué paso se crea.
 
 - **Para qué:** simular los viajes del lado del pasajero.
 - **Dónde:** todavía no sabemos cómo funciona.
-- **Reglas:** solo `src/services/tripRequestsSource.js` sabe de dónde vienen las
-  solicitudes. Cuando llegue la API, se cambia ese archivo y las pantallas
-  quedan igual.
+- **Reglas:**
+  - Solo `src/services/tripRequestsSource.js` sabe de dónde vienen las
+    solicitudes. Cuando llegue la API, se cambia ese archivo y las pantallas
+    quedan igual.
+  - La ubicación del conductor está en `drivers/{uid}`: `location` (`{ lat, lng }`),
+    `locationUpdatedAt` (hora del servidor, se guarda como máximo cada 10
+    segundos) e `isAvailable` (conectado y sin viaje en curso). Lo escribe
+    `src/services/driverLocation.js`.
+  - Un conductor con `locationUpdatedAt` de hace más de 1 minuto se trata como
+    desconectado, aunque diga `isAvailable: true`: si la app se cierra a la
+    fuerza, no alcanza a marcarse no disponible.
 
 ## En veremos
 
