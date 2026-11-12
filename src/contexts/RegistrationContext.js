@@ -16,11 +16,11 @@ const isEmpty = (fieldErrors) => Object.keys(fieldErrors).length === 0;
 const ACCOUNT_FIELDS = ["email", "phone"];
 
 export const RegistrationProvider = ({ account, children }) => {
-  const { login } = useContext(AuthContext); // Para simular el login al finalizar
+  const { login } = useContext(AuthContext); // Used to simulate the login when finishing
   const lockedFields = ACCOUNT_FIELDS.filter((field) => account?.[field]);
 
   const [formData, setFormData] = useState({
-    // Pestaña 1: Datos personales
+    // Tab 1: Personal info
     profilePhoto: "",
     name: "",
     documentId: "",
@@ -29,7 +29,7 @@ export const RegistrationProvider = ({ account, children }) => {
     gender: "",
     email: account?.email ?? "",
     language: "",
-    // Pestaña 2: Vehículo
+    // Tab 2: Vehicle
     category: "",
     plate: "",
     vehicleMake: "",
@@ -38,7 +38,7 @@ export const RegistrationProvider = ({ account, children }) => {
     color: "",
     capacity: "",
     vehiclePhoto: "",
-    // Pestaña 3: Documentos y pagos (fechas "AAAA-MM-DD", fotos como uri)
+    // Tab 3: Documents and payments (dates as "YYYY-MM-DD", photos as uri)
     licenseNumber: "",
     licensePhoto: "",
     licenseExpiry: "",
@@ -50,15 +50,15 @@ export const RegistrationProvider = ({ account, children }) => {
     acceptedTerms: false,
   });
 
-  // Estado del guardado en Firestore. saveError es { section, code }; code es una
-  // clave de src/i18n/strings.js y section dice en qué pestaña falló
+  // Firestore save state. saveError is { section, code }; code is a key of
+  // src/i18n/strings.js and section says which tab failed
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
-  // Campos que el conductor ya visitó: solo esos muestran su error
+  // Fields the driver already visited: only those show their error
   const [touched, setTouched] = useState({});
 
-  // Las reglas viven en src/validation; aquí solo se calculan a partir de los datos
+  // The rules live in src/validation; here they are only computed from the data
   const personalErrors = useMemo(
     () => validatePersonalInfo(formData),
     [formData],
@@ -86,7 +86,7 @@ export const RegistrationProvider = ({ account, children }) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
-  // Para el botón Siguiente: muestra de una vez los errores de toda la pestaña
+  // For the Next button: shows the errors of the whole tab at once
   const touchFields = (fields) => {
     setTouched((prev) => ({
       ...prev,
@@ -98,12 +98,12 @@ export const RegistrationProvider = ({ account, children }) => {
   const isVehicleValid = isEmpty(vehicleErrors);
   const isDocsValid = isEmpty(documentErrors);
 
-  // Regla de negocio: El botón final solo se habilita si las 3 pestañas son válidas
+  // Business rule: the final button is only enabled when all 3 tabs are valid
   const canSubmit = isPersonalValid && isVehicleValid && isDocsValid;
 
   /**
-   * Guarda una pestaña ("personal", "vehicle" o "documents") en Firestore.
-   * Devuelve el uid si se guardó, o null si falló (el motivo queda en saveError).
+   * Saves a tab ("personal", "vehicle" or "documents") to Firestore.
+   * Returns the uid if it was saved, or null if it failed (the reason goes to saveError).
    */
   const saveSection = async (section, options) => {
     setIsSaving(true);
@@ -114,14 +114,14 @@ export const RegistrationProvider = ({ account, children }) => {
         formData,
         options,
       );
-      // Las fotos ya subidas se guardan como URL para no subirlas otra vez
+      // Uploaded photos are stored as URLs so they aren't uploaded again
       for (const [field, url] of Object.entries(photoUrls)) {
         handleChange(field, url);
       }
       return uid;
     } catch (error) {
       console.error(
-        `Error guardando la pestaña ${section}:`,
+        `Error saving tab ${section}:`,
         error.cause ?? error,
       );
       setSaveError({ section, code: error.code ?? "save.failed" });
@@ -134,12 +134,12 @@ export const RegistrationProvider = ({ account, children }) => {
   const submitRegistration = async () => {
     if (!canSubmit || isSaving) return;
 
-    // Se guardan otra vez las pestañas 1 y 2 por si el conductor volvió a ellas
-    // con la barra de pestañas (sin tocar Siguiente) y cambió algo
+    // Tabs 1 and 2 are saved again in case the driver went back to them
+    // with the tab bar (without tapping Next) and changed something
     if (!(await saveSection("personal"))) return;
     if (!(await saveSection("vehicle"))) return;
 
-    // Regla de negocio: Pasa a "Pendiente de aprobación"
+    // Business rule: moves to "Pending approval"
     const uid = await saveSection("documents", { submit: true });
     if (!uid) return;
 

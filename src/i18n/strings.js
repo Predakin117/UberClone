@@ -206,6 +206,16 @@ export const strings = {
       "No se pudo conectar con el servidor. Revisa que esté encendido y en la misma red Wi-Fi",
     "verify.error.generico": "Ocurrió un error. Inténtalo de nuevo",
 
+    // Código al iniciar sesión (VerifyLoginScreen). Los errores usan verify.error.*
+    "verifyLogin.heading": "Confirma que eres tú",
+    "verifyLogin.sending": "Estamos enviando un código de 6 dígitos a {email}.",
+    "verifyLogin.sentTo":
+      "Por seguridad enviamos un código de 6 dígitos a {email}. Escríbelo para entrar.",
+    "verifyLogin.notSent": "No pudimos enviar el código a {email}.",
+    "verifyLogin.confirm": "Confirmar e ingresar",
+    "verifyLogin.checkSpam":
+      "¿No te llegó? Revisa la carpeta de spam o de promociones.",
+
     // Inicio: interruptor de disponibilidad y por qué todavía no puede conectarse
     "home.online": "CONECTADO",
     "home.offline": "DESCONECTADO",
@@ -538,6 +548,15 @@ export const strings = {
     "verify.error.sin_conexion":
       "Could not reach the server. Check that it is running and on the same Wi-Fi network",
     "verify.error.generico": "Something went wrong. Please try again",
+
+    "verifyLogin.heading": "Confirm it's you",
+    "verifyLogin.sending": "We are sending a 6-digit code to {email}.",
+    "verifyLogin.sentTo":
+      "For your security we sent a 6-digit code to {email}. Enter it to log in.",
+    "verifyLogin.notSent": "We could not send the code to {email}.",
+    "verifyLogin.confirm": "Confirm and log in",
+    "verifyLogin.checkSpam":
+      "Didn't get it? Check your spam or promotions folder.",
 
     "home.online": "ONLINE",
     "home.offline": "OFFLINE",

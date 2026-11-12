@@ -1,6 +1,6 @@
 // AI-assisted: see docs/AI_LOG.md #4
-// Extiende app.json con valores que vienen del .env (Expo CLI lo carga automáticamente).
-// GOOGLE_MAPS_API_KEY no lleva prefijo EXPO_PUBLIC_ para que no se incluya en el bundle JS.
+// Extends app.json with values from .env (Expo CLI loads it automatically).
+// GOOGLE_MAPS_API_KEY has no EXPO_PUBLIC_ prefix so it is not included in the JS bundle.
 export default ({ config }) => ({
   ...config,
   android: {

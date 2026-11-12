@@ -38,8 +38,8 @@ const RegistrationTabs = () => {
 };
 
 // route.params.account ({ email, phone }) comes from the sign-up or the login.
-// La confirmación del correo va encima de las pestañas, dentro del mismo
-// RegistrationProvider, para que use los datos del formulario.
+// Email confirmation sits on top of the tabs, inside the same
+// RegistrationProvider, so it can use the form data.
 export const AuthTabs = ({ route }) => {
   const { t } = useLanguage();
 

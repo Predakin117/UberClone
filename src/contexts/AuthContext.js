@@ -7,7 +7,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Para la pantalla de carga inicial
+  const [isLoading, setIsLoading] = useState(true); // For the initial loading screen
   const [driverData, setDriverData] = useState(null);
 
   // AI-assisted: see docs/AI_LOG.md #19
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (data) => {
     try {
-      // Mock de login exitoso. Nunca guardar info bancaria aquí.
+      // Successful login mock. Never store banking info here.
       await AsyncStorage.setItem(
         "@driver_session",
         JSON.stringify({ id: data.id, name: data.name, status: data.status }),
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
       setDriverData(data);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error("Error guardando la sesión:", error);
+      console.error("Error saving the session:", error);
     }
   };
 
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
       setDriverData(null);
       setIsAuthenticated(false);
     } catch (error) {
-      console.error("Error cerrando sesión:", error);
+      console.error("Error signing out:", error);
     }
   };
 

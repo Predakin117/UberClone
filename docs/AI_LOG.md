@@ -977,3 +977,19 @@ Se descartó: La plantilla genérica inicial de Expo que venía por defecto en e
   - Después, la pantalla de login abrió bien, pero al buscar un número salió "La base de datos rechazó la operación" (`permission-denied`). La app estaba usando el Firebase de Tamiro porque no existía `.env.local`, y ese proyecto no tiene las reglas de `loginIndex`. Se configuró el proyecto propio (correo/contraseña y anónimo habilitados, Firestore en modo producción, reglas de `firestore.rules` publicadas) y se creó `.env.local` con sus valores.
   - [Pendiente la prueba en el celular con el proyecto de Firebase propio: cuenta no encontrada, crear cuenta, contraseña incorrecta y correcta, correo o celular repetido, y correo para restablecer la contraseña]
 - Aprendizaje: 
+
+### Entrada #55
+
+- Fecha: 2026-11-10
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Que al iniciar sesión llegue un código al correo de la cuenta y solo se pueda entrar escribiéndolo. No está en el enunciado; es una funcionalidad adicional.
+- Prompt: "porque no me llega la pestaañl de codigo de ingreso al correo" y luego "Si porfavor" (a conectarlo al login)
+- Resumen de la respuesta: La IA revisó el backend y encontró que el correo no llegaba porque ninguna pantalla de `main` pedía el código: el backend estaba apagado (las credenciales de Gmail sí funcionaban) y la pantalla del código solo existía en `tamiro/confirmar-correo`, y solo para el registro. Se creó la rama `ximena/login-codigo` sobre `main` (que ya trae `ximena/login-auth` y `tamiro/confirmar-correo`, integradas por Tamiro en el PR #10) y se agregó `VerifyLoginScreen`: después de la contraseña correcta envía el código con `motivo: "login"` y solo con el código correcto entra al menú (o vuelve a las pestañas si el registro no se había enviado).
+- Qué se usó / modificó / descartó:
+  - Se usó: el backend del código y `emailVerification.js` (entrada #11), el hook `useEmailVerification` y los mensajes de error `verify.error.*` de la entrada #13, y `NextButton`, `FormField` y el encabezado con flecha de la entrada #53.
+  - Se modificó: `useEmailVerification` recibe `motivo` (por defecto "registro"). `LoginPasswordScreen` ya no entra directo: lleva a `VerifyLoginScreen`, que es la que llama a `login()`. `AppNavigator` agrega la ruta `VerifyLogin`. Primero se habían fusionado las dos ramas a mano, pero Tamiro las integró en `main` mientras tanto, así que se descartó ese merge y el cambio se rehízo encima de `main` (`git rebase`).
+  - Se descartó: pedir el código antes de la contraseña, porque cualquiera podría llenar de correos la bandeja de otro conductor con solo saber su celular. Si el conductor vuelve atrás sin confirmar, se cierra la sesión de Firebase para que nadie quede con sesión sin el código.
+- Archivos y commit: `src/screens/auth/VerifyLoginScreen.js`, `src/screens/auth/LoginPasswordScreen.js`, `src/hooks/useEmailVerification.js`, `src/navigation/AppNavigator.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — bf2f150 y el commit siguiente (bitácora)
+- Verificación: `npx jest` pasa 119 tests, `npx tsc --noEmit` no da errores y `npx expo lint` solo reporta los 2 errores que ya existían en `AuthContext.js` y `useTripRequests.js`. Se comprobó con `transporter.verify()` que el Gmail del backend acepta las credenciales. [Pendiente la prueba en el celular con el backend encendido: código correcto, incorrecto, vencido, reenviar a los 60 s y volver atrás sin confirmar]
+- Aprendizaje: 
