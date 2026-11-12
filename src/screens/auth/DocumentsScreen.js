@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12, #13, #54
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #10, #12, #13, #54, #56
 import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";

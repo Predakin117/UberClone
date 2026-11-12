@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #7, #54
+// AI-assisted: see docs/AI_LOG.md #7, #54, #56
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { colors } from "../config/theme";

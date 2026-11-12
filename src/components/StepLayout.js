@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #56
 // Layout of each registration step: a big title and subtitle, the fields in a
 // scroll and the main button fixed at the bottom, always within reach.
 import {

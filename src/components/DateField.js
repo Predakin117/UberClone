@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12
+// AI-assisted: see docs/AI_LOG.md #9, #12, #56
 // Campo de fecha reutilizable: lo usan la fecha de nacimiento y los
 // vencimientos de la pestaña 3. El valor es texto "AAAA-MM-DD" (ver validation/dates.js).
 import DateTimePicker, {

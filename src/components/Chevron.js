@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #56
 // Small arrow drawn with borders (no icon library): "down" on the lists,
 // "right" where a field opens something else
 import { StyleSheet, View } from "react-native";

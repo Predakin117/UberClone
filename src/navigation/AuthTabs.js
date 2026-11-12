@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #2, #9, #13, #54
+// AI-assisted: see docs/AI_LOG.md #2, #9, #13, #54, #56
 // src/navigation/AuthTabs.js
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";

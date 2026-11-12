@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #56
 // Registration progress for the step bar. It only reads the validators of the
 // 3 tabs, it doesn't add rules: a field counts as done when it is filled in and
 // has no error. Fields that aren't needed (empty and without error, like the

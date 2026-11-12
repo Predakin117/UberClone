@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #56
 // Visual theme of the app: black and white with light gray surfaces, bold
 // type and pill-shaped secondary buttons. Screens and components take their
 // colors, sizes and spacing from here instead of writing them by hand.

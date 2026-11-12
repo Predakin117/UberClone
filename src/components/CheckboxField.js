@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #12
+// AI-assisted: see docs/AI_LOG.md #12, #56
 // Casilla de verificación: la usa la aceptación de términos de la pestaña 3.
 // El error se muestra debajo, como en los demás campos, nunca en un Alert.
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";

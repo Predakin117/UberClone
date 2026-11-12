@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #7, #9
+// AI-assisted: see docs/AI_LOG.md #7, #9, #56
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";

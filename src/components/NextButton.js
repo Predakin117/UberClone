@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #10, #13, #54
+// AI-assisted: see docs/AI_LOG.md #10, #13, #54, #56
 // Botón principal de cada pestaña del registro: muestra "Guardando…" mientras se
 // guarda en Firestore y el error debajo si algo falla (nunca en un Alert).
 // The login screens and the email confirmation use it too, with their own

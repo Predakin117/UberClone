@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #56
 // Top bar of the registration: "Step X of 3", the % completed and the 3 steps.
 // It replaces the default tab bar (AuthTabs passes it as tabBar) and keeps its
 // behavior: tapping a step opens that tab. The % comes from
