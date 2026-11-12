@@ -14,6 +14,7 @@ import { useTrip } from "../../contexts/TripContext";
 import { useDriverLocation } from "../../hooks/useDriverLocation";
 import { useEarnings } from "../../hooks/useEarnings";
 import { useEarningsTrips } from "../../hooks/useEarningsTrips";
+import { useNightMap } from "../../hooks/useNightMap";
 import { useDriverStatus } from "../../hooks/useDriverStatus";
 import { useTripRequests } from "../../hooks/useTripRequests";
 import { formatCop } from "../../i18n/format";
@@ -37,6 +38,8 @@ export default function HomeScreen() {
   // Today's net earnings for the pill on top, the same as the earnings screen
   const { trips: earningsTrips } = useEarningsTrips();
   const todayEarnings = useEarnings(earningsTrips).today.netEarnings;
+  // Dark map between 6 p.m. and 6 a.m.
+  const nightMap = useNightMap();
 
   // Solo un conductor aprobado puede ponerse Disponible (sección 2 del enunciado).
   // Si la cuenta no está aprobada queda desconectado, aunque la última vez quedara conectado.
@@ -111,6 +114,7 @@ export default function HomeScreen() {
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
+        {...nightMap}
         showsMyLocationButton={false}
         initialRegion={{
           latitude: 6.2442,

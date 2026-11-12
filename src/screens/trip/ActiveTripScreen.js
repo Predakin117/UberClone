@@ -20,6 +20,7 @@ import {
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
 import { useCarPosition } from "../../hooks/useCarPosition";
+import { useNightMap } from "../../hooks/useNightMap";
 import { passengerContact } from "../../services/passengerContact";
 import { advanceTrip, completeTrip } from "../../services/tripRepository";
 import { navigationUrl, tripRoute } from "../../services/tripRoute";
@@ -33,6 +34,8 @@ export default function ActiveTripScreen() {
   const { trip, isLoading, pickupRoute } = useTrip();
   // The car on the map (read-only GPS; the home screen saves the location)
   const carPosition = useCarPosition();
+  // Dark map between 6 p.m. and 6 a.m.
+  const nightMap = useNightMap();
   const mapRef = useRef(null);
   // Evita volver al inicio mientras se abre el resumen del viaje terminado
   const isFinishing = useRef(false);
@@ -157,6 +160,7 @@ export default function ActiveTripScreen() {
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
+        {...nightMap}
         onMapReady={() => setIsMapReady(true)}
         initialRegion={{
           latitude: trip.origin.lat,
