@@ -1,4 +1,4 @@
-<!-- AI-assisted: see docs/AI_LOG.md #51, #21, #24 -->
+<!-- AI-assisted: see docs/AI_LOG.md #51, #21, #24, #28 -->
 
 # UberClone — Versión Conductor
 
@@ -15,12 +15,13 @@ Aplicación móvil para iOS y Android, inspirada en Uber, desde el lado del cond
   - el interruptor Disponible / No disponible, que solo se activa cuando el registro está aprobado;
   - las solicitudes de viaje en tiempo real desde Firestore, con 15 segundos para aceptarlas o rechazarlas;
   - el viaje en curso con sus estados (`accepted`, `driver_arriving`, `in_progress`, `completed`), la ruta hasta el punto de recogida y hasta el destino en el mapa, y el cierre con la tarifa, la comisión y la ganancia neta calculadas con `calculateFare`;
-  - el resumen del cobro con el estado del pago;
+  - el resumen del cobro con el estado del pago en tiempo real;
+  - el pago en efectivo: el conductor confirma con "Recibí efectivo" y el backend deja el viaje en `paid`;
+  - la ubicación del conductor y su disponibilidad guardadas en Firestore;
+  - el historial de viajes, con filtros Hoy / Esta semana / Este mes;
+  - las ganancias de hoy, de la semana y del mes, y el saldo con la plataforma;
   - un simulador de solicitudes en el backend (`npm run simular`) mientras llega la API del pasajero.
-- **En curso:**
-  - el pago en efectivo y con Mercado Pago (modo de prueba);
-  - la ubicación del conductor guardada en Firestore;
-  - el historial y las ganancias.
+- **En integración (modo de prueba):** el pago con Mercado Pago.
 - **Pendiente:** las notificaciones push de solicitudes nuevas.
 
 ## Tecnologías
