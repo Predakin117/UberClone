@@ -365,6 +365,34 @@ export const strings = {
       "No se pudo cargar tu historial. Revisa tu conexión.",
     "history.fare": "Tarifa",
     "history.earnings": "Ganancia neta",
+    // AI-assisted: see docs/AI_LOG.md #30
+    // Perfil ({rating}, {count}, {date} y {days} los reemplaza ProfileScreen)
+    "profile.loading": "Cargando tu perfil…",
+    "profile.loadFailed": "No se pudo cargar tu perfil. Revisa tu conexión.",
+    "profile.noRegistration": "Todavía no has enviado tu registro.",
+    "profile.status.approved": "Cuenta aprobada",
+    "profile.status.pending": "Pendiente de aprobación",
+    "profile.status.rejected": "Registro rechazado",
+    "profile.status.draft": "Registro sin enviar",
+    "profile.rating": "Calificación promedio: {rating} ★ ({count})",
+    "profile.noRating": "Todavía no tienes calificaciones",
+    "profile.personalSection": "Datos personales",
+    "profile.vehicleSection": "Vehículo",
+    "profile.documentsSection": "Documentos",
+    "profile.readOnlyNote":
+      "Cambiar estos datos requiere una nueva aprobación de tu cuenta.",
+    "profile.save": "Guardar cambios",
+    "profile.saved": "Cambios guardados",
+    "profile.expiresOn": "Vence el {date}",
+    "profile.expiresSoon": "Vence en {days} días",
+    "profile.expiresToday": "Vence hoy",
+    "profile.expired": "Vencido",
+
+    // Configuración
+    "settings.commission": "Comisión de la plataforma",
+    "settings.commissionValue":
+      "{percent} % de cada tarifa. Las propinas son 100 % tuyas.",
+    "settings.version": "Versión de la app",
 
     // Errores de los viajes (códigos de TRIP_ERROR_CODES en services/trips.js)
     "trip.error.invalidTransition":
@@ -787,6 +815,32 @@ export const strings = {
     "history.loadFailed": "Your history could not be loaded. Check your connection.",
     "history.fare": "Fare",
     "history.earnings": "Net earnings",
+    // AI-assisted: see docs/AI_LOG.md #30
+    "profile.loading": "Loading your profile…",
+    "profile.loadFailed": "Your profile could not be loaded. Check your connection.",
+    "profile.noRegistration": "You haven't submitted your registration yet.",
+    "profile.status.approved": "Account approved",
+    "profile.status.pending": "Pending approval",
+    "profile.status.rejected": "Registration rejected",
+    "profile.status.draft": "Registration not submitted",
+    "profile.rating": "Average rating: {rating} ★ ({count})",
+    "profile.noRating": "You have no ratings yet",
+    "profile.personalSection": "Personal details",
+    "profile.vehicleSection": "Vehicle",
+    "profile.documentsSection": "Documents",
+    "profile.readOnlyNote":
+      "Changing these details requires your account to be approved again.",
+    "profile.save": "Save changes",
+    "profile.saved": "Changes saved",
+    "profile.expiresOn": "Expires on {date}",
+    "profile.expiresSoon": "Expires in {days} days",
+    "profile.expiresToday": "Expires today",
+    "profile.expired": "Expired",
+
+    "settings.commission": "Platform fee",
+    "settings.commissionValue":
+      "{percent}% of each fare. Tips are 100% yours.",
+    "settings.version": "App version",
 
     "trip.error.invalidTransition":
       "That change is not allowed in the current trip status.",
