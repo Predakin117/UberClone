@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #2, #4, #57, #28, #30
+// AI-assisted: see docs/AI_LOG.md #2, #4, #57, #28, #30, #60
 // src/navigation/MainDrawer.js
 import {
   createDrawerNavigator,
@@ -13,9 +13,9 @@ import { colors, radius, spacing, typography } from "../config/theme";
 import { AuthContext } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import EarningsScreen from "../screens/main/EarningsScreen";
-import HistoryScreen from "../screens/main/HistoryScreen";
 import ProfileScreen from "../screens/main/ProfileScreen";
 import SettingsScreen from "../screens/main/SettingsScreen";
+import { HistoryStack } from "./HistoryStack";
 import { TripStack } from "./TripStack";
 
 const Drawer = createDrawerNavigator();
@@ -84,12 +84,13 @@ export const MainDrawer = () => {
       <Drawer.Screen
         name="TripFlow"
         component={TripStack}
-        // The map has its own menu button: without a header it uses the whole
-        // screen. The trip screens keep the header.
+        // The map has its own menu button and the current trip its black
+        // banner: without a header they use the whole screen. Only the trip
+        // summary keeps the header.
         options={({ route }) => ({
           title: t("drawer.home"),
           headerShown:
-            (getFocusedRouteNameFromRoute(route) ?? "Home") !== "Home",
+            (getFocusedRouteNameFromRoute(route) ?? "Home") === "TripSummary",
         })}
       />
       <Drawer.Screen
@@ -99,8 +100,17 @@ export const MainDrawer = () => {
       />
       <Drawer.Screen
         name="History"
-        component={HistoryScreen}
-        options={{ title: t("drawer.history") }}
+        component={HistoryStack}
+        // AI-assisted: see docs/AI_LOG.md #60
+        // The trip details have their own header with the back arrow, and
+        // opening History from the menu always starts at the list
+        options={({ route }) => ({
+          title: t("drawer.history"),
+          headerShown:
+            (getFocusedRouteNameFromRoute(route) ?? "HistoryList") ===
+            "HistoryList",
+          popToTopOnBlur: true,
+        })}
       />
       <Drawer.Screen
         name="Earnings"
