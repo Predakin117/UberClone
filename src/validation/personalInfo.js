@@ -120,3 +120,11 @@ export const validatePersonalInfo = (data, today = new Date()) => {
 
   return errors;
 };
+
+// AI-assisted: see docs/AI_LOG.md #58
+// True when everything in tab 1 is valid except the profile photo, which is
+// still empty: then Next opens the selfie step instead of showing errors
+export const isOnlyProfilePhotoMissing = (data, today = new Date()) => {
+  const fields = Object.keys(validatePersonalInfo(data, today));
+  return fields.length === 1 && fields[0] === "profilePhoto";
+};

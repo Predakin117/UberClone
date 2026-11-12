@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #2, #9, #13, #54, #56
+// AI-assisted: see docs/AI_LOG.md #2, #9, #13, #54, #56, #58
 // src/navigation/AuthTabs.js
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -8,11 +8,19 @@ import { RegistrationProvider } from "../contexts/RegistrationContext";
 
 import DocumentsScreen from "../screens/auth/DocumentsScreen";
 import PersonalInfoScreen from "../screens/auth/PersonalInfoScreen";
+import ProfilePhotoScreen from "../screens/auth/ProfilePhotoScreen";
 import VehicleScreen from "../screens/auth/VehicleScreen";
 import VerifyEmailScreen from "../screens/auth/VerifyEmailScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+// Only the back arrow: each screen shows its own big title
+const backHeader = {
+  title: "",
+  headerShadowVisible: false,
+  headerBackButtonDisplayMode: "minimal",
+};
 
 const RegistrationTabs = () => {
   const { t } = useLanguage();
@@ -47,8 +55,6 @@ const RegistrationTabs = () => {
 // Email confirmation sits on top of the tabs, inside the same
 // RegistrationProvider, so it can use the form data.
 export const AuthTabs = ({ route }) => {
-  const { t } = useLanguage();
-
   return (
     <RegistrationProvider account={route?.params?.account}>
       <Stack.Navigator>
@@ -60,7 +66,13 @@ export const AuthTabs = ({ route }) => {
         <Stack.Screen
           name="VerifyEmail"
           component={VerifyEmailScreen}
-          options={{ title: t("verify.title") }}
+          options={backHeader}
+        />
+        {/* AI-assisted: see docs/AI_LOG.md #58 */}
+        <Stack.Screen
+          name="ProfilePhoto"
+          component={ProfilePhotoScreen}
+          options={backHeader}
         />
       </Stack.Navigator>
     </RegistrationProvider>

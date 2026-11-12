@@ -1,11 +1,11 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #9, #10, #54, #56
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #9, #10, #54, #56, #58
 import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
 import { StyleSheet } from "react-native";
 import DateField from "../../components/DateField";
 import FormField from "../../components/FormField";
 import NextButton from "../../components/NextButton";
-import PhotoField from "../../components/PhotoField";
+import ProfilePhotoRow from "../../components/ProfilePhotoRow";
 import SelectField from "../../components/SelectField";
 import StepLayout from "../../components/StepLayout";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -17,6 +17,7 @@ import {
   MAX_EMAIL_LENGTH,
   MAX_NAME_LENGTH,
   MIN_DRIVER_AGE,
+  isOnlyProfilePhotoMissing,
   PERSONAL_FIELDS,
 } from "../../validation/personalInfo";
 
@@ -60,10 +61,21 @@ export default function PersonalInfoScreen() {
     setLanguage(value);
   };
 
+  const openSelfie = () => navigation.navigate("ProfilePhoto");
+
   // Si la pestaña es válida se guarda en Firestore y solo entonces se avanza
   const handleNext = async () => {
-    touchFields(PERSONAL_FIELDS);
-    if (!isPersonalValid) return;
+    if (!isPersonalValid) {
+      // AI-assisted: see docs/AI_LOG.md #58
+      // Like Uber, the selfie comes last: if the photo is the only thing
+      // missing, Next opens the selfie step instead of showing an error
+      if (isOnlyProfilePhotoMissing(formData)) {
+        openSelfie();
+        return;
+      }
+      touchFields(PERSONAL_FIELDS);
+      return;
+    }
     if (await saveSection("personal")) navigation.navigate("Vehicle");
   };
 
@@ -81,13 +93,6 @@ export default function PersonalInfoScreen() {
         />
       }
     >
-      <PhotoField
-        label={t("personal.profilePhoto")}
-        uri={formData.profilePhoto}
-        onChange={(uri) => handleSelect("profilePhoto", uri)}
-        error={t(errors.profilePhoto)}
-      />
-
       <FormField
         label={t("personal.name")}
         value={formData.name}
@@ -168,6 +173,14 @@ export default function PersonalInfoScreen() {
         options={LANGUAGE_OPTIONS}
         onChange={handleLanguage}
         error={t(errors.language)}
+      />
+
+      {/* AI-assisted: see docs/AI_LOG.md #58 */}
+      <ProfilePhotoRow
+        label={t("personal.profilePhoto")}
+        uri={formData.profilePhoto}
+        onPress={openSelfie}
+        error={t(errors.profilePhoto)}
       />
     </StepLayout>
   );

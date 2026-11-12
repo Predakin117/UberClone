@@ -1,4 +1,7 @@
-import { validatePersonalInfo } from "./personalInfo";
+import {
+  isOnlyProfilePhotoMissing,
+  validatePersonalInfo,
+} from "./personalInfo";
 
 // Fecha fija para que las pruebas de edad no dependan del día en que se corren
 const TODAY = new Date(2026, 10, 5); // 5 de noviembre de 2026
@@ -166,5 +169,33 @@ describe("validatePersonalInfo", () => {
   it("exige español o inglés como idioma", () => {
     expect(errorsFor({ language: "en" }).language).toBeUndefined();
     expect(errorsFor({ language: "fr" }).language).toBeDefined();
+  });
+});
+
+// AI-assisted: see docs/AI_LOG.md #58
+describe("isOnlyProfilePhotoMissing", () => {
+  it("is true when the photo is the only empty field", () => {
+    expect(
+      isOnlyProfilePhotoMissing({ ...validData, profilePhoto: "" }, TODAY),
+    ).toBe(true);
+  });
+
+  it("is false when the tab is complete", () => {
+    expect(isOnlyProfilePhotoMissing(validData, TODAY)).toBe(false);
+  });
+
+  it("is false when other fields also have errors", () => {
+    expect(
+      isOnlyProfilePhotoMissing(
+        { ...validData, profilePhoto: "", name: "" },
+        TODAY,
+      ),
+    ).toBe(false);
+  });
+
+  it("is false when the photo is there but another field fails", () => {
+    expect(isOnlyProfilePhotoMissing({ ...validData, email: "ana" }, TODAY)).toBe(
+      false,
+    );
   });
 });

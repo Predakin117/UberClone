@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56, #58
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -519,6 +519,28 @@ export const strings = {
     "errors.capacityTooHigh": `La capacidad máxima es de ${MAX_CAPACITY} pasajeros`,
     "errors.capacityXl": `La categoría XL exige mínimo ${XL_MIN_CAPACITY} pasajeros`,
     "errors.vehiclePhotoRequired": "La foto del vehículo es obligatoria",
+    // AI-assisted: see docs/AI_LOG.md #58
+    "app.name": "UberClone",
+    "app.driverBadge": "Conductor",
+    "login.or": "o",
+    "password.change": "Cambiar",
+    "personal.profilePhotoPending":
+      "Al final te pediremos una selfie con buena luz.",
+    "personal.profilePhotoReady": "Lista. Toca para cambiarla.",
+    "selfie.title": "Toma tu foto de perfil",
+    "selfie.subtitle":
+      "Los pasajeros la verán para reconocerte cuando llegues a recogerlos.",
+    "selfie.reviewTitle": "¿Se ve bien?",
+    "selfie.reviewSubtitle":
+      "Revisa que tu cara se vea completa, de frente y nítida.",
+    "selfie.tipFace": "Mira de frente a la cámara, con la cara descubierta",
+    "selfie.tipLight": "Busca buena luz, sin sombras ni contraluz",
+    "selfie.tipAccessories": "Sin gafas de sol, gorra ni filtros",
+    "selfie.tipAlone": "Solo tú en la foto",
+    "selfie.take": "Tomar selfie",
+    "selfie.use": "Usar esta foto",
+    "selfie.retake": "Tomar otra",
+    "selfie.preview": "Vista previa de tu foto de perfil",
   },
 
   en: {
@@ -988,6 +1010,28 @@ export const strings = {
     "errors.capacityTooHigh": `The maximum capacity is ${MAX_CAPACITY} passengers`,
     "errors.capacityXl": `XL requires at least ${XL_MIN_CAPACITY} passengers`,
     "errors.vehiclePhotoRequired": "A vehicle photo is required",
+    // AI-assisted: see docs/AI_LOG.md #58
+    "app.name": "UberClone",
+    "app.driverBadge": "Driver",
+    "login.or": "or",
+    "password.change": "Change",
+    "personal.profilePhotoPending":
+      "At the end we'll ask you for a selfie in good light.",
+    "personal.profilePhotoReady": "Done. Tap to change it.",
+    "selfie.title": "Take your profile photo",
+    "selfie.subtitle":
+      "Riders will see it to recognize you when you arrive to pick them up.",
+    "selfie.reviewTitle": "Does it look good?",
+    "selfie.reviewSubtitle":
+      "Check that your whole face is visible, facing forward and sharp.",
+    "selfie.tipFace": "Look straight at the camera, with your face uncovered",
+    "selfie.tipLight": "Find good light, without shadows or backlight",
+    "selfie.tipAccessories": "No sunglasses, hats or filters",
+    "selfie.tipAlone": "Only you in the photo",
+    "selfie.take": "Take selfie",
+    "selfie.use": "Use this photo",
+    "selfie.retake": "Take another",
+    "selfie.preview": "Preview of your profile photo",
   },
 };
 
