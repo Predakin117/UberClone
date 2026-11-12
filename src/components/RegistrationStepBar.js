@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #56
+// AI-assisted: see docs/AI_LOG.md #56, #57
 // Top bar of the registration: "Step X of 3", the % completed and the 3 steps.
 // It replaces the default tab bar (AuthTabs passes it as tabBar) and keeps its
 // behavior: tapping a step opens that tab. The % comes from
@@ -9,6 +9,7 @@ import { colors, radius, spacing } from "../config/theme";
 import { useLanguage } from "../contexts/LanguageContext";
 import { RegistrationContext } from "../contexts/RegistrationContext";
 import { getRegistrationProgress } from "../validation/progress";
+import StepIcon from "./StepIcon";
 
 export default function RegistrationStepBar({ state, navigation, insets }) {
   const { t } = useLanguage();
@@ -108,12 +109,11 @@ export default function RegistrationStepBar({ state, navigation, insets }) {
                     {isDone ? "✓" : index + 1}
                   </Text>
                 </View>
-                <Text
-                  style={[styles.stepLabel, isFocused && styles.stepLabelOn]}
-                  numberOfLines={1}
-                >
-                  {label}
-                </Text>
+                {/* The name of the step is only read by the screen reader */}
+                <StepIcon
+                  name={route.name}
+                  color={isFocused ? colors.black : colors.placeholder}
+                />
               </View>
               <View
                 style={[styles.underline, isFocused && styles.underlineOn]}
@@ -175,8 +175,6 @@ const styles = StyleSheet.create({
   badgeDone: { backgroundColor: colors.success },
   badgeText: { fontSize: 12, fontWeight: "700", color: colors.textSecondary },
   badgeTextOn: { color: colors.white },
-  stepLabel: { fontSize: 14, color: colors.textSecondary },
-  stepLabelOn: { color: colors.textPrimary, fontWeight: "700" },
   underline: {
     alignSelf: "stretch",
     height: 3,
