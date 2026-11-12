@@ -8,10 +8,12 @@
     "start": "node --env-file=.env src/server.js",
     "dev": "node --watch --env-file=.env src/server.js",
     "test": "node --test",
-    "simular": "node --env-file=.env scripts/simular-solicitud.js"
+    "simular": "node --env-file=.env scripts/simular-solicitud.js",
+    "simular-historial": "node scripts/simular-historial.js",
+    "limpiar-simulados": "node scripts/limpiar-simulados.js"
   },
   "engines": {
-    "node": ">=20.6"
+    "node": ">=20.19"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",
