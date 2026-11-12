@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -20,6 +20,24 @@ export const strings = {
     "tabs.vehicle": "2. Vehículo",
     "tabs.documents": "3. Docs",
 
+    // Barra de progreso y encabezado de cada paso del registro
+    "register.stepOf": "Paso {step} de {total}",
+    "register.percent": "{percent} % completado",
+    "register.stepDone": "{label}, completo",
+    "register.stepPending": "{label}, pendiente",
+    "register.step.PersonalInfo": "Datos",
+    "register.step.Vehicle": "Vehículo",
+    "register.step.Documents": "Documentos",
+    "register.title.PersonalInfo": "Cuéntanos sobre ti",
+    "register.subtitle.PersonalInfo":
+      "Usaremos estos datos para verificar tu identidad. Solo te tomará unos minutos.",
+    "register.title.Vehicle": "Tu vehículo",
+    "register.subtitle.Vehicle":
+      "Registra el vehículo con el que vas a conducir. Los datos deben coincidir con la tarjeta de propiedad.",
+    "register.title.Documents": "Documentos y pagos",
+    "register.subtitle.Documents":
+      "Sube tus documentos vigentes y elige dónde recibirás tus ganancias.",
+
     // Componentes compartidos
     "common.next": "Siguiente",
     "common.done": "Listo",
@@ -27,6 +45,8 @@ export const strings = {
     "date.placeholder": "Selecciona una fecha",
     "photo.takePhoto": "Tomar foto",
     "photo.chooseFromGallery": "Elegir de galería",
+    "photo.emptyHint": "Toma una foto clara, con buena luz y sin reflejos.",
+    "photo.added": "Foto agregada",
     "photo.permissionDenied": "Debes conceder el permiso para agregar la foto.",
     "photo.pickError": "No se pudo obtener la foto. Inténtalo de nuevo.",
 
@@ -227,6 +247,25 @@ export const strings = {
     "home.statusError":
       "No se pudo verificar el estado de tu cuenta. Revisa tu conexión.",
     "home.backToTrip": "Volver al viaje en curso",
+    "home.available": "Disponible",
+    "home.unavailable": "No disponible",
+    "home.onlineTitle": "Estás conectado",
+    "home.offlineTitle": "Estás desconectado",
+    "home.onlineSubtitle":
+      "Buscando viajes cerca de ti. Tu ubicación se actualiza cada pocos segundos.",
+    "home.offlineSubtitle":
+      "Conéctate para empezar a recibir solicitudes de viaje.",
+    "home.openMenu": "Abrir menú",
+
+    // Menú lateral
+    "drawer.home": "Inicio",
+    "drawer.profile": "Mi perfil",
+    "drawer.history": "Historial",
+    "drawer.earnings": "Mis ganancias",
+    "drawer.settings": "Configuración",
+    "drawer.logout": "Cerrar sesión",
+    "drawer.driver": "Conductor",
+    "drawer.greeting": "Hola, {name}",
 
     // Solicitud nueva ({seconds}, {km} y {minutes} los reemplaza IncomingRequestCard)
     "request.title": "¡Nueva solicitud!",
@@ -379,12 +418,31 @@ export const strings = {
     "tabs.vehicle": "2. Vehicle",
     "tabs.documents": "3. Documents",
 
+    "register.stepOf": "Step {step} of {total}",
+    "register.percent": "{percent}% complete",
+    "register.stepDone": "{label}, complete",
+    "register.stepPending": "{label}, pending",
+    "register.step.PersonalInfo": "Personal",
+    "register.step.Vehicle": "Vehicle",
+    "register.step.Documents": "Documents",
+    "register.title.PersonalInfo": "Tell us about yourself",
+    "register.subtitle.PersonalInfo":
+      "We'll use this information to verify your identity. It only takes a few minutes.",
+    "register.title.Vehicle": "Your vehicle",
+    "register.subtitle.Vehicle":
+      "Add the vehicle you'll drive. The details must match the registration card.",
+    "register.title.Documents": "Documents and payments",
+    "register.subtitle.Documents":
+      "Upload your valid documents and choose where you'll receive your earnings.",
+
     "common.next": "Next",
     "common.done": "Done",
     "select.placeholder": "Select an option",
     "date.placeholder": "Select a date",
     "photo.takePhoto": "Take photo",
     "photo.chooseFromGallery": "Choose from gallery",
+    "photo.emptyHint": "Take a clear photo, in good light and without glare.",
+    "photo.added": "Photo added",
     "photo.permissionDenied": "You must grant permission to add the photo.",
     "photo.pickError": "The photo could not be loaded. Please try again.",
 
@@ -568,6 +626,23 @@ export const strings = {
     "home.statusError":
       "Your account status could not be checked. Check your connection.",
     "home.backToTrip": "Back to the current trip",
+    "home.available": "Available",
+    "home.unavailable": "Unavailable",
+    "home.onlineTitle": "You're online",
+    "home.offlineTitle": "You're offline",
+    "home.onlineSubtitle":
+      "Looking for trips near you. Your location updates every few seconds.",
+    "home.offlineSubtitle": "Go online to start receiving trip requests.",
+    "home.openMenu": "Open menu",
+
+    "drawer.home": "Home",
+    "drawer.profile": "My profile",
+    "drawer.history": "History",
+    "drawer.earnings": "My earnings",
+    "drawer.settings": "Settings",
+    "drawer.logout": "Log out",
+    "drawer.driver": "Driver",
+    "drawer.greeting": "Hi, {name}",
 
     "request.title": "New request!",
     "request.seconds": "{seconds} s",
