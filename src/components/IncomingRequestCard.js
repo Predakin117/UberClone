@@ -1,7 +1,7 @@
-// AI-assisted: see docs/AI_LOG.md #4, #21, #29, #31
-// Tarjeta de solicitud nueva (sección 3 del enunciado). HomeScreen la muestra
-// sobre el mapa con la solicitud más antigua y los segundos que quedan para
-// responder; el temporizador vive en useTripRequests. The countdown is also a
+// AI-assisted: see docs/AI_LOG.md #4, #21, #29, #31, #59
+// New request card (section 3 of the project statement). HomeScreen shows it
+// on the map with the oldest request and the seconds left to answer; the
+// timer lives in useTripRequests. The countdown is also a
 // bar that shrinks from 15 to 0 seconds. On top, the straight-line time and
 // distance to the pickup point (no OpenRouteService call here, section 7).
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  Vibration,
   View,
 } from "react-native";
 import { calculateFare } from "../config/pricing";
@@ -29,6 +30,12 @@ import { respondToRequest } from "../services/tripRepository";
 import { TRIP_STATUS } from "../services/trips";
 
 const formatCop = (amount) => `$${amount.toLocaleString("es-CO")} COP`;
+
+// AI-assisted: see docs/AI_LOG.md #59
+// Two long pulses, like Uber, so the driver notices the request without
+// looking at the phone. On Android: wait, vibrate, pause, vibrate (ms).
+// iOS ignores the durations and vibrates once.
+const NEW_REQUEST_VIBRATION = [0, 500, 250, 500];
 
 export default function IncomingRequestCard({
   trip,
@@ -56,6 +63,15 @@ export default function IncomingRequestCard({
     return () => animation.stop();
   }, [timeLeft, progress]);
 
+  // AI-assisted: see docs/AI_LOG.md #59
+  // HomeScreen gives the card the trip id as key, so it mounts again with
+  // each new request and vibrates once per request. If the card goes away
+  // first (accepted, declined or timed out), the vibration stops.
+  useEffect(() => {
+    Vibration.vibrate(NEW_REQUEST_VIBRATION);
+    return () => Vibration.cancel();
+  }, []);
+
   const barWidth = progress.interpolate({
     inputRange: [0, 1],
     outputRange: ["0%", "100%"],
@@ -67,8 +83,8 @@ export default function IncomingRequestCard({
     [driverLocation, trip.origin],
   );
 
-  // La misma función que cierra el viaje: la estimación coincide con el cobro.
-  // Con una categoría desconocida no hay estimación.
+  // The same function that closes the trip, so the estimate matches the
+  // charge. An unknown category gives no estimate.
   const estimate = useMemo(() => {
     try {
       return calculateFare({
@@ -81,28 +97,28 @@ export default function IncomingRequestCard({
     }
   }, [trip.distanceKm, trip.durationMin, trip.category]);
 
-  // Al aceptar no se navega desde aquí: el viaje pasa a "accepted" en Firestore y
-  // HomeScreen lleva al conductor al viaje según ese status
+  // Accepting doesn't navigate from here: the trip becomes "accepted" in
+  // Firestore and HomeScreen takes the driver to the trip from that status
   const handleAccept = useCallback(async () => {
     setIsSending(true);
     setError(null);
     try {
       await respondToRequest(trip.id, TRIP_STATUS.ACCEPTED, driverStatus);
     } catch (acceptError) {
-      console.error("Error aceptando la solicitud:", acceptError.cause ?? acceptError);
+      console.error("Error accepting the request:", acceptError.cause ?? acceptError);
       setError(acceptError.code ?? "trip.error.failed");
       setIsSending(false);
     }
   }, [trip.id, driverStatus]);
 
-  // Al rechazar, la solicitud sale de la lista y HomeScreen deja de mostrarla
+  // Declining removes the request from the list and HomeScreen stops showing it
   const handleReject = useCallback(async () => {
     setIsSending(true);
     setError(null);
     try {
       await respondToRequest(trip.id, TRIP_STATUS.REJECTED, driverStatus);
     } catch (rejectError) {
-      console.error("Error rechazando la solicitud:", rejectError.cause ?? rejectError);
+      console.error("Error declining the request:", rejectError.cause ?? rejectError);
       setError(rejectError.code ?? "trip.error.failed");
       setIsSending(false);
     }
