@@ -312,6 +312,36 @@ export const strings = {
     "summary.paymentStatus.cash": "Efectivo: cobra al pasajero",
     "summary.backToMap": "Volver al mapa",
     "summary.error": "No se pudo cargar el resumen del viaje.",
+    // AI-assisted: see docs/AI_LOG.md #28
+
+    // Periodos de ganancias e historial
+    "period.today": "Hoy",
+    "period.week": "Esta semana",
+    "period.month": "Este mes",
+
+    // Ganancias (sección 5)
+    "earnings.loading": "Cargando tus ganancias…",
+    "earnings.loadFailed":
+      "No se pudieron cargar tus ganancias. Revisa tu conexión.",
+    "earnings.trips": "Viajes",
+    "earnings.totalFare": "Total facturado",
+    "earnings.commission": "Comisiones",
+    "earnings.tips": "Propinas",
+    "earnings.net": "Ganancia neta",
+    "earnings.average": "Promedio por viaje",
+    "earnings.balance": "Saldo",
+    "earnings.balanceOwed": "La plataforma te debe",
+    "earnings.balanceDue": "Le debes a la plataforma",
+    "earnings.balanceHint":
+      "Este mes: ganancias de viajes pagados con Mercado Pago menos la comisión de los viajes en efectivo.",
+
+    // Historial de viajes
+    "history.loading": "Cargando tu historial…",
+    "history.empty": "No tienes viajes en este periodo.",
+    "history.loadFailed":
+      "No se pudo cargar tu historial. Revisa tu conexión.",
+    "history.fare": "Tarifa",
+    "history.earnings": "Ganancia neta",
 
     // Errores de los viajes (códigos de TRIP_ERROR_CODES en services/trips.js)
     "trip.error.invalidTransition":
@@ -686,6 +716,32 @@ export const strings = {
     "summary.paymentStatus.cash": "Cash: collect from the passenger",
     "summary.backToMap": "Back to map",
     "summary.error": "The trip summary could not be loaded.",
+    // AI-assisted: see docs/AI_LOG.md #28
+
+    "period.today": "Today",
+    "period.week": "This week",
+    "period.month": "This month",
+
+    "earnings.loading": "Loading your earnings…",
+    "earnings.loadFailed":
+      "Your earnings could not be loaded. Check your connection.",
+    "earnings.trips": "Trips",
+    "earnings.totalFare": "Total billed",
+    "earnings.commission": "Fees",
+    "earnings.tips": "Tips",
+    "earnings.net": "Net earnings",
+    "earnings.average": "Average per trip",
+    "earnings.balance": "Balance",
+    "earnings.balanceOwed": "The platform owes you",
+    "earnings.balanceDue": "You owe the platform",
+    "earnings.balanceHint":
+      "This month: earnings from trips paid with Mercado Pago minus the fee of cash trips.",
+
+    "history.loading": "Loading your history…",
+    "history.empty": "You have no trips in this period.",
+    "history.loadFailed": "Your history could not be loaded. Check your connection.",
+    "history.fare": "Fare",
+    "history.earnings": "Net earnings",
 
     "trip.error.invalidTransition":
       "That change is not allowed in the current trip status.",

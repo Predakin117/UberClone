@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #2, #4, #57
+// AI-assisted: see docs/AI_LOG.md #2, #4, #57, #28
 // src/navigation/MainDrawer.js
 import {
   createDrawerNavigator,
@@ -13,6 +13,7 @@ import { colors, radius, spacing, typography } from "../config/theme";
 import { AuthContext } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import EarningsScreen from "../screens/main/EarningsScreen";
+import HistoryScreen from "../screens/main/HistoryScreen";
 import { TripStack } from "./TripStack";
 
 const Drawer = createDrawerNavigator();
@@ -21,11 +22,6 @@ const Drawer = createDrawerNavigator();
 const ProfileScreen = () => (
   <View>
     <Text>Perfil del Conductor</Text>
-  </View>
-);
-const HistoryScreen = () => (
-  <View>
-    <Text>Historial de Carreras</Text>
   </View>
 );
 const SettingsScreen = () => {
