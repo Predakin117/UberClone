@@ -1183,10 +1183,33 @@ Se descartó: La plantilla genérica inicial de Expo que venía por defecto en e
 - Objetivo: Agregar una pantalla de inicio de sesión con número de celular antes de las pestañas del registro, con opción de cambiar el país. No está en el enunciado; es una funcionalidad adicional.
 - Prompt: "Quiero hacer una pestaña inicial antes de la pestaña 1 y 2, será el inicio de sesión y aunque no este en la guia quiero hacer el inicio de seión, donde se pueda inciar sesion por numero de telefono, le de la ocpion de cambiar el pais y que pueda colocar el numero, Primero quiero hacer esa parte"
 - Resumen de la respuesta: Se creó la rama `ximena/login` desde `main`. Se agregó `LoginScreen` como primera pantalla sin sesión, con un selector de país (`CountryPicker`) que muestra bandera, nombre y código, y busca por nombre en español o inglés o por código. `src/validation/phone.js` tiene 20 países con la cantidad de dígitos de sus celulares, valida el número y lo convierte a formato internacional (+573001234567). Los textos están en español e inglés en `strings.js`. Por ahora "Continuar" lleva al registro; la verificación por SMS queda para el siguiente paso.
-- Qué se usó / modificó / descartó: [Completar]
+- Qué se usó / modificó / descartó: 
+Se usó:
+
+El módulo de validación de teléfonos (src/validation/phone.js) configurado con 20 países, sus respectivas reglas de longitud de dígitos y conversión a formato internacional (ej. +573001234567).
+
+El componente CountryPicker para permitir la selección de país mostrando bandera, nombre y código, con capacidad de búsqueda por texto.
+
+El archivo de internacionalización (strings.js) para estructurar los textos de la interfaz tanto en español como en inglés.
+
+Jest y el archivo de pruebas src/validation/phone.test.js para asegurar la robustez de la validación numérica.
+
+Se modificó:
+
+src/navigation/AppNavigator.js para insertar LoginScreen como la pantalla inicial previa al flujo de pestañas del registro.
+
+docs/AI_LOG.md para documentar el commit y los avances de la bitácora.
+
+Se descartó:
+
+Implementar la verificación por código SMS en esta primera iteración (se optó por dejarla como el siguiente paso lógico una vez validada la estructura local del número).
+
 - Archivos y commit: `src/validation/phone.js`, `src/validation/phone.test.js`, `src/components/CountryPicker.js`, `src/screens/auth/LoginScreen.js`, `src/navigation/AppNavigator.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — 95dd67b (código) y el commit siguiente (bitácora)
 - Verificación: `npx jest` pasa 49 tests (13 nuevos en `phone.test.js`), `npx tsc --noEmit` no da errores, `npx expo lint` no reporta problemas en los archivos nuevos y `npx expo export --platform android` genera el bundle. [Pendiente la prueba en el emulador: elegir otro país y buscarlo, número con menos o más dígitos, número correcto que lleva al registro, y textos en inglés]
 - Aprendizaje: 
+Diseño modular y componentes reutilizables: Implementar flujos adicionales no contemplados en la guía inicial (como la pantalla de inicio de sesión) exige estructurar desde el inicio componentes independientes y limpios, como el CountryPicker y los módulos de validación separados (phone.js).
+
+Pruebas unitarias como base de confianza: Escribir tests exhaustivos en Jest para los distintos formatos de números internacionales y cantidad de dígitos permite validar la lógica de entrada antes de conectar la interfaz gráfica, reduciendo errores en la experiencia de usuario.
 
 ### Entrada #53
 
@@ -1208,6 +1231,28 @@ Se descartó: La plantilla genérica inicial de Expo que venía por defecto en e
   - [Pendiente la prueba en el celular con el proyecto de Firebase propio: cuenta no encontrada, crear cuenta, contraseña incorrecta y correcta, correo o celular repetido, y correo para restablecer la contraseña]
 - Aprendizaje: 
 
+Seguridad y prevención de suplantación en autenticación: Permitir el acceso únicamente verificando la existencia de un correo o número telefónico en la base de datos representaba una brecha crítica de seguridad (cualquier persona habría podido ingresar a la cuenta de otro conductor con solo conocer su número). Implementar Firebase Auth con contraseña garantiza que solo el titular legítimo pueda acceder.
+
+Estrategia de índices y reglas de seguridad en Firestore: El uso de una colección de índices (loginIndex) permite realizar consultas rápidas para verificar la existencia previa de un correo o celular sin exponer datos sensibles, complementada con reglas estrictas de Firestore que impiden listar o consultar registros ajenos en masa.
+
+Gestión de entornos locales y caché en desarrollo: Trabajar con configuraciones multiplataforma y proyectos de Firebase en equipo exige un manejo riguroso de las variables de entorno (.env.local) para evitar apuntar accidentalmente a bases de datos compartidas. Asimismo, entender que instalar dependencias nuevas (como firebase) requieren limpiar la caché del servidor de desarrollo con npx expo start --clear previene errores críticos de resolución de módulos.
+
+### Entrada #54
+
+- Fecha: 2026-11-10
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Hacer más estrictas las validaciones del inicio de sesión y de las 3 pestañas del registro, avisar al llegar al límite de caracteres como en la app de Uber, quitar código repetido y garantizar que la cuenta se cree completa y que el flujo sea el correcto.
+- Prompt: "Ayúdame a hacer las verificaciones en los formularios más estrictas, en el formulario 1 no me puede permitir caracteres infinitos, me debe advertir, como si fuera la propia aplicación de Uber, y también revisa redundancias, pero importante verificaciones más estrictas, en todos los campos, y garantizar usuario creado y que el flujo sí sea el correcto"
+- Resumen de la respuesta: Primero se trajo `main` a `ximena/login-auth` (merge e8d7331, con 2 conflictos resueltos conservando las reglas de los dos integrantes). Después se endurecieron las reglas de los 5 formularios (inicio de sesión, crear cuenta y las 3 pestañas). Los campos de texto libre muestran un contador al llegar al 80 % de su límite y un aviso en naranja al llegar al máximo, en vez de dejar de escribir sin avisar. Al crear la cuenta, el correo y el celular llegan llenos y bloqueados a la pestaña 1, y un inicio de sesión con el registro sin enviar vuelve a las pestañas en lugar de entrar al menú.
+- Qué se usó / modificó / descartó:
+  - Se usó: las reglas de celular de la entrada #52, `accountService` y `account.js` de la entrada #53, Jest para las pruebas nuevas y los textos en español e inglés de `strings.js`.
+  - Se modificó: el nombre pide nombre y apellido. El documento no puede empezar por 0 ni ser un mismo dígito repetido. El celular de Colombia empieza por 3. Los correos no aceptan `..` ni un punto al inicio o al final. La contraseña nueva pide letras y números. En la pestaña 2, la marca acepta letras y guiones y el modelo también números y puntos; el vehículo tiene máximo 20 años de antigüedad y la capacidad va de 4 a 8 pasajeros (XL desde 6). En la pestaña 3, la licencia tiene de 6 a 15 dígitos, y los vencimientos tienen un máximo de 10 años para la licencia y de 1 año para el SOAT y la revisión técnico-mecánica. Estos últimos límites los propuso la IA, inspirados en los requisitos de Uber, porque el enunciado no los fija. La pestaña 2 dejó de tener textos escritos a mano y usa `t()`. Se agregaron `textLimit.js` (límites de caracteres) y `FieldMessage.js` (contador y aviso).
+  - Se descartó: `PrimaryButton`, porque hacía lo mismo que `NextButton`, y el temporizador repetido en dos servicios, que quedó una sola vez en `withTimeout.js`. Tampoco se recargan las pestañas que el conductor ya había guardado en Firestore al volver a iniciar sesión: solo se llenan el correo y el celular.
+- Archivos y commit: `src/validation/textLimit.js`, `src/validation/textLimit.test.js`, `src/validation/personalInfo.js`, `src/validation/personalInfo.test.js`, `src/validation/vehicle.js`, `src/validation/vehicle.test.js`, `src/validation/documents.js`, `src/validation/documents.test.js`, `src/validation/account.js`, `src/validation/account.test.js`, `src/validation/phone.js`, `src/validation/phone.test.js`, `src/components/FieldMessage.js`, `src/components/FormField.js`, `src/components/NextButton.js`, `src/components/PasswordField.js`, `src/components/PrimaryButton.js` (borrado), `src/components/formStyles.js`, `src/contexts/RegistrationContext.js`, `src/navigation/AuthTabs.js`, `src/screens/auth/LoginScreen.js`, `src/screens/auth/LoginPasswordScreen.js`, `src/screens/auth/CreateAccountScreen.js`, `src/screens/auth/PersonalInfoScreen.js`, `src/screens/auth/VehicleScreen.js`, `src/screens/auth/DocumentsScreen.js`, `src/services/accountService.js`, `src/services/accountService.test.js`, `src/services/driverRepository.js`, `src/services/withTimeout.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — e8d7331 (merge de `main`), 7621b1d (reglas de validación), 0443794 (avisos de límite, pestaña 1 desde la cuenta y flujo) y el commit siguiente (bitácora)
+- Verificación: `npx jest` pasa 115 tests, incluidas las pruebas nuevas de `accountService.test.js`, que comprueban que la cuenta guarda sus 3 documentos o ninguno y que no se crea si el celular ya existe. `npx expo export --platform android` genera el bundle. [Pendiente la prueba en el celular: crear una cuenta con `1234567899` (debe rechazarlo) y con la contraseña `12345678` (debe pedir letras), ver el correo y el celular bloqueados en la pestaña 1, el aviso al llegar al límite de caracteres, y entrar con una cuenta sin registro enviado para confirmar que vuelve a las pestañas]
+- Aprendizaje: 
+
 ### Entrada #55
 
 - Fecha: 2026-11-10
@@ -1223,6 +1268,12 @@ Se descartó: La plantilla genérica inicial de Expo que venía por defecto en e
 - Archivos y commit: `src/screens/auth/VerifyLoginScreen.js`, `src/screens/auth/LoginPasswordScreen.js`, `src/hooks/useEmailVerification.js`, `src/navigation/AppNavigator.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — bf2f150 y el commit siguiente (bitácora)
 - Verificación: `npx jest` pasa 119 tests, `npx tsc --noEmit` no da errores y `npx expo lint` solo reporta los 2 errores que ya existían en `AuthContext.js` y `useTripRequests.js`. Se comprobó con `transporter.verify()` que el Gmail del backend acepta las credenciales. [Pendiente la prueba en el celular con el backend encendido: código correcto, incorrecto, vencido, reenviar a los 60 s y volver atrás sin confirmar]
 - Aprendizaje: 
+
+Seguridad en flujos de doble factor (2FA): Secuenciar la verificación por código después de autenticar con contraseña (y no antes) es fundamental para evitar ataques de denegación de servicio o saturación de bandejas de correo a terceros, ya que requiere validar primero la identidad del propietario de la cuenta.
+
+Control de estado y limpieza ante la interrupción de flujos: Gestionar adecuadamente el abandono de pantallas críticas (como cerrar la sesión de Firebase si el usuario decide volver atrás sin confirmar el código) previene brechas de seguridad donde queden sesiones activas sin verificación completa.
+
+Reutilización y extensión de lógica existente: Aprovechar componentes y servicios previos (como el backend de verificación de correo, useEmailVerification y los componentes visuales de autenticación) reduce la duplicación de código y acelera la integración de nuevas medidas de seguridad en la aplicación.
 
 ### Entrada #56
 
@@ -1240,13 +1291,19 @@ Se descartó: La plantilla genérica inicial de Expo que venía por defecto en e
 - Verificación: `npx jest` pasa 160 tests (5 nuevos en `progress.test.js`: 0 % con el formulario vacío, 100 % solo con las 3 pestañas válidas, pestaña completa marcada, valores inválidos que no cuentan y revisión técnico-mecánica que no se exige). `npm test` en `backend/` pasa 27 tests, `npx tsc --noEmit` no da errores y `npx expo lint` no reporta errores (solo un aviso que ya existía en `emailVerification.test.js`). [Pendiente la prueba en el celular: la barra sube al llenar campos, tocar los pasos, botón fijo con el teclado abierto, listas desde abajo, fotos con cámara y galería, y textos en inglés]
 - Aprendizaje: 
 
+Estrategia de diseño modular sin alterar la lógica de negocio: Mejorar la experiencia de usuario (UX) e implementar interfaces estilo Uber en un formulario existente es posible encapsulando los cambios visuales en componentes reutilizables (StepLayout, RegistrationStepBar, estilos centralizados en theme.js) sin necesidad de tocar las reglas del backend ni la máquina de estados.
+
+Cálculo de progreso basado en estado real: Evitar falsos positivos en las barras de progreso (como asumir un porcentaje inicial arbitrario o contar campos vacíos como válidos) requiere acoplar la métrica directamente a las funciones de validación existentes (validatePersonalInfo, etc.), asegurando que el 100% solo se refleje cuando todas las pestañas cumplan las condiciones reales.
+
+Optimización de animaciones y cumplimiento de linters: Gestionar transiciones fluidas de UI mediante Animated de React Native exige respetar las reglas de análisis estático (por ejemplo, evitar useRef para ciertas referencias de animación si los linters de Expo lo señalan, optando por alternativas compatibles como useState).
+
 ### Entrada #57
 
 - Fecha: 2026-11-12
 - Integrante: Ximena Rosales Lopez
 - Herramienta: Claude Code
 - Objetivo: Agregar un ícono a cada paso de la barra del registro y darle a la pantalla de inicio (mapa con el interruptor Disponible / No disponible) y al menú lateral el mismo estilo parecido al de Uber, sin cambiar la lógica.
-- Prompt: "Me gustaria que editaramos las pestaña y agregaramos un icono represnetativo, lo quiero masomenos asi, ademas de que el dlujo en este moemnto me lleva al mapa yme gustaria que tuviera un home: La guia exige Inicio: mapa con la ubicación actual y un interruptor Disponible / No disponible. Mientras está Disponible, la ubicación se actualiza en la base de datos cada pocos segundos; al pasar a No disponible o salir de la pantalla, el seguimiento se detiene (función de limpieza de useEffect) Sin dañar nada solo ayudame ocn los cambios menores sin modificar archivos demas y un home llamativo que cumpla con estas exigencias y ekl panela  ala derecha tambiéj el mismoe xtilo"
+- Prompt: "Me gustaria que editaramos las pestaña y agregaramos un icono represnetativo, lo quiero masomenos asi, ademas de que el dlujo en este moemnto me lleva al mapa yme gustaria que tuviera un home: La guia exige Inicio: mapa con la ubicación actual y un interruptor Disponible / No disponible. Mientras está Disponible, la ubicación se actualiza en la base de datos cada pocos segundos; al pasar a No disponible o salir de la pantalla, el seguimiento se detiene (función de limpieza de useEffect) Sin dañar nada solo ayudame ocn los cambios menores sin modificar archivos demas y un home llamativo que cumpla con estas exigencias y ekl panela  ala derecha tambiéj el mismoe estilo"
 - Resumen de la respuesta: La IA revisó el inicio y encontró que en esta rama la ubicación todavía no se guardaba en la base de datos (`useDriverLocation` tenía un TODO), pero que Tamiro ya lo había resuelto en `main` con `driverLocation.js` (entrada #27). Se trajo `main` a `ximena/frontend` (merge sin conflictos) y solo se cambió lo visual. Cada paso del registro muestra ahora su número y un ícono (persona, carro y documento) en lugar del nombre. El inicio tiene el mapa a pantalla completa, un botón redondo para abrir el menú, una etiqueta "Disponible" / "No disponible" con un punto verde o gris, los avisos como tarjetas y un panel inferior con "Estás conectado" / "Estás desconectado" y un interruptor grande. El menú lateral tiene un encabezado negro con la inicial y el nombre del conductor, las opciones en letra grande y "Cerrar sesión" abajo.
 - Qué se usó / modificó / descartó:
   - Se usó: el tema de la entrada #56 (`src/config/theme.js`), `DrawerActions.openDrawer()` para abrir el menú desde el mapa, `getFocusedRouteNameFromRoute` para ocultar el encabezado del menú solo en el mapa, `drawerContent` con `DrawerContentScrollView` y `DrawerItemList` de React Navigation, y `useSafeAreaInsets` para no tapar el notch ni la barra inferior.
@@ -1255,3 +1312,9 @@ Se descartó: La plantilla genérica inicial de Expo que venía por defecto en e
 - Archivos y commit: `src/components/StepIcon.js`, `src/components/RegistrationStepBar.js`, `src/screens/trip/HomeScreen.js`, `src/navigation/MainDrawer.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — 4f84503 (merge de `main`), los commits "feat: add icons to the registration steps" y "feat: restyle the home screen and the side menu", y el commit siguiente (bitácora)
 - Verificación: `npx jest` pasa 181 tests, `npx tsc --noEmit` no da errores y `npx expo lint` no reporta errores (solo el aviso que ya existía en `emailVerification.test.js`). [Pendiente la prueba en el celular: íconos de los pasos, botón del menú, interruptor conectado y desconectado, cuenta sin aprobar, solicitud nueva encima del panel, volver al viaje en curso y textos en inglés]
 - Aprendizaje: 
+
+Integración fluida y fusión de ramas (Merge de main): Cuando la lógica de negocio (como el rastreo de ubicación con driverLocation.js) ya ha sido resuelta por otros compañeros en la rama principal, la estrategia correcta en un equipo ágil es integrar main de manera limpia antes de aplicar las capas de rediseño visual, evitando duplicar esfuerzo o romper flujos existentes.
+
+Aprovechamiento de componentes nativos de navegación: Implementar menús laterales personalizados (DrawerContentScrollView, DrawerItemList) y botones flotantes sincronizados con DrawerActions.openDrawer() permite rediseñar la navegación manteniendo intacta la arquitectura de rutas y la persistencia de estados (como el interruptor de disponibilidad o el almacenamiento local).
+
+Consistencia visual y accesibilidad: Sustituir nombres largos por íconos representativos en barras de progreso compactas mejora la limpieza visual de la interfaz, siempre y cuando se preserve la semántica (como mantener las etiquetas legibles para lectores de pantalla) y se evite la instalación innecesaria de librerías externas de terceros.
