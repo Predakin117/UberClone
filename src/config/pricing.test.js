@@ -1,37 +1,50 @@
 import { calculateFare } from "./pricing";
 
+// Ejemplo del enunciado (sección 5): viaje de 8,5 km y 22 minutos, sin propina
+const trip = { distanceKm: 8.5, durationMin: 22 };
+
 describe("calculateFare", () => {
-  it("rounds to the nearest multiple of 100 COP", () => {
-    // 4000 + 5 * 1200 + 15 * 200 = 13000
-    expect(calculateFare({ distanceKm: 5, durationMin: 15 }).fare).toBe(13000);
-    // 4000 + 1.33 * 1200 + 0 = 5596 → 5600
-    expect(calculateFare({ distanceKm: 1.33, durationMin: 0 }).fare).toBe(5600);
-  });
-
-  it("applies the 5000 COP minimum fare", () => {
-    expect(calculateFare({ distanceKm: 0, durationMin: 0 }).fare).toBe(5000);
-  });
-
-  it("charges a 20% commission and gives the whole tip to the driver", () => {
-    const result = calculateFare({ distanceKm: 5, durationMin: 15, tip: 2000 });
-    expect(result.commissionRate).toBe(0.2);
-    expect(result.commission).toBe(2600);
-    expect(result.driverEarnings).toBe(13000 - 2600 + 2000);
-  });
-
-  it("uses the premium rate when requested", () => {
-    // 6500 + 5 * 1800 + 15 * 300 = 20000
-    const result = calculateFare({
-      distanceKm: 5,
-      durationMin: 15,
-      category: "premium",
+  it("calcula el ejemplo Económico del enunciado", () => {
+    // 3.500 + 10.200 + 5.500 = 19.200
+    expect(calculateFare({ ...trip, category: "economy" })).toEqual({
+      fare: 19200,
+      commission: 3840,
+      driverEarnings: 15360,
+      commissionRate: 0.2,
+      tip: 0,
     });
-    expect(result.fare).toBe(20000);
   });
 
-  it("ignores negative tips", () => {
-    const result = calculateFare({ distanceKm: 5, durationMin: 15, tip: -500 });
-    expect(result.tip).toBe(0);
-    expect(result.driverEarnings).toBe(10400);
+  it("calcula el ejemplo XL del enunciado, redondeando antes de la comisión", () => {
+    // 19.200 × 1,4 = 26.880 → 26.900
+    const result = calculateFare({ ...trip, category: "xl" });
+    expect(result.fare).toBe(26900);
+    expect(result.commission).toBe(5380);
+    expect(result.driverEarnings).toBe(21520);
+  });
+
+  it("aplica el multiplicador Premium", () => {
+    // 19.200 × 1,8 = 34.560 → 34.600
+    expect(calculateFare({ ...trip, category: "premium" }).fare).toBe(34600);
+  });
+
+  it("usa Económico si no se indica la categoría", () => {
+    expect(calculateFare(trip).fare).toBe(19200);
+  });
+
+  it("aplica la tarifa mínima de 6.000 COP", () => {
+    // 3.500 + 1.200 + 250 = 4.950
+    expect(calculateFare({ distanceKm: 1, durationMin: 1 }).fare).toBe(6000);
+  });
+
+  it("deja la propina completa al conductor y nunca negativa", () => {
+    expect(calculateFare({ ...trip, tip: 2000 }).driverEarnings).toBe(17360);
+    const negative = calculateFare({ ...trip, tip: -500 });
+    expect(negative.tip).toBe(0);
+    expect(negative.driverEarnings).toBe(15360);
+  });
+
+  it("rechaza una categoría desconocida", () => {
+    expect(() => calculateFare({ ...trip, category: "standard" })).toThrow();
   });
 });

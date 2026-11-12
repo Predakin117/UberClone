@@ -9,24 +9,26 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true); // For the initial loading screen
   const [driverData, setDriverData] = useState(null);
 
+  // AI-assisted: see docs/AI_LOG.md #19
+  // La lectura de la sesión vive dentro del efecto: así no se usa antes de declararla
   useEffect(() => {
+    const checkSession = async () => {
+      try {
+        // REGLA: AsyncStorage solo para sesión, idioma y último estado de disponibilidad.
+        const storedSession = await AsyncStorage.getItem("@driver_session");
+        if (storedSession) {
+          setDriverData(JSON.parse(storedSession));
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error("Error leyendo la sesión:", error);
+      } finally {
+        setIsLoading(false); // Terminamos de verificar
+      }
+    };
+
     checkSession();
   }, []);
-
-  const checkSession = async () => {
-    try {
-      // RULE: AsyncStorage only for session, language and last availability status.
-      const storedSession = await AsyncStorage.getItem("@driver_session");
-      if (storedSession) {
-        setDriverData(JSON.parse(storedSession));
-        setIsAuthenticated(true);
-      }
-    } catch (error) {
-      console.error("Error reading the session:", error);
-    } finally {
-      setIsLoading(false); // Finished checking
-    }
-  };
 
   const login = async (data) => {
     try {

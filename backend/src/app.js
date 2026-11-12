@@ -1,11 +1,20 @@
-// AI-assisted: see docs/AI_LOG.md #11
+// AI-assisted: see docs/AI_LOG.md #11, #21
 // Servidor HTTP con el módulo nativo de Node (sin Express).
 // Rutas (bajo /api/v1):
 //   GET  /health
 //   POST /auth/enviar-codigo     { email, nombre?, motivo: "registro" | "login", dispositivo? }
 //   POST /auth/verificar-codigo  { email, codigo }
+//   POST /rutas                  { origen: { lat, lng }, destino: { lat, lng } }
 const http = require("node:http");
 const { renderCorreo } = require("./mailer");
+const { calcularRuta: calcularRutaOrs } = require("./rutas");
+
+// { lat, lng } con números dentro de los rangos de latitud y longitud
+const esPunto = (punto) =>
+  Number.isFinite(punto?.lat) &&
+  Number.isFinite(punto?.lng) &&
+  Math.abs(punto.lat) <= 90 &&
+  Math.abs(punto.lng) <= 180;
 
 const MOTIVOS = ["registro", "login"];
 
@@ -50,7 +59,13 @@ const STATUS = {
   espera: 429,
 };
 
-function createApp({ store, enviarCorreo, basePath = "/api/v1", logger = console }) {
+function createApp({
+  store,
+  enviarCorreo,
+  calcularRuta = calcularRutaOrs,
+  basePath = "/api/v1",
+  logger = console,
+}) {
   async function enviarCodigo(req, res, body) {
     const motivo = body.motivo;
     if (!MOTIVOS.includes(motivo)) {
@@ -95,6 +110,34 @@ function createApp({ store, enviarCorreo, basePath = "/api/v1", logger = console
     return responder(res, 200, { ok: true });
   }
 
+  // Ruta en carro entre dos puntos con OpenRouteService. La app la pide una vez al
+  // aceptar un viaje, para ir hasta el pasajero: la llave de ORS nunca sale del
+  // backend (docs/APIS.md).
+  async function calcularRutaHandler(req, res, body) {
+    if (!esPunto(body.origen) || !esPunto(body.destino)) {
+      return responder(res, 400, {
+        ok: false,
+        codigoError: "ruta_invalida",
+        error: "origen y destino deben ser { lat, lng }",
+      });
+    }
+
+    try {
+      const ruta = await calcularRuta(
+        [body.origen.lng, body.origen.lat],
+        [body.destino.lng, body.destino.lat],
+      );
+      return responder(res, 200, { ok: true, ...ruta });
+    } catch (error) {
+      logger.error("No se pudo calcular la ruta:", error.message);
+      return responder(res, 502, {
+        ok: false,
+        codigoError: "ruta_no_disponible",
+        error: "No se pudo calcular la ruta",
+      });
+    }
+  }
+
   return http.createServer(async (req, res) => {
     const ruta = (req.url || "").split("?")[0];
 
@@ -106,6 +149,7 @@ function createApp({ store, enviarCorreo, basePath = "/api/v1", logger = console
     const rutas = {
       [`${basePath}/auth/enviar-codigo`]: enviarCodigo,
       [`${basePath}/auth/verificar-codigo`]: verificarCodigo,
+      [`${basePath}/rutas`]: calcularRutaHandler,
     };
     const manejador = rutas[ruta];
     if (!manejador) return responder(res, 404, { ok: false, error: "Ruta no encontrada" });

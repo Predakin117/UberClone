@@ -49,5 +49,92 @@ service cloud.firestore {
       allow read, create: if request.auth != null && request.auth.uid == uid;
       allow update, delete: if false;
     }
+
+    // AI-assisted: see docs/AI_LOG.md #18
+    // Viajes (sección 6 del enunciado), en la raíz. Los crea el backend con
+    // firebase-admin, que no pasa por estas reglas; también es el único que escribe
+    // paymentStatus, paymentId y el estado "paid". src/services/trips.js repite
+    // estas reglas para que la app no intente cambios que aquí se rechazan.
+    match /trips/{tripId} {
+      function signedIn() {
+        return request.auth != null;
+      }
+
+      function changedFields() {
+        return request.resource.data.diff(resource.data).affectedKeys();
+      }
+
+      // Estados a los que el conductor puede llevar su viaje desde el actual
+      function nextStatuses() {
+        return {
+          'accepted': ['driver_arriving', 'cancelled'],
+          'driver_arriving': ['in_progress', 'cancelled'],
+          'in_progress': ['completed']
+        }.get(resource.data.status, []);
+      }
+
+      // Solo un conductor aprobado en la consola puede tomar solicitudes (sección 2)
+      function isApprovedDriver() {
+        return get(/databases/$(database)/documents/drivers/$(request.auth.uid))
+          .data.get('status', null) == 'approved';
+      }
+
+      // La misma cuenta de calculateFare en src/config/pricing.js, con sus mismos
+      // valores: si cambian allá, hay que cambiarlos aquí. Se calcula con la
+      // distancia, la duración y la categoría guardadas en el viaje.
+      function isExpectedFare(fare) {
+        let multiplier = {'economy': 1.0, 'xl': 1.4, 'premium': 1.8}[resource.data.category];
+        let subtotal = 3500 + resource.data.distanceKm * 1200
+          + resource.data.durationMin * 250;
+        // floor(x + 0.5) es lo que hace Math.round de JavaScript con números
+        // positivos: en un empate (por ejemplo 214,5) redondea hacia arriba. Así
+        // no dependemos de cómo redondee math.round de las reglas en los empates.
+        let rounded = math.floor(subtotal * multiplier / 100 + 0.5) * 100;
+        return fare == rounded || (rounded < 6000 && fare == 6000);
+      }
+
+      // Al terminar se guardan los montos de calculateFare, en pesos enteros y
+      // coherentes entre sí: el conductor no puede subir la tarifa ni bajar la comisión
+      function isValidCompletion() {
+        let data = request.resource.data;
+        return changedFields().hasOnly(['status', 'fare', 'commission', 'tip',
+            'driverEarnings', 'commissionRate', 'completedAt'])
+          && data.fare is int && data.commission is int
+          && data.tip is int && data.driverEarnings is int
+          && isExpectedFare(data.fare)
+          && data.commissionRate == 0.2
+          && data.commission == math.round(data.fare * 0.2)
+          && data.tip >= 0
+          && data.driverEarnings == data.fare - data.commission + data.tip
+          && data.completedAt == request.time;
+      }
+
+      // Sus viajes y las solicitudes nuevas, que todavía no tienen conductor.
+      // La app consulta con los mismos filtros: driverId == uid o status == "requested".
+      allow read: if signedIn()
+        && (resource.data.driverId == request.auth.uid
+          || resource.data.status == 'requested');
+
+      allow create, delete: if false;
+
+      allow update: if signedIn() && (
+        // Aceptar o rechazar una solicitud sin conductor: queda a su nombre.
+        // La app lo hace con runTransaction para que dos conductores no la tomen a la vez.
+        (resource.data.status == 'requested'
+          && resource.data.get('driverId', null) == null
+          && isApprovedDriver()
+          && request.resource.data.status in ['accepted', 'rejected']
+          && request.resource.data.driverId == request.auth.uid
+          && changedFields().hasOnly(['status', 'driverId']))
+        ||
+        // Avanzar su viaje: accepted → driver_arriving → in_progress → completed,
+        // o cancelarlo antes de in_progress
+        (resource.data.driverId == request.auth.uid
+          && request.resource.data.status in nextStatuses()
+          && ((request.resource.data.status == 'completed' && isValidCompletion())
+            || (request.resource.data.status != 'completed'
+              && changedFields().hasOnly(['status']))))
+      );
+    }
   }
 }

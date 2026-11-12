@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #54
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -215,6 +215,82 @@ export const strings = {
     "verifyLogin.confirm": "Confirmar e ingresar",
     "verifyLogin.checkSpam":
       "¿No te llegó? Revisa la carpeta de spam o de promociones.",
+
+    // Inicio: interruptor de disponibilidad y por qué todavía no puede conectarse
+    "home.online": "CONECTADO",
+    "home.offline": "DESCONECTADO",
+    "home.checkingStatus": "Verificando el estado de tu cuenta…",
+    "home.pendingApproval":
+      "Tu cuenta está pendiente de aprobación. Podrás conectarte cuando sea aprobada.",
+    "home.rejected":
+      "Tu registro fue rechazado. Comunícate con soporte para revisarlo.",
+    "home.statusError":
+      "No se pudo verificar el estado de tu cuenta. Revisa tu conexión.",
+    "home.backToTrip": "Volver al viaje en curso",
+
+    // Solicitud nueva ({seconds}, {km} y {minutes} los reemplaza IncomingRequestCard)
+    "request.title": "¡Nueva solicitud!",
+    "request.seconds": "{seconds} s",
+    "request.origin": "Origen",
+    "request.destination": "Destino",
+    "request.distance": "Distancia",
+    "request.km": "{km} km",
+    "request.duration": "Duración",
+    "request.minutes": "{minutes} min",
+    "request.category": "Categoría",
+    "request.paymentMethod": "Método de pago",
+    "request.fare": "Tarifa estimada",
+    "request.earnings": "Tu ganancia neta",
+    "request.accept": "Aceptar",
+    "request.reject": "Rechazar",
+    "payment.mercadopago": "Mercado Pago",
+    "payment.stripe": "Stripe",
+    "payment.cash": "Efectivo",
+
+    // Viaje en curso
+    "activeTrip.loading": "Cargando el viaje en curso…",
+    "activeTrip.goingToPickup": "Recoge al pasajero en",
+    "activeTrip.goingToDestination": "Lleva al pasajero a",
+    "activeTrip.passengerOnBoard": "Pasajero a bordo",
+    "activeTrip.finish": "Finalizar viaje",
+    "activeTrip.cancel": "Cancelar viaje",
+    "activeTrip.straightLine":
+      "Ruta aproximada: no se pudo calcular la ruta por las calles.",
+    "activeTrip.loadingRoute": "Calculando la ruta hasta el pasajero…",
+    "activeTrip.noLocation":
+      "No hay ubicación del conductor: no se puede trazar la ruta hasta el pasajero.",
+
+    // Cobro y resumen ({percent} lo reemplaza TripSummaryScreen)
+    "summary.title": "Resumen del viaje",
+    "summary.fare": "Tarifa final",
+    "summary.commission": "Comisión ({percent} %)",
+    "summary.tip": "Propina",
+    "summary.earnings": "Tu ganancia neta",
+    "summary.payment": "Pago",
+    "summary.paymentStatus.approved": "Aprobado",
+    "summary.paymentStatus.pending": "Pendiente",
+    "summary.paymentStatus.rejected": "Rechazado",
+    "summary.paymentStatus.cash": "Efectivo: cobra al pasajero",
+    "summary.backToMap": "Volver al mapa",
+    "summary.error": "No se pudo cargar el resumen del viaje.",
+
+    // Errores de los viajes (códigos de TRIP_ERROR_CODES en services/trips.js)
+    "trip.error.invalidTransition":
+      "Ese cambio no está permitido en el estado actual del viaje.",
+    "trip.error.alreadyTaken": "Otro conductor ya tomó esta solicitud.",
+    "trip.error.notApproved":
+      "Tu cuenta debe estar aprobada para tomar solicitudes.",
+    "trip.error.notYourTrip": "Este viaje no es tuyo.",
+    "trip.error.fieldNotAllowed": "No puedes modificar esos datos del viaje.",
+    "trip.error.invalidAmounts": "Los montos del viaje no coinciden con la tarifa.",
+    "trip.error.notFound": "La solicitud ya no existe.",
+    "trip.error.noSession": "Tu sesión se cerró. Inicia sesión de nuevo.",
+    "trip.error.permissionDenied":
+      "La base de datos rechazó el cambio. Revisa las reglas de Firestore.",
+    "trip.error.failed":
+      "No se pudo guardar el cambio. Revisa tu conexión e inténtalo de nuevo.",
+    "trip.error.loadFailed":
+      "No se pudieron cargar las solicitudes. Revisa tu conexión.",
 
     // Guardado en Firestore
     "save.saving": "Guardando…",
@@ -481,6 +557,77 @@ export const strings = {
     "verifyLogin.confirm": "Confirm and log in",
     "verifyLogin.checkSpam":
       "Didn't get it? Check your spam or promotions folder.",
+
+    "home.online": "ONLINE",
+    "home.offline": "OFFLINE",
+    "home.checkingStatus": "Checking your account status…",
+    "home.pendingApproval":
+      "Your account is pending approval. You can go online once it is approved.",
+    "home.rejected":
+      "Your registration was rejected. Contact support to review it.",
+    "home.statusError":
+      "Your account status could not be checked. Check your connection.",
+    "home.backToTrip": "Back to the current trip",
+
+    "request.title": "New request!",
+    "request.seconds": "{seconds} s",
+    "request.origin": "Pickup",
+    "request.destination": "Destination",
+    "request.distance": "Distance",
+    "request.km": "{km} km",
+    "request.duration": "Duration",
+    "request.minutes": "{minutes} min",
+    "request.category": "Category",
+    "request.paymentMethod": "Payment method",
+    "request.fare": "Estimated fare",
+    "request.earnings": "Your net earnings",
+    "request.accept": "Accept",
+    "request.reject": "Decline",
+    "payment.mercadopago": "Mercado Pago",
+    "payment.stripe": "Stripe",
+    "payment.cash": "Cash",
+
+    "activeTrip.loading": "Loading the current trip…",
+    "activeTrip.goingToPickup": "Pick up the passenger at",
+    "activeTrip.goingToDestination": "Take the passenger to",
+    "activeTrip.passengerOnBoard": "Passenger on board",
+    "activeTrip.finish": "End trip",
+    "activeTrip.cancel": "Cancel trip",
+    "activeTrip.straightLine":
+      "Approximate route: the street route could not be calculated.",
+    "activeTrip.loadingRoute": "Calculating the route to the passenger…",
+    "activeTrip.noLocation":
+      "No driver location: the route to the passenger cannot be drawn.",
+
+    "summary.title": "Trip summary",
+    "summary.fare": "Final fare",
+    "summary.commission": "Fee ({percent}%)",
+    "summary.tip": "Tip",
+    "summary.earnings": "Your net earnings",
+    "summary.payment": "Payment",
+    "summary.paymentStatus.approved": "Approved",
+    "summary.paymentStatus.pending": "Pending",
+    "summary.paymentStatus.rejected": "Rejected",
+    "summary.paymentStatus.cash": "Cash: collect from the passenger",
+    "summary.backToMap": "Back to map",
+    "summary.error": "The trip summary could not be loaded.",
+
+    "trip.error.invalidTransition":
+      "That change is not allowed in the current trip status.",
+    "trip.error.alreadyTaken": "Another driver already took this request.",
+    "trip.error.notApproved":
+      "Your account must be approved to take requests.",
+    "trip.error.notYourTrip": "This trip is not yours.",
+    "trip.error.fieldNotAllowed": "You cannot change that trip data.",
+    "trip.error.invalidAmounts": "The trip amounts do not match the fare.",
+    "trip.error.notFound": "The request no longer exists.",
+    "trip.error.noSession": "Your session ended. Please log in again.",
+    "trip.error.permissionDenied":
+      "The database rejected the change. Check the Firestore rules.",
+    "trip.error.failed":
+      "The change could not be saved. Check your connection and try again.",
+    "trip.error.loadFailed":
+      "The requests could not be loaded. Check your connection.",
 
     "save.saving": "Saving…",
     "save.notConfigured":
