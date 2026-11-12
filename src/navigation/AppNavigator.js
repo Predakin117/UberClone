@@ -8,6 +8,7 @@ import CreateAccountScreen from "../screens/auth/CreateAccountScreen";
 import LoginPasswordScreen from "../screens/auth/LoginPasswordScreen";
 import LoginScreen from "../screens/auth/LoginScreen";
 import VerifyLoginScreen from "../screens/auth/VerifyLoginScreen";
+import WelcomeScreen from "../screens/auth/WelcomeScreen";
 import { AuthTabs } from "./AuthTabs";
 import { MainDrawer } from "./MainDrawer";
 
@@ -44,10 +45,12 @@ export const AppNavigator = () => {
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
-          // AI-assisted: see docs/AI_LOG.md #52, #53, #55
-          // Without a session the app starts at login. A new driver creates the
-          // account and then fills in the registration tabs.
+          // AI-assisted: see docs/AI_LOG.md #52, #53, #55, #59
+          // Without a session the app starts at the welcome screen and "Get
+          // started" opens the login. A new driver creates the account and
+          // then fills in the registration tabs.
           <>
+            <RootStack.Screen name="Welcome" component={WelcomeScreen} />
             <RootStack.Screen name="Login" component={LoginScreen} />
             <RootStack.Screen
               name="LoginPassword"

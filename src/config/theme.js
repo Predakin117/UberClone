@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #56
+// AI-assisted: see docs/AI_LOG.md #56, #59
 // Visual theme of the app: black and white with light gray surfaces, bold
 // type and pill-shaped secondary buttons. Screens and components take their
 // colors, sizes and spacing from here instead of writing them by hand.
@@ -18,9 +18,15 @@ export const colors = {
   error: "#C62828",
   errorBackground: "#FDECEC",
   warning: "#9A5B00",
+  // Background of the "In review" labels
+  warningBackground: "#FFF4E5",
   success: "#05944F",
   link: "#276EF1",
   backdrop: "rgba(0, 0, 0, 0.5)",
+  // Welcome screen: dark gray shapes and secondary text on the black background
+  surfaceDark: "#1F1F1F",
+  borderDark: "#333333",
+  textOnDark: "#B3B3B3",
 };
 
 export const radius = { sm: 8, md: 12, lg: 16, pill: 999 };

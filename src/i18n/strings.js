@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56, #58
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56, #58, #59
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -541,6 +541,31 @@ export const strings = {
     "selfie.use": "Usar esta foto",
     "selfie.retake": "Tomar otra",
     "selfie.preview": "Vista previa de tu foto de perfil",
+    // AI-assisted: see docs/AI_LOG.md #59
+    "welcome.headline": "Conduce cuando quieras y gana a tu ritmo",
+    "welcome.benefitSchedule": "Tú eliges cuándo conectarte",
+    "welcome.benefitEarnings": "Ve tu ganancia antes de aceptar cada viaje",
+    "welcome.benefitPayments": "Cobra con tarjeta o en efectivo",
+    "welcome.start": "Comenzar",
+    "welcome.language": "Idioma: {language}",
+    "submitted.title": "¡Registro enviado!",
+    "submitted.subtitle":
+      "Estamos revisando tus datos y documentos. Te avisaremos cuando tu cuenta esté aprobada.",
+    "submitted.stepSent": "Registro enviado",
+    "submitted.stepReview": "Revisión de documentos",
+    "submitted.stepApproved": "Cuenta aprobada",
+    "submitted.documentsTitle": "Documentos en revisión",
+    "submitted.inReview": "En revisión",
+    "submitted.personal": "Datos personales y foto",
+    "submitted.vehicle": "Vehículo",
+    "submitted.license": "Licencia de conducción",
+    "submitted.soat": "SOAT",
+    "submitted.techReview": "Revisión técnico-mecánica",
+    "submitted.mercadoPago": "Cuenta de Mercado Pago",
+    "submitted.expires": "Vence el {date}",
+    "submitted.notice":
+      "Mientras tu cuenta está en revisión no podrás ponerte Disponible.",
+    "submitted.goHome": "Ir al inicio",
   },
 
   en: {
@@ -1032,6 +1057,30 @@ export const strings = {
     "selfie.use": "Use this photo",
     "selfie.retake": "Take another",
     "selfie.preview": "Preview of your profile photo",
+    // AI-assisted: see docs/AI_LOG.md #59
+    "welcome.headline": "Drive when you want and earn at your own pace",
+    "welcome.benefitSchedule": "You choose when to go online",
+    "welcome.benefitEarnings": "See your earnings before accepting each trip",
+    "welcome.benefitPayments": "Get paid by card or in cash",
+    "welcome.start": "Get started",
+    "welcome.language": "Language: {language}",
+    "submitted.title": "Registration submitted!",
+    "submitted.subtitle":
+      "We're reviewing your details and documents. We'll let you know when your account is approved.",
+    "submitted.stepSent": "Registration submitted",
+    "submitted.stepReview": "Document review",
+    "submitted.stepApproved": "Account approved",
+    "submitted.documentsTitle": "Documents under review",
+    "submitted.inReview": "In review",
+    "submitted.personal": "Personal details and photo",
+    "submitted.vehicle": "Vehicle",
+    "submitted.license": "Driver's license",
+    "submitted.soat": "SOAT",
+    "submitted.techReview": "Vehicle inspection",
+    "submitted.mercadoPago": "Mercado Pago account",
+    "submitted.expires": "Expires on {date}",
+    "submitted.notice": "While your account is under review you can't go online.",
+    "submitted.goHome": "Go to home",
   },
 };
 
