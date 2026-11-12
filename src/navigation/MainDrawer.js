@@ -9,7 +9,7 @@ import { TripStack } from "./TripStack";
 
 const Drawer = createDrawerNavigator();
 
-// Mocks temporales
+// Temporary mocks
 const ProfileScreen = () => (
   <View>
     <Text>Perfil del Conductor</Text>

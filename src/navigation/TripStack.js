@@ -13,7 +13,7 @@ export const TripStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomeScreen} />
-      {/* Se muestra como overlay semitransparente sobre el mapa */}
+      {/* Shown as a semi-transparent overlay on top of the map */}
       <Stack.Screen
         name="IncomingRequest"
         component={IncomingRequestScreen}
