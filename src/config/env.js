@@ -1,8 +1,8 @@
 // AI-assisted: see docs/AI_LOG.md #4
-// Expo solo expone al cliente las variables con prefijo EXPO_PUBLIC_ y deben leerse
-// con acceso estático (process.env.EXPO_PUBLIC_X), no con process.env[clave].
-// Ninguna de estas es secreta: la configuración web de Firebase es pública y la
-// protegen las reglas de Firestore; Cloudinary usa un upload preset sin firma.
+// Expo only exposes EXPO_PUBLIC_ variables to the client, and they must be read
+// with static access (process.env.EXPO_PUBLIC_X), not with process.env[key].
+// None of these are secret: the Firebase web config is public and protected by
+// the Firestore rules; Cloudinary uses an unsigned upload preset.
 export const env = {
   firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   firebaseAuthDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,

@@ -1,6 +1,6 @@
 // AI-assisted: see docs/AI_LOG.md #10
-// Firebase con el SDK web (funciona en Expo Go). La sesión de Auth se guarda en
-// AsyncStorage para que el conductor siga siendo el mismo al reabrir la app.
+// Firebase with the web SDK (works in Expo Go). The Auth session is stored in
+// AsyncStorage so the driver stays the same when the app is reopened.
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import {
@@ -21,7 +21,7 @@ const firebaseConfig = {
   appId: env.firebaseAppId,
 };
 
-// Sin estos valores Firebase falla al iniciar; así la app abre igual y avisa al guardar
+// Without these values Firebase fails on startup; this way the app still opens and warns on save
 export const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId,
 );
@@ -29,7 +29,7 @@ export const isFirebaseConfigured = Boolean(
 const createFirebase = () => {
   if (!isFirebaseConfigured) return { auth: null, db: null };
 
-  // Con Fast Refresh este archivo se vuelve a ejecutar: no se inicializa dos veces
+  // Fast Refresh re-runs this file: don't initialize twice
   if (getApps().length > 0) {
     const app = getApp();
     return { auth: getAuth(app), db: getFirestore(app) };
@@ -44,7 +44,7 @@ const createFirebase = () => {
 
 export const { auth, db } = createFirebase();
 
-// Devuelve el usuario actual o crea una sesión anónima (cada celular = un conductor)
+// Returns the current user or creates an anonymous session (one phone = one driver)
 export const ensureSignedIn = async () => {
   await auth.authStateReady();
   if (auth.currentUser) return auth.currentUser;
