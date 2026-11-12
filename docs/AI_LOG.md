@@ -895,6 +895,236 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - [Pendiente: ver en la consola que `location` cambia cada 10 s y que al desconectarse queda `isAvailable: false`]
 - Aprendizaje: [Completar]
 
+### Entrada #28
+
+- Fecha: 2026-11-12
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Historial de viajes y ganancias reales (sección 5) a partir de Firestore, y confirmar el pago en efectivo desde el resumen del viaje.
+- Prompt (puntos de código; se omiten las líneas sobre ramas y commits):
+  > Usa src/config/theme.js de Ximena para los colores. Todo texto con t() en
+  > español e inglés. Siguiente entrada de bitácora: #28.
+  >
+  > 1. src/hooks/useTripHistory.js: escucha con onSnapshot los viajes del
+  >    conductor (driverId == uid) en status completed o paid, ordenados del
+  >    más reciente al más antiguo por completedAt, con limit(20). Si Firestore
+  >    pide índice compuesto, dame el link. Con limpieza en el useEffect.
+  >
+  > 2. src/hooks/useEarnings.js (hook OBLIGATORIO, sección 5): recibe la lista
+  >    de viajes y con useMemo calcula para hoy, esta semana (desde el lunes) y
+  >    este mes: número de viajes, total facturado (fare), comisiones,
+  >    propinas, ganancia neta (driverEarnings) y promedio por viaje. Además el
+  >    saldo: driverEarnings de viajes pagados con mercadopago menos commission
+  >    de viajes en efectivo. Lógica en funciones puras con pruebas Jest.
+  >
+  > 3. EarningsScreen: reemplaza el simulador por useTripHistory + useEarnings,
+  >    con tres bloques Hoy / Semana / Mes y el saldo.
+  >
+  > 4. HistoryScreen nueva en src/screens/main/ (hoy es un mock en
+  >    MainDrawer): FlatList con fecha y hora, origen → destino, categoría,
+  >    tarifa, ganancia neta y estado del pago; filtros Hoy / Semana / Mes;
+  >    mensaje cuando no hay viajes. Conéctala en MainDrawer sin cambiar el
+  >    resto de su diseño.
+  >
+  > 5. TripSummaryScreen: escucha el viaje con onSnapshot (por trip.id) para
+  >    ver el estado del pago en tiempo real. Si paymentMethod es cash y el
+  >    viaje no está paid, botón "Recibí efectivo" que llama a
+  >    markCashReceived de src/services/payments.js, con estado de carga y el
+  >    error debajo usando payment.error.<código>. Agrega esos textos.
+
+  > Un cambio: useEarnings no puede depender del limit(20) del historial,
+  > porque los totales del mes saldrían incompletos. Para ganancias usa una
+  > consulta aparte con los viajes del conductor en completed o paid con
+  > completedAt desde el inicio del mes (sin limit); usa el mismo índice.
+  > Quita la nota "Calculado con tus últimos 20 viajes". El historial sigue
+  > con limit(20).
+  >
+  > Lo demás de tus decisiones está bien.
+
+  > 2. Actualiza la sección Alcance del README: pasa a "Ya está hecho" el
+  >    pago en efectivo, la ubicación del conductor en Firestore, el
+  >    historial y las ganancias. Mercado Pago queda "en integración (modo de
+  >    prueba)" y las notificaciones push en "Pendiente".
+- Resumen de la respuesta: `src/services/earnings.js` tiene las funciones puras: `periodStarts` (inicio de hoy, del lunes y del día 1, en la hora del celular), `filterTripsByPeriod`, `summarizeTrips` (viajes, total facturado, comisiones, propinas, ganancia neta y promedio por viaje), `calculateBalance` y `calculateEarnings`, que junta los tres periodos y el saldo. Solo suman los montos que se guardaron al completar cada viaje; no recalculan tarifas. `useEarnings(trips)` las envuelve en `useMemo`. En `tripRepository.js`, `subscribeToTripHistory` escucha los últimos 20 viajes `completed` o `paid` del conductor y `subscribeToTripsSince` los de un periodo sin límite; las dos leen `completedAt` con `serverTimestamps: "estimate"` para que un viaje recién terminado no llegue con fecha vacía. `useTripHistory` y `useEarningsTrips` comparten `useDriverTrips` (espera la sesión de Firebase y limpia las dos suscripciones en el `useEffect`). `EarningsScreen` muestra Hoy / Esta semana / Este mes y el saldo del mes; `HistoryScreen` es una `FlatList` con filtros, que reemplaza el mock de `MainDrawer`. `TripSummaryScreen` escucha el viaje con `useTrip` y, si es en efectivo y no está `paid`, muestra el botón "Recibí efectivo" con carga y el error debajo (`FieldMessage`). Los textos van en `strings.js` en español e inglés, y `src/i18n/format.js` formatea pesos y fecha/hora.
+- Qué se usó / modificó / descartó:
+  - Se usó: el mismo patrón de `useActiveTrip` (escuchar la sesión y luego el viaje), `theme.js` de Ximena para los colores de las pantallas nuevas y `FieldMessage` para el error.
+  - Se modificó: la consulta de ganancias empieza en el lunes o en el día 1, el que sea más temprano, porque la semana puede empezar en el mes anterior (por ejemplo, si el 1 de noviembre es domingo); el saldo se calcula solo con los viajes del mes. El promedio por viaje es la ganancia neta entre el número de viajes. Para Mercado Pago el saldo cuenta solo los viajes `paid`; para efectivo resta la comisión de todos. `paymentStatusKey` devuelve "Efectivo recibido" cuando un viaje en efectivo ya está `paid`, para que el resumen cambie en vivo al tocar el botón. El historial abre en "Este mes".
+  - Se descartó: la primera versión calculaba las ganancias con los 20 viajes del historial y mostraba la nota "Calculado con tus últimos 20 viajes"; Tamiro pidió una consulta aparte sin límite. También se descartó cambiar los estilos que ya tenía `TripSummaryScreen` (solo el botón nuevo usa `theme.js`).
+- Archivos y commit: `src/services/earnings.js`, `src/services/earnings.test.js`, `src/services/tripRepository.js`, `src/hooks/useDriverTrips.js`, `src/hooks/useTripHistory.js`, `src/hooks/useEarningsTrips.js`, `src/hooks/useEarnings.js`, `docs/APIS.md` — a0c9fe9; `src/screens/main/EarningsScreen.js`, `src/screens/main/HistoryScreen.js`, `src/navigation/MainDrawer.js`, `src/i18n/format.js`, `src/i18n/format.test.js`, `src/i18n/strings.js` — 6cf7e16; `src/screens/trip/TripSummaryScreen.js`, `src/hooks/useTrip.js`, `src/services/trips.js`, `src/services/trips.test.js`, `src/services/payments.test.js`, `src/i18n/strings.js` — 3eb36ae; `README.md` (sección Alcance) — fd4c051
+- Verificación:
+  - Jest de la raíz pasa 209 (22 en `earnings.test.js`: inicio de la semana en lunes, domingo y lunes, semana que empieza en el mes anterior, límites de cada periodo, totales, promedio sin dividir por cero, saldo con Mercado Pago pagado y sin pagar, efectivo y saldo solo del mes; 5 en `format.test.js`; 1 nueva en `payments.test.js` que revisa que cada código de error tenga su texto en los dos idiomas; 1 caso nuevo de `paymentStatusKey`). Las 42 del backend pasan, `npx expo lint` queda sin errores y `npx tsc --noEmit` no da errores.
+  - Con firebase-admin (solo lectura) se lanzaron las consultas del historial y de ganancias contra `uber-clone-ba0e2`: las dos pidieron el mismo índice compuesto (`driverId` ↑, `status` ↑, `completedAt` ↓), que quedó anotado en `docs/APIS.md`.
+  - El índice se creó a mano en la consola de Firebase (Firestore Database → Índices). La primera vez no quedó guardado: la API de administración de Firestore mostraba 0 índices en `trips` y la app seguía con el error "The query requires an index". Se intentó crearlo con la clave de servicio del backend, pero la API respondió 403 ("The caller does not have permission"): esa cuenta puede leer y escribir datos, pero no administrar índices, y no se le dieron más permisos en IAM solo para esto. Tamiro lo creó de nuevo en la consola y quedó "Habilitado". Después la API lo mostró en estado `READY` y las dos consultas respondieron sin error con firebase-admin.
+  - `docs/enunciado.pdf` no está en el repositorio; se siguió `src/services/trips.js` (secciones 3 y 6).
+  - En el celular, con la cuenta de Tamiro (`approved`), después de `npm run simular-historial`: Mis ganancias mostró Hoy, Esta semana y Este mes con sus totales y el saldo; el Historial mostró los viajes del más reciente al más antiguo y el filtro Hoy funcionó. Con un viaje real (`simular economy cash 2`) finalizado, "Recibí efectivo" cambió el resumen a "Efectivo recibido" en tiempo real y el viaje apareció en el historial.
+  - La aprobación del conductor sigue siendo manual en la consola de Firebase, como pide la sección 2.
+- Aprendizaje: [Completar]
+
+### Entrada #29
+
+- Fecha: 2026-11-12
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Pulir el diseño de la solicitud entrante, el viaje en curso y el resumen con el tema de Ximena, sin cambiar la lógica ni los textos que ya existían, y agregar un botón para navegar con Google Maps.
+- Prompt:
+  > Pulido visual final, sin cambiar la lógica ni los textos existentes
+  > (entrada nueva de bitácora). Usa src/config/theme.js de Ximena.
+  >
+  > 1. IncomingRequestCard, ActiveTripScreen y TripSummaryScreen: reemplaza
+  >    todos los colores escritos a mano (#4CAF50, #F44336, #FF9800, #2E7D32,
+  >    #E53935, #e8f5e9, grises sueltos) por colors de theme.js. Botón
+  >    principal en negro con texto blanco; verde (colors.success) solo para
+  >    montos de dinero; rojo (colors.error) solo para errores y cancelar.
+  >    Usa radius, spacing y typography del tema.
+  > 2. IncomingRequestCard: la cuenta regresiva como una barra horizontal que
+  >    se achica de 15 a 0 segundos (además del número), "Aceptar" como botón
+  >    grande negro a todo el ancho y "Rechazar" como una X discreta arriba a
+  >    la derecha. Mantén useCallback y los mismos manejadores.
+  > 3. ActiveTripScreen: botón secundario "Navegar" que abre Google Maps con
+  >    Linking hacia el punto de recogida (driver_arriving) o el destino
+  >    (in_progress): https://www.google.com/maps/dir/?api=1&destination=LAT,LNG
+  >    Texto con t() en español e inglés.
+  >
+  > Lint, tsc y pruebas sin errores.
+- Resumen de la respuesta: Los tres archivos toman colores, radios, espacios y tipografía de `theme.js`. El botón principal ("Aceptar", "Pasajero a bordo", "Finalizar viaje", "Volver al mapa") es negro con texto blanco; el verde quedó solo en los montos (tarifa estimada, ganancia neta) y el rojo solo en los errores y en "Cancelar viaje". En `IncomingRequestCard` la cuenta regresiva es una barra que se achica con `Animated` (cada segundo se desliza al siguiente valor, para que baje sin saltos) junto al número de segundos, "Aceptar" es un botón negro a todo el ancho y "Rechazar" es una X dibujada con dos barras en una esquina, con `accessibilityLabel` "Rechazar"; `handleAccept` y `handleReject` siguen iguales con `useCallback`. En `ActiveTripScreen`, `navigationUrl(trip)` (nueva función pura en `src/services/tripRoute.js`) arma el enlace de Google Maps hacia el origen en `driver_arriving` o hacia el destino en `in_progress`, y el botón secundario "Navegar" (contorno negro, forma de píldora) lo abre con `Linking.openURL`.
+- Qué se usó / modificó / descartó:
+  - Se usó: `REQUEST_SECONDS` de `useTripRequests` para la barra, las formas de `Chevron.js` de Ximena como ejemplo para dibujar la X sin librería de íconos, y `CONTROL_HEIGHT` del tema para la altura de los botones.
+  - Se modificó: además de "Navegar" se agregó el texto `activeTrip.navigateFailed`, que se muestra debajo como los demás errores si el celular no puede abrir el enlace. El pin del punto de recogida pasó de `"green"` a `colors.success`: en Android los pines solo aceptan un tono de color y el negro saldría rojo, así que es la única excepción a "verde solo para dinero". La línea de la ruta pasó de azul a negro. La tarifa estimada de la solicitud también quedó en verde, porque es un monto.
+  - Se descartó: animar la barra con el driver nativo (un ancho en porcentaje no se puede animar así) y cambiar los textos existentes; los que ya había quedaron iguales.
+- Archivos y commit: `src/components/IncomingRequestCard.js`, `src/screens/trip/ActiveTripScreen.js`, `src/screens/trip/TripSummaryScreen.js`, `src/services/tripRoute.js`, `src/services/tripRoute.test.js`, `src/i18n/strings.js` — fc7bd5a
+- Verificación:
+  - Jest de la raíz pasa 212 (3 nuevas en `tripRoute.test.js` para `navigationUrl`: recogida en `driver_arriving`, destino en `in_progress`, y `null` en otros estados o sin coordenadas). `npx expo lint` queda sin errores y `npx tsc --noEmit` no da errores.
+  - Se revisó que no quedara ningún color escrito a mano en los tres archivos.
+  - [Pendiente: revisar en el celular la barra de 15 s, la X de rechazar, los colores y que "Navegar" abra Google Maps hacia la recogida y hacia el destino]
+- Aprendizaje: [Completar]
+
+### Entrada #30
+
+- Fecha: 2026-11-12
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Perfil y Configuración del conductor (sección 3: datos editables, vehículo, documentos, idioma y cierre de sesión).
+- Prompt (se omite la línea sobre la rama):
+  > Perfil y Configuración (sección 3: "datos editables, vehículo, documentos,
+  > idioma y cierre de sesión"). [...] Usa theme.js y t() en español e inglés.
+  > Siguiente entrada de bitácora.
+  >
+  > 1. ProfileScreen en src/screens/main/ (hoy es un mock en MainDrawer): lee
+  >    drivers/{uid} en tiempo real y muestra foto, nombre, estado de la cuenta
+  >    y calificación promedio de sus viajes; secciones Datos personales,
+  >    Vehículo (con su foto) y Documentos (licencia, SOAT y tecnomecánica con
+  >    vencimiento y aviso si vence en menos de 30 días).
+  > 2. Editables: nombre, correo de Mercado Pago y foto de perfil (Cloudinary,
+  >    como en el registro), con las mismas validaciones de src/validation/ y
+  >    los errores debajo del campo. Celular, correo de la cuenta, vehículo y
+  >    documentos de solo lectura, con una nota de que cambiarlos requiere
+  >    nueva aprobación. Comprueba que firestore.rules permite la escritura
+  >    sin tocar status.
+  > 3. SettingsScreen: selector de idioma (LanguageContext), comisión de la
+  >    plataforma desde pricing.js como información, versión de la app y
+  >    cerrar sesión.
+  > 4. Conéctalas en MainDrawer sin cambiar el resto de su diseño.
+  >
+  > Lint, tsc y pruebas sin errores.
+- Resumen de la respuesta: `ProfileScreen` usa el hook `useDriverProfile`, que escucha `drivers/{uid}` con `onSnapshot` (`subscribeToDriver` en `driverRepository.js`) y los viajes terminados del conductor para la calificación promedio (`subscribeToTripsSince` desde el inicio, con el índice que ya existía). Arriba muestra la foto, el nombre, el estado de la cuenta y la calificación; luego las secciones Datos personales, Vehículo (con su foto), Documentos y Pagos. El nombre, la foto de perfil y el correo de Mercado Pago se editan con `FormField` y `PhotoField` del registro; el resto se muestra como texto con la nota "Cambiar estos datos requiere una nueva aprobación de tu cuenta". Al guardar, `profileUpdate` arma solo los campos que cambiaron con rutas como `personal.name` (nunca `status`) y `updateDriverProfile` sube antes la foto nueva a Cloudinary y escribe con `updateDoc`. `SettingsScreen` tiene el selector de idioma, la comisión desde `COMMISSION_RATE`, la versión de `expo-constants` y "Cerrar sesión". Las dos reemplazan los mocks de `MainDrawer`.
+- Qué se usó / modificó / descartó:
+  - Se usó: las etiquetas que ya existían del registro (`personal.*`, `vehicle.*`, `documents.*`, `category.*`, `color.*`), `FormField`, `PhotoField` y `NextButton` de Ximena, `formatDisplayDate` y `LANGUAGE_OPTIONS`.
+  - Se modificó: para usar "las mismas validaciones", la regla del nombre pasó a `validateName` (en `personalInfo.js`) y la del correo de Mercado Pago a `validateMercadoPagoEmail` (en `documents.js`); el registro las sigue usando igual y sus pruebas no cambiaron. `validateProfile` las combina con la foto obligatoria. Después de guardar un nombre nuevo se llama a `login()` de `AuthContext` con el nombre actualizado, para que el saludo del menú lateral cambie sin volver a iniciar sesión. El vencimiento muestra "Vencido" (rojo) o "Vence en N días" / "Vence hoy" (color de aviso) si faltan menos de 30 días.
+  - Se descartó: cambiar `firestore.rules` (no hizo falta) y guardar el idioma de Configuración en Firestore: se queda en el celular con `LanguageContext`.
+- Archivos y commit: `src/screens/main/ProfileScreen.js`, `src/screens/main/SettingsScreen.js`, `src/hooks/useDriverProfile.js`, `src/services/driverProfile.js`, `src/services/driverProfile.test.js`, `src/services/driverRepository.js`, `src/validation/profile.js`, `src/validation/profile.test.js`, `src/validation/personalInfo.js`, `src/validation/documents.js`, `src/navigation/MainDrawer.js`, `src/i18n/strings.js` — 6ad6bc4
+- Verificación:
+  - Jest de la raíz pasa 226 (4 en `profile.test.js`, que comprueban que el nombre y el correo de Mercado Pago dan los mismos errores que en las pestañas 1 y 3; 10 en `driverProfile.test.js`: promedio con un decimal y sin calificaciones, vencido, vence hoy, a 29 y a 30 días, fecha inválida, y que la actualización solo tenga los campos cambiados y nunca `status`). Las 90 pruebas de `src/validation/` del registro siguen pasando. `npx expo lint` queda sin errores y `npx tsc --noEmit` no da errores.
+  - `firestore.rules` ya permite que el dueño actualice `drivers/{uid}` si `status` queda igual. Se comprobó con las reglas publicadas en `uber-clone-ba0e2`: con un token real de la cuenta de Tamiro y la API REST de Firestore se escribieron `personal.name` y `documents.mercadoPagoEmail` con los mismos valores que ya tenían; respondió 200 y `status` siguió en `approved`.
+  - [Pendiente: probar en el celular editar el nombre, la foto y el correo de Mercado Pago, los errores debajo de cada campo, el aviso de vencimiento, el cambio de idioma y cerrar sesión]
+- Aprendizaje: [Completar]
+
+### Entrada #31
+
+- Fecha: 2026-11-12
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Detalles de la app del conductor parecidos a Uber Driver (tarjeta de solicitud, calificar al pasajero, gráfica semanal, contacto con el pasajero, carro en el mapa, píldora de ganancias y mapa oscuro de noche), sin cambiar la lógica de estados, tarifas ni pagos.
+- Prompt (se omiten las líneas sobre la rama, los commits y el push):
+  > Detalles estilo Uber Driver. [...] Usa theme.js y t() en español e
+  > inglés. [...] No cambies la lógica de estados, tarifas ni pagos.
+  >
+  > 0. Colores: en IncomingRequestCard, ActiveTripScreen y TripSummaryScreen
+  >    reemplaza los colores escritos a mano (#4CAF50, #F44336, #FF9800,
+  >    #2E7D32, #E53935, #e8f5e9, grises sueltos) por theme.js. Botón
+  >    principal negro; verde solo para dinero; rojo solo para errores y
+  >    cancelar.
+  >
+  > 1. Tarjeta de solicitud: arriba "N min · X km de distancia" hasta el punto
+  >    de recogida, calculado en línea recta (Haversine) desde la ubicación
+  >    actual del conductor con una velocidad promedio de 25 km/h. NO llames
+  >    a OpenRouteService aquí (sección 7: solo al crear y al aceptar). La
+  >    cuenta regresiva como barra que se achica, "Aceptar" grande negro y
+  >    "Rechazar" como X discreta.
+  >
+  > 2. Calificar al pasajero: en TripSummaryScreen, 5 estrellas para
+  >    calificarlo, una sola vez. Guárdalo en un campo NUEVO passengerRating
+  >    (entero 1 a 5), no en rating, que es la calificación del conductor y
+  >    la usa el perfil. Cambia firestore.rules para que el conductor del
+  >    viaje pueda escribir solo passengerRating, una vez, en un viaje
+  >    completed o paid, y repite la regla en trips.js con pruebas.
+  >    Muéstrame el diff de las reglas y espera mi sí antes de publicarlas
+  >    con firebase-admin; luego confirma que las publicadas coinciden.
+  >
+  > 3. Ganancias: gráfica de barras de la semana (lunes a domingo) con la
+  >    ganancia neta de cada día, hecha con Views (sin librerías nuevas),
+  >    resaltando el día de hoy. Los datos salen de useEarnings, con una
+  >    función pura nueva y sus pruebas.
+  >
+  > 4. Llamar y mensaje: en ActiveTripScreen, junto al nombre del pasajero,
+  >    botones con íconos de teléfono y chat que abren tel: y sms: con
+  >    Linking. Solo si el viaje tiene passengerPhone. En el simulador
+  >    (simular-solicitud.js) agrega passengerName y passengerPhone de
+  >    ejemplo como campos extra, sin cambiar los del enunciado; actualiza
+  >    su prueba que revisa los campos y docs/APIS.md.
+  >
+  > 5. Ícono de carro: en el mapa del inicio y del viaje, un Marker propio
+  >    con forma de carro (hecho con Views o un ícono de @expo/vector-icons,
+  >    sin imágenes nuevas) que rota según el heading de la ubicación, en
+  >    vez del punto azul.
+  >
+  > 6. Píldora de ganancias: si HomeScreen no la tiene ya, una píldora negra
+  >    arriba al centro con la ganancia neta de hoy desde useEarnings.
+  >
+  > 7. Mapa oscuro de noche: entre las 6 p. m. y las 6 a. m., customMapStyle
+  >    oscuro en los mapas del inicio, el viaje y el historial. Si en iOS no
+  >    aplica, que no falle.
+  >
+  > Antes de cada commit: npm test (raíz y backend), npx expo lint sin
+  > errores y npx tsc --noEmit.
+
+  Respuesta de Tamiro al diff de las reglas: "Sí, publícalas".
+- Resumen de la respuesta:
+  - 0: los tres archivos ya usaban `theme.js` desde la entrada #29 (también la barra, la X y "Aceptar" del punto 1), así que no hubo commit.
+  - 1: `pickupEstimate` (en `src/services/pickupEstimate.js`) calcula con Haversine la distancia en línea recta desde la ubicación que ya tenía `HomeScreen` y los minutos a 25 km/h (redondeados hacia arriba, mínimo 1). La tarjeta muestra "6 min · 2,4 km de distancia" con `formatDecimal` según el idioma. No llama a OpenRouteService.
+  - 2: `PassengerRating` muestra 5 estrellas y un botón "Enviar calificación"; `ratePassenger` escribe solo `passengerRating`. `firestore.rules` agrega una tercera forma de `update` en `trips`: el conductor del viaje, con el viaje `completed` o `paid`, sin `passengerRating` previo, cambiando solo ese campo y con un entero de 1 a 5. `validatePassengerRating` en `trips.js` repite la regla. El resumen pasó a `ScrollView` para que quepa.
+  - 3: `weeklyEarnings` (en `earnings.js`) da la ganancia neta de lunes a domingo y marca hoy; `calculateEarnings` la entrega como `weekDays`, así que llega por `useEarnings`. `WeekEarningsChart` dibuja las barras con Views, con hoy en negro.
+  - 4: `passengerContact` arma `tel:` y `sms:` con el número limpio; si el viaje no tiene `passengerPhone`, no hay botones. Los íconos son `Ionicons` de `@expo/vector-icons`, instalado con `npx expo install`. El simulador agrega `passengerName` y `passengerPhone` de un pasajero de ejemplo con número inventado.
+  - 5: `CarMarker` es un carro visto desde arriba hecho con Views, con `flat` y `rotation`. `nextHeading` solo usa el rumbo del GPS si el carro va a más de 1 m/s y, si no, conserva el último. `useDriverLocation` agrega `heading` a la ubicación que muestra (a Firestore siguen yendo solo `lat`/`lng`) y `useCarPosition` sigue el GPS en el viaje sin guardar nada.
+  - 6: una píldora negra con "Hoy" y la ganancia neta, debajo del chip Disponible / No disponible, con `useEarningsTrips` y `useEarnings`.
+  - 7: `isNightTime` (de 18:00 a 5:59) y `useNightMap`, que revisa la hora cada minuto y le da al mapa `customMapStyle` oscuro (Android) y `userInterfaceStyle: "dark"` (iOS con Apple Maps, donde `customMapStyle` no hace nada).
+- Qué se usó / modificó / descartó:
+  - Se usó: la ubicación que `HomeScreen` ya tenía para la distancia a la recogida, `useEarnings` para la gráfica y la píldora, y el método de la entrada #27 (token real y API REST de Firestore) para probar las reglas.
+  - Se modificó: la píldora no quedó en el centro de la barra superior, porque ahí está el chip de estado de Ximena: quedó centrada justo debajo y los avisos bajaron. El historial no tiene mapa (es una lista), así que el mapa oscuro quedó solo en el inicio y el viaje. Los colores del estilo oscuro están en `src/config/mapStyle.js` y no en `theme.js`, porque son colores del formato de estilos de Google Maps y no de la interfaz. El pin del punto de recogida sigue en verde (ver entrada #29).
+  - Se descartó: tocar los estados, las tarifas o los pagos; usar una imagen o un ícono para el carro (un dibujo visto desde arriba rota mejor); y una librería de gráficas.
+- Archivos y commit:
+  - Punto 1: `src/services/pickupEstimate.js`, `src/services/pickupEstimate.test.js`, `src/components/IncomingRequestCard.js`, `src/screens/trip/HomeScreen.js`, `src/i18n/format.js`, `src/i18n/format.test.js`, `src/i18n/strings.js` — deefd8d
+  - Punto 2: `firestore.rules`, `src/services/trips.js`, `src/services/trips.test.js`, `src/services/tripRepository.js`, `src/components/PassengerRating.js`, `src/screens/trip/TripSummaryScreen.js`, `src/i18n/strings.js`, `docs/APIS.md` — e2a1116
+  - Punto 3: `src/services/earnings.js`, `src/services/earnings.test.js`, `src/components/WeekEarningsChart.js`, `src/screens/main/EarningsScreen.js`, `src/i18n/strings.js` — 3688a4f
+  - Punto 4: `src/services/passengerContact.js`, `src/services/passengerContact.test.js`, `src/screens/trip/ActiveTripScreen.js`, `backend/scripts/simular-solicitud.js`, `backend/test/simular-solicitud.test.js`, `docs/APIS.md`, `package.json`, `package-lock.json`, `src/i18n/strings.js` — c82c18a
+  - Punto 5: `src/components/CarMarker.js`, `src/hooks/useCarPosition.js`, `src/services/carHeading.js`, `src/services/carHeading.test.js`, `src/hooks/useDriverLocation.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js` — f5cbaf4
+  - Punto 6: `src/screens/trip/HomeScreen.js`, `src/i18n/strings.js` — 1931999
+  - Punto 7: `src/config/mapStyle.js`, `src/config/mapStyle.test.js`, `src/hooks/useNightMap.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js` — 7b57e23
+- Verificación:
+  - Antes de cada commit: Jest de la raíz (al final 256 pruebas, 30 nuevas: Haversine y estimación de recogida, decimales por idioma, `validatePassengerRating`, `weeklyEarnings` incluso con la semana empezando en el mes anterior, `passengerContact`, `nextHeading` e `isNightTime`), las 42 del backend (con la prueba de campos del simulador actualizada), `npx expo lint` sin errores y `npx tsc --noEmit` sin errores.
+  - Reglas: antes de cambiarlas se comparó lo publicado en `uber-clone-ba0e2` con `firestore.rules` (solo cambiaban los comentarios). Con el sí de Tamiro se publicaron con `releaseFirestoreRulesetFromSource` de firebase-admin, y `getFirestoreRuleset` confirmó que lo publicado es igual al archivo. Con un token real de la cuenta de Tamiro y la API REST de Firestore, sobre viajes simulados ya pagados: `passengerRating` 5 respondió 200; una segunda calificación, escribir `rating` y un `passengerRating` de 6 respondieron 403; `rating` y `status` no cambiaron.
+  - [Pendiente: probar en el celular los puntos 1 a 7]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
@@ -984,7 +1214,7 @@ Se descartó: La plantilla genérica inicial de Expo que venía por defecto en e
 - Integrante: Ximena Rosales Lopez
 - Herramienta: Claude Code
 - Objetivo: Que al iniciar sesión llegue un código al correo de la cuenta y solo se pueda entrar escribiéndolo. No está en el enunciado; es una funcionalidad adicional.
-- Prompt: "porque no me llega la pestaañl de codigo de ingreso al correo" y luego "Si porfavor" (a conectarlo al login)
+- Prompt: "porque no me llega la pestaña de codigo de ingreso al correo" y luego "Si porfavor" (a conectarlo al login)
 - Resumen de la respuesta: La IA revisó el backend y encontró que el correo no llegaba porque ninguna pantalla de `main` pedía el código: el backend estaba apagado (las credenciales de Gmail sí funcionaban) y la pantalla del código solo existía en `tamiro/confirmar-correo`, y solo para el registro. Se creó la rama `ximena/login-codigo` sobre `main` (que ya trae `ximena/login-auth` y `tamiro/confirmar-correo`, integradas por Tamiro en el PR #10) y se agregó `VerifyLoginScreen`: después de la contraseña correcta envía el código con `motivo: "login"` y solo con el código correcto entra al menú (o vuelve a las pestañas si el registro no se había enviado).
 - Qué se usó / modificó / descartó:
   - Se usó: el backend del código y `emailVerification.js` (entrada #11), el hook `useEmailVerification` y los mensajes de error `verify.error.*` de la entrada #13, y `NextButton`, `FormField` y el encabezado con flecha de la entrada #53.
@@ -992,4 +1222,36 @@ Se descartó: La plantilla genérica inicial de Expo que venía por defecto en e
   - Se descartó: pedir el código antes de la contraseña, porque cualquiera podría llenar de correos la bandeja de otro conductor con solo saber su celular. Si el conductor vuelve atrás sin confirmar, se cierra la sesión de Firebase para que nadie quede con sesión sin el código.
 - Archivos y commit: `src/screens/auth/VerifyLoginScreen.js`, `src/screens/auth/LoginPasswordScreen.js`, `src/hooks/useEmailVerification.js`, `src/navigation/AppNavigator.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — bf2f150 y el commit siguiente (bitácora)
 - Verificación: `npx jest` pasa 119 tests, `npx tsc --noEmit` no da errores y `npx expo lint` solo reporta los 2 errores que ya existían en `AuthContext.js` y `useTripRequests.js`. Se comprobó con `transporter.verify()` que el Gmail del backend acepta las credenciales. [Pendiente la prueba en el celular con el backend encendido: código correcto, incorrecto, vencido, reenviar a los 60 s y volver atrás sin confirmar]
+- Aprendizaje: 
+
+### Entrada #56
+
+- Fecha: 2026-11-12
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Darle a las 3 pestañas del registro un estilo parecido al de Uber, con una barra que muestre el porcentaje completado, sin cambiar la lógica ni el backend.
+- Prompt: "Quiero que la parte de las pestañas tenga un estilo igual al de Uber como estamos clonando uber para actividades academicas la quiero igual y con mas detalle sisn ca,mbiar logica ni backen doslo darle mas estilo y IU al formualrio, oarecido a uber y que sea muy buena expeirncia usaurio y una barra que lke indique cuanto pporcentaje:p"
+- Resumen de la respuesta: Se creó la rama `ximena/frontend` desde `ximena/login-codigo`. La barra de pestañas de abajo se reemplazó por una barra arriba (`RegistrationStepBar`) con "Paso X de 3", el porcentaje completado, una barra que se llena con animación y los 3 pasos (el actual en negro y los completos con ✓ verde); tocar un paso sigue abriendo esa pestaña. Cada pantalla tiene ahora un título grande con una explicación corta y el botón principal fijo abajo (`StepLayout`). Los campos pasaron a fondo gris claro sin borde, con borde negro al escribir y rojo con error; las listas se abren como una hoja desde abajo y las fotos van en una tarjeta con botones redondeados. Todos los colores y tamaños quedaron en `src/config/theme.js`.
+- Qué se usó / modificó / descartó:
+  - Se usó: las validaciones que ya existían (`validatePersonalInfo`, `validateVehicle`, `validateDocuments` y sus listas de campos) para calcular el porcentaje en `src/validation/progress.js`, sin agregar reglas. La opción `tabBarPosition: "top"` y la propiedad `tabBar` de React Navigation 7 para poner una barra propia arriba, y `Animated` de React Native para llenar la barra.
+  - Se modificó: `formStyles`, `FormField`, `SelectField`, `DateField`, `PhotoField`, `CheckboxField` y `NextButton` (solo estilos; `FormField` guarda si el campo está enfocado solo para el borde). `AuthTabs` usa la barra nueva. `PersonalInfoScreen`, `VehicleScreen` y `DocumentsScreen` usan `StepLayout` y pasan el botón al pie; en Documentos, el aviso de qué falta y el enlace "Ver qué falta" quedaron junto al botón. Se agregaron textos nuevos en español e inglés (`register.*`, `photo.emptyHint` y `photo.added`). Como el login y crear cuenta usan los mismos campos y el mismo botón, también tomaron el estilo nuevo.
+  - Se descartó: calcular el porcentaje dentro de `RegistrationContext`, para no tocar la lógica del registro. Contar como completo todo campo sin error, porque la revisión técnico-mecánica de un carro nuevo no tiene error aunque esté vacía y el registro empezaba en 8 %; ahora solo cuentan los campos llenos y válidos, y el 100 % solo aparece cuando las 3 pestañas son válidas. Instalar una librería de íconos: la flecha de las listas se dibuja con bordes (`Chevron`). Guardar la animación con `useRef`, porque `npx expo lint` lo marca como error (`react-hooks/refs`); se usa `useState`.
+- Archivos y commit: `src/config/theme.js`, `src/validation/progress.js`, `src/validation/progress.test.js`, `src/components/RegistrationStepBar.js`, `src/components/StepLayout.js`, `src/components/Chevron.js`, `src/components/formStyles.js`, `src/components/FormField.js`, `src/components/SelectField.js`, `src/components/DateField.js`, `src/components/PhotoField.js`, `src/components/CheckboxField.js`, `src/components/NextButton.js`, `src/navigation/AuthTabs.js`, `src/screens/auth/PersonalInfoScreen.js`, `src/screens/auth/VehicleScreen.js`, `src/screens/auth/DocumentsScreen.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — d6cdad6 (campos), 81f600e (barra y pantallas), e0aa3f0 (tema y porcentaje) y el commit siguiente (bitácora)
+- Verificación: `npx jest` pasa 160 tests (5 nuevos en `progress.test.js`: 0 % con el formulario vacío, 100 % solo con las 3 pestañas válidas, pestaña completa marcada, valores inválidos que no cuentan y revisión técnico-mecánica que no se exige). `npm test` en `backend/` pasa 27 tests, `npx tsc --noEmit` no da errores y `npx expo lint` no reporta errores (solo un aviso que ya existía en `emailVerification.test.js`). [Pendiente la prueba en el celular: la barra sube al llenar campos, tocar los pasos, botón fijo con el teclado abierto, listas desde abajo, fotos con cámara y galería, y textos en inglés]
+- Aprendizaje: 
+
+### Entrada #57
+
+- Fecha: 2026-11-12
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Agregar un ícono a cada paso de la barra del registro y darle a la pantalla de inicio (mapa con el interruptor Disponible / No disponible) y al menú lateral el mismo estilo parecido al de Uber, sin cambiar la lógica.
+- Prompt: "Me gustaria que editaramos las pestaña y agregaramos un icono represnetativo, lo quiero masomenos asi, ademas de que el dlujo en este moemnto me lleva al mapa yme gustaria que tuviera un home: La guia exige Inicio: mapa con la ubicación actual y un interruptor Disponible / No disponible. Mientras está Disponible, la ubicación se actualiza en la base de datos cada pocos segundos; al pasar a No disponible o salir de la pantalla, el seguimiento se detiene (función de limpieza de useEffect) Sin dañar nada solo ayudame ocn los cambios menores sin modificar archivos demas y un home llamativo que cumpla con estas exigencias y ekl panela  ala derecha tambiéj el mismoe xtilo"
+- Resumen de la respuesta: La IA revisó el inicio y encontró que en esta rama la ubicación todavía no se guardaba en la base de datos (`useDriverLocation` tenía un TODO), pero que Tamiro ya lo había resuelto en `main` con `driverLocation.js` (entrada #27). Se trajo `main` a `ximena/frontend` (merge sin conflictos) y solo se cambió lo visual. Cada paso del registro muestra ahora su número y un ícono (persona, carro y documento) en lugar del nombre. El inicio tiene el mapa a pantalla completa, un botón redondo para abrir el menú, una etiqueta "Disponible" / "No disponible" con un punto verde o gris, los avisos como tarjetas y un panel inferior con "Estás conectado" / "Estás desconectado" y un interruptor grande. El menú lateral tiene un encabezado negro con la inicial y el nombre del conductor, las opciones en letra grande y "Cerrar sesión" abajo.
+- Qué se usó / modificó / descartó:
+  - Se usó: el tema de la entrada #56 (`src/config/theme.js`), `DrawerActions.openDrawer()` para abrir el menú desde el mapa, `getFocusedRouteNameFromRoute` para ocultar el encabezado del menú solo en el mapa, `drawerContent` con `DrawerContentScrollView` y `DrawerItemList` de React Navigation, y `useSafeAreaInsets` para no tapar el notch ni la barra inferior.
+  - Se modificó: `RegistrationStepBar` muestra `StepIcon` en vez del nombre del paso (el nombre lo sigue leyendo el lector de pantalla). En `HomeScreen` solo cambiaron el JSX y los estilos: el interruptor, la ubicación, la disponibilidad guardada en AsyncStorage y las solicitudes siguen igual. `MainDrawer` tiene el panel nuevo y sus títulos pasan por `t()`, así que también salen en inglés. Se agregaron los textos `home.*` y `drawer.*` en español e inglés.
+  - Se descartó: instalar una librería de íconos, porque cambia `package.json` y la regla del equipo pide aprobación para librerías nuevas; los íconos se dibujan con bordes (`StepIcon`). Escribir la ubicación en la base de datos desde esta rama, porque ya estaba hecho en `main`. Quitar el encabezado del menú en las pantallas del viaje: solo se quita en el mapa, que tiene su propio botón de menú.
+- Archivos y commit: `src/components/StepIcon.js`, `src/components/RegistrationStepBar.js`, `src/screens/trip/HomeScreen.js`, `src/navigation/MainDrawer.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — 4f84503 (merge de `main`), los commits "feat: add icons to the registration steps" y "feat: restyle the home screen and the side menu", y el commit siguiente (bitácora)
+- Verificación: `npx jest` pasa 181 tests, `npx tsc --noEmit` no da errores y `npx expo lint` no reporta errores (solo el aviso que ya existía en `emailVerification.test.js`). [Pendiente la prueba en el celular: íconos de los pasos, botón del menú, interruptor conectado y desconectado, cuenta sin aprobar, solicitud nueva encima del panel, volver al viaje en curso y textos en inglés]
 - Aprendizaje: 

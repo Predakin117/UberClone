@@ -93,8 +93,17 @@ qué paso se crea.
   - Tiempo real con `onSnapshot`, siempre con limpieza en el `useEffect`.
   - Los campos y estados de `trips` son el contrato con la API del pasajero: no
     se renombran.
+  - `passengerRating` (entero de 1 a 5) es un campo extra de `trips`, fuera de la
+    tabla de la sección 6: la calificación que el conductor le da al pasajero.
+    Lo escribe el conductor del viaje una sola vez, con el viaje `completed` o
+    `paid` (`firestore.rules` y `validatePassengerRating` en `src/services/trips.js`).
+    `rating` sigue siendo la calificación del conductor, que él nunca escribe.
   - Si cambia `firestore.rules`, hay que publicarlas a mano en la consola de
     Firebase (Firestore Database → Reglas → Publicar).
+  - El historial (`subscribeToTripHistory` en `src/services/tripRepository.js`)
+    necesita un índice compuesto en `trips`: `driverId` ↑, `status` ↑,
+    `completedAt` ↓. Se crea en Firestore Database → Índices, o con el link que
+    sale en la consola de Metro si falta.
 
 ### 6. Cloudinary
 
@@ -151,6 +160,11 @@ qué paso se crea.
 - **Para qué:** simular los viajes del lado del pasajero.
 - **Dónde:** todavía no sabemos cómo funciona.
 - **Reglas:**
+  - `passengerName` y `passengerPhone` son campos extra y opcionales de `trips`,
+    fuera de la tabla de la sección 6. El simulador (`backend/scripts/simular-solicitud.js`)
+    los llena con un pasajero de ejemplo de número inventado. En el viaje en curso, los
+    botones de llamar (`tel:`) y de mensaje (`sms:`) solo aparecen si existe
+    `passengerPhone`. Cuando llegue la API del pasajero, hay que ver si los manda.
   - Solo `src/services/tripRequestsSource.js` sabe de dónde vienen las
     solicitudes. Cuando llegue la API, se cambia ese archivo y las pantallas
     quedan igual.

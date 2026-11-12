@@ -134,6 +134,19 @@ service cloud.firestore {
           && ((request.resource.data.status == 'completed' && isValidCompletion())
             || (request.resource.data.status != 'completed'
               && changedFields().hasOnly(['status']))))
+        ||
+        // AI-assisted: see docs/AI_LOG.md #31
+        // Rate the passenger once, from 1 to 5, after the trip ends (completed
+        // or paid). Only passengerRating changes; rating is the driver's own
+        // rating and the driver never writes it. src/services/trips.js repeats
+        // this rule in validatePassengerRating.
+        (resource.data.driverId == request.auth.uid
+          && resource.data.status in ['completed', 'paid']
+          && resource.data.get('passengerRating', null) == null
+          && changedFields().hasOnly(['passengerRating'])
+          && request.resource.data.passengerRating is int
+          && request.resource.data.passengerRating >= 1
+          && request.resource.data.passengerRating <= 5)
       );
     }
   }

@@ -1,5 +1,6 @@
 import { env } from "../config/env";
 import { auth } from "../config/firebase";
+import { strings } from "../i18n/strings";
 import {
   PAYMENT_ERROR_CODES,
   markCashReceived,
@@ -93,5 +94,15 @@ describe("markCashReceived", () => {
       codigoError: "sin_backend",
     });
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+});
+
+// AI-assisted: see docs/AI_LOG.md #28
+describe("PAYMENT_ERROR_CODES", () => {
+  it("every code has its payment.error text in Spanish and English", () => {
+    for (const code of PAYMENT_ERROR_CODES) {
+      expect(strings.es[`payment.error.${code}`]).toBeDefined();
+      expect(strings.en[`payment.error.${code}`]).toBeDefined();
+    }
   });
 });

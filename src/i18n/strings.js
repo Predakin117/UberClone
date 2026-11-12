@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -20,6 +20,24 @@ export const strings = {
     "tabs.vehicle": "2. Vehículo",
     "tabs.documents": "3. Docs",
 
+    // Barra de progreso y encabezado de cada paso del registro
+    "register.stepOf": "Paso {step} de {total}",
+    "register.percent": "{percent} % completado",
+    "register.stepDone": "{label}, completo",
+    "register.stepPending": "{label}, pendiente",
+    "register.step.PersonalInfo": "Datos",
+    "register.step.Vehicle": "Vehículo",
+    "register.step.Documents": "Documentos",
+    "register.title.PersonalInfo": "Cuéntanos sobre ti",
+    "register.subtitle.PersonalInfo":
+      "Usaremos estos datos para verificar tu identidad. Solo te tomará unos minutos.",
+    "register.title.Vehicle": "Tu vehículo",
+    "register.subtitle.Vehicle":
+      "Registra el vehículo con el que vas a conducir. Los datos deben coincidir con la tarjeta de propiedad.",
+    "register.title.Documents": "Documentos y pagos",
+    "register.subtitle.Documents":
+      "Sube tus documentos vigentes y elige dónde recibirás tus ganancias.",
+
     // Componentes compartidos
     "common.next": "Siguiente",
     "common.done": "Listo",
@@ -27,6 +45,8 @@ export const strings = {
     "date.placeholder": "Selecciona una fecha",
     "photo.takePhoto": "Tomar foto",
     "photo.chooseFromGallery": "Elegir de galería",
+    "photo.emptyHint": "Toma una foto clara, con buena luz y sin reflejos.",
+    "photo.added": "Foto agregada",
     "photo.permissionDenied": "Debes conceder el permiso para agregar la foto.",
     "photo.pickError": "No se pudo obtener la foto. Inténtalo de nuevo.",
 
@@ -227,9 +247,32 @@ export const strings = {
     "home.statusError":
       "No se pudo verificar el estado de tu cuenta. Revisa tu conexión.",
     "home.backToTrip": "Volver al viaje en curso",
+    "home.available": "Disponible",
+    "home.unavailable": "No disponible",
+    "home.onlineTitle": "Estás conectado",
+    "home.offlineTitle": "Estás desconectado",
+    "home.onlineSubtitle":
+      "Buscando viajes cerca de ti. Tu ubicación se actualiza cada pocos segundos.",
+    "home.offlineSubtitle":
+      "Conéctate para empezar a recibir solicitudes de viaje.",
+    "home.openMenu": "Abrir menú",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "home.todayEarnings": "Hoy",
+
+    // Menú lateral
+    "drawer.home": "Inicio",
+    "drawer.profile": "Mi perfil",
+    "drawer.history": "Historial",
+    "drawer.earnings": "Mis ganancias",
+    "drawer.settings": "Configuración",
+    "drawer.logout": "Cerrar sesión",
+    "drawer.driver": "Conductor",
+    "drawer.greeting": "Hola, {name}",
 
     // Solicitud nueva ({seconds}, {km} y {minutes} los reemplaza IncomingRequestCard)
     "request.title": "¡Nueva solicitud!",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "request.pickupEstimate": "{minutes} min · {km} km de distancia",
     "request.seconds": "{seconds} s",
     "request.origin": "Origen",
     "request.destination": "Destino",
@@ -257,6 +300,14 @@ export const strings = {
     "activeTrip.straightLine":
       "Ruta aproximada: no se pudo calcular la ruta por las calles.",
     "activeTrip.loadingRoute": "Calculando la ruta hasta el pasajero…",
+    // AI-assisted: see docs/AI_LOG.md #29
+    "activeTrip.navigate": "Navegar",
+    "activeTrip.navigateFailed": "No se pudo abrir Google Maps.",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "activeTrip.passenger": "Pasajero",
+    "activeTrip.call": "Llamar al pasajero",
+    "activeTrip.message": "Enviar un mensaje al pasajero",
+    "activeTrip.contactFailed": "No se pudo abrir el teléfono ni los mensajes.",
     "activeTrip.noLocation":
       "No hay ubicación del conductor: no se puede trazar la ruta hasta el pasajero.",
 
@@ -273,6 +324,98 @@ export const strings = {
     "summary.paymentStatus.cash": "Efectivo: cobra al pasajero",
     "summary.backToMap": "Volver al mapa",
     "summary.error": "No se pudo cargar el resumen del viaje.",
+    // AI-assisted: see docs/AI_LOG.md #28
+    "summary.paymentStatus.cashReceived": "Efectivo recibido",
+    "summary.cashReceived": "Recibí efectivo",
+    "summary.confirmingCash": "Confirmando…",
+    "summary.ratePassenger": "Califica al pasajero",
+    "summary.sendRating": "Enviar calificación",
+    "summary.sendingRating": "Enviando…",
+    "summary.ratedPassenger": "Calificaste al pasajero con {stars} de 5",
+    "summary.starLabel": "{stars} de 5 estrellas",
+
+    // Errores de pago (códigos de PAYMENT_ERROR_CODES en services/payments.js)
+    "payment.error.no_implementado":
+      "Este método de pago todavía no está disponible.",
+    "payment.error.sin_backend":
+      "Falta configurar el servidor de pagos en el archivo .env.",
+    "payment.error.sin_conexion":
+      "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+    "payment.error.sin_sesion": "Tu sesión se cerró. Inicia sesión de nuevo.",
+    "payment.error.no_autorizado":
+      "El servidor no aceptó tu sesión. Inicia sesión de nuevo.",
+    "payment.error.no_encontrado": "El viaje ya no existe.",
+    "payment.error.no_es_tu_viaje": "Este viaje no es tuyo.",
+    "payment.error.estado_invalido": "El viaje todavía no está terminado.",
+    "payment.error.metodo_invalido":
+      "El método de pago de este viaje no corresponde.",
+    "payment.error.fallo": "No se pudo confirmar el pago. Inténtalo de nuevo.",
+
+    // Periodos de ganancias e historial
+    "period.today": "Hoy",
+    "period.week": "Esta semana",
+    "period.month": "Este mes",
+
+    // Ganancias (sección 5)
+    "earnings.loading": "Cargando tus ganancias…",
+    "earnings.loadFailed":
+      "No se pudieron cargar tus ganancias. Revisa tu conexión.",
+    "earnings.trips": "Viajes",
+    "earnings.totalFare": "Total facturado",
+    "earnings.commission": "Comisiones",
+    "earnings.tips": "Propinas",
+    "earnings.net": "Ganancia neta",
+    "earnings.average": "Promedio por viaje",
+    "earnings.balance": "Saldo",
+    "earnings.balanceOwed": "La plataforma te debe",
+    "earnings.balanceDue": "Le debes a la plataforma",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "earnings.weekChart": "Ganancia neta de la semana",
+    "weekday.mon": "L",
+    "weekday.tue": "M",
+    "weekday.wed": "X",
+    "weekday.thu": "J",
+    "weekday.fri": "V",
+    "weekday.sat": "S",
+    "weekday.sun": "D",
+    "earnings.balanceHint":
+      "Este mes: ganancias de viajes pagados con Mercado Pago menos la comisión de los viajes en efectivo.",
+
+    // Historial de viajes
+    "history.loading": "Cargando tu historial…",
+    "history.empty": "No tienes viajes en este periodo.",
+    "history.loadFailed":
+      "No se pudo cargar tu historial. Revisa tu conexión.",
+    "history.fare": "Tarifa",
+    "history.earnings": "Ganancia neta",
+    // AI-assisted: see docs/AI_LOG.md #30
+    // Perfil ({rating}, {count}, {date} y {days} los reemplaza ProfileScreen)
+    "profile.loading": "Cargando tu perfil…",
+    "profile.loadFailed": "No se pudo cargar tu perfil. Revisa tu conexión.",
+    "profile.noRegistration": "Todavía no has enviado tu registro.",
+    "profile.status.approved": "Cuenta aprobada",
+    "profile.status.pending": "Pendiente de aprobación",
+    "profile.status.rejected": "Registro rechazado",
+    "profile.status.draft": "Registro sin enviar",
+    "profile.rating": "Calificación promedio: {rating} ★ ({count})",
+    "profile.noRating": "Todavía no tienes calificaciones",
+    "profile.personalSection": "Datos personales",
+    "profile.vehicleSection": "Vehículo",
+    "profile.documentsSection": "Documentos",
+    "profile.readOnlyNote":
+      "Cambiar estos datos requiere una nueva aprobación de tu cuenta.",
+    "profile.save": "Guardar cambios",
+    "profile.saved": "Cambios guardados",
+    "profile.expiresOn": "Vence el {date}",
+    "profile.expiresSoon": "Vence en {days} días",
+    "profile.expiresToday": "Vence hoy",
+    "profile.expired": "Vencido",
+
+    // Configuración
+    "settings.commission": "Comisión de la plataforma",
+    "settings.commissionValue":
+      "{percent} % de cada tarifa. Las propinas son 100 % tuyas.",
+    "settings.version": "Versión de la app",
 
     // Errores de los viajes (códigos de TRIP_ERROR_CODES en services/trips.js)
     "trip.error.invalidTransition":
@@ -291,6 +434,10 @@ export const strings = {
       "No se pudo guardar el cambio. Revisa tu conexión e inténtalo de nuevo.",
     "trip.error.loadFailed":
       "No se pudieron cargar las solicitudes. Revisa tu conexión.",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "trip.error.notFinished": "El viaje todavía no ha terminado.",
+    "trip.error.alreadyRated": "Ya calificaste a este pasajero.",
+    "trip.error.invalidRating": "Elige de 1 a 5 estrellas.",
 
     // Guardado en Firestore
     "save.saving": "Guardando…",
@@ -379,12 +526,31 @@ export const strings = {
     "tabs.vehicle": "2. Vehicle",
     "tabs.documents": "3. Documents",
 
+    "register.stepOf": "Step {step} of {total}",
+    "register.percent": "{percent}% complete",
+    "register.stepDone": "{label}, complete",
+    "register.stepPending": "{label}, pending",
+    "register.step.PersonalInfo": "Personal",
+    "register.step.Vehicle": "Vehicle",
+    "register.step.Documents": "Documents",
+    "register.title.PersonalInfo": "Tell us about yourself",
+    "register.subtitle.PersonalInfo":
+      "We'll use this information to verify your identity. It only takes a few minutes.",
+    "register.title.Vehicle": "Your vehicle",
+    "register.subtitle.Vehicle":
+      "Add the vehicle you'll drive. The details must match the registration card.",
+    "register.title.Documents": "Documents and payments",
+    "register.subtitle.Documents":
+      "Upload your valid documents and choose where you'll receive your earnings.",
+
     "common.next": "Next",
     "common.done": "Done",
     "select.placeholder": "Select an option",
     "date.placeholder": "Select a date",
     "photo.takePhoto": "Take photo",
     "photo.chooseFromGallery": "Choose from gallery",
+    "photo.emptyHint": "Take a clear photo, in good light and without glare.",
+    "photo.added": "Photo added",
     "photo.permissionDenied": "You must grant permission to add the photo.",
     "photo.pickError": "The photo could not be loaded. Please try again.",
 
@@ -568,8 +734,29 @@ export const strings = {
     "home.statusError":
       "Your account status could not be checked. Check your connection.",
     "home.backToTrip": "Back to the current trip",
+    "home.available": "Available",
+    "home.unavailable": "Unavailable",
+    "home.onlineTitle": "You're online",
+    "home.offlineTitle": "You're offline",
+    "home.onlineSubtitle":
+      "Looking for trips near you. Your location updates every few seconds.",
+    "home.offlineSubtitle": "Go online to start receiving trip requests.",
+    "home.openMenu": "Open menu",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "home.todayEarnings": "Today",
+
+    "drawer.home": "Home",
+    "drawer.profile": "My profile",
+    "drawer.history": "History",
+    "drawer.earnings": "My earnings",
+    "drawer.settings": "Settings",
+    "drawer.logout": "Log out",
+    "drawer.driver": "Driver",
+    "drawer.greeting": "Hi, {name}",
 
     "request.title": "New request!",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "request.pickupEstimate": "{minutes} min · {km} km away",
     "request.seconds": "{seconds} s",
     "request.origin": "Pickup",
     "request.destination": "Destination",
@@ -596,6 +783,14 @@ export const strings = {
     "activeTrip.straightLine":
       "Approximate route: the street route could not be calculated.",
     "activeTrip.loadingRoute": "Calculating the route to the passenger…",
+    // AI-assisted: see docs/AI_LOG.md #29
+    "activeTrip.navigate": "Navigate",
+    "activeTrip.navigateFailed": "Google Maps could not be opened.",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "activeTrip.passenger": "Passenger",
+    "activeTrip.call": "Call the passenger",
+    "activeTrip.message": "Text the passenger",
+    "activeTrip.contactFailed": "The phone or messages app could not be opened.",
     "activeTrip.noLocation":
       "No driver location: the route to the passenger cannot be drawn.",
 
@@ -611,6 +806,91 @@ export const strings = {
     "summary.paymentStatus.cash": "Cash: collect from the passenger",
     "summary.backToMap": "Back to map",
     "summary.error": "The trip summary could not be loaded.",
+    // AI-assisted: see docs/AI_LOG.md #28
+    "summary.paymentStatus.cashReceived": "Cash received",
+    "summary.cashReceived": "I received the cash",
+    "summary.confirmingCash": "Confirming…",
+    "summary.ratePassenger": "Rate the passenger",
+    "summary.sendRating": "Send rating",
+    "summary.sendingRating": "Sending…",
+    "summary.ratedPassenger": "You rated the passenger {stars} out of 5",
+    "summary.starLabel": "{stars} out of 5 stars",
+
+    "payment.error.no_implementado":
+      "This payment method is not available yet.",
+    "payment.error.sin_backend":
+      "The payment server is not set up in the .env file.",
+    "payment.error.sin_conexion":
+      "Could not reach the server. Check your connection and try again.",
+    "payment.error.sin_sesion": "Your session ended. Please log in again.",
+    "payment.error.no_autorizado":
+      "The server did not accept your session. Please log in again.",
+    "payment.error.no_encontrado": "The trip no longer exists.",
+    "payment.error.no_es_tu_viaje": "This trip is not yours.",
+    "payment.error.estado_invalido": "The trip is not finished yet.",
+    "payment.error.metodo_invalido":
+      "The payment method of this trip does not match.",
+    "payment.error.fallo": "The payment could not be confirmed. Try again.",
+
+    "period.today": "Today",
+    "period.week": "This week",
+    "period.month": "This month",
+
+    "earnings.loading": "Loading your earnings…",
+    "earnings.loadFailed":
+      "Your earnings could not be loaded. Check your connection.",
+    "earnings.trips": "Trips",
+    "earnings.totalFare": "Total billed",
+    "earnings.commission": "Fees",
+    "earnings.tips": "Tips",
+    "earnings.net": "Net earnings",
+    "earnings.average": "Average per trip",
+    "earnings.balance": "Balance",
+    "earnings.balanceOwed": "The platform owes you",
+    "earnings.balanceDue": "You owe the platform",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "earnings.weekChart": "Net earnings this week",
+    "weekday.mon": "M",
+    "weekday.tue": "T",
+    "weekday.wed": "W",
+    "weekday.thu": "T",
+    "weekday.fri": "F",
+    "weekday.sat": "S",
+    "weekday.sun": "S",
+    "earnings.balanceHint":
+      "This month: earnings from trips paid with Mercado Pago minus the fee of cash trips.",
+
+    "history.loading": "Loading your history…",
+    "history.empty": "You have no trips in this period.",
+    "history.loadFailed": "Your history could not be loaded. Check your connection.",
+    "history.fare": "Fare",
+    "history.earnings": "Net earnings",
+    // AI-assisted: see docs/AI_LOG.md #30
+    "profile.loading": "Loading your profile…",
+    "profile.loadFailed": "Your profile could not be loaded. Check your connection.",
+    "profile.noRegistration": "You haven't submitted your registration yet.",
+    "profile.status.approved": "Account approved",
+    "profile.status.pending": "Pending approval",
+    "profile.status.rejected": "Registration rejected",
+    "profile.status.draft": "Registration not submitted",
+    "profile.rating": "Average rating: {rating} ★ ({count})",
+    "profile.noRating": "You have no ratings yet",
+    "profile.personalSection": "Personal details",
+    "profile.vehicleSection": "Vehicle",
+    "profile.documentsSection": "Documents",
+    "profile.readOnlyNote":
+      "Changing these details requires your account to be approved again.",
+    "profile.save": "Save changes",
+    "profile.saved": "Changes saved",
+    "profile.expiresOn": "Expires on {date}",
+    "profile.expiresSoon": "Expires in {days} days",
+    "profile.expiresToday": "Expires today",
+    "profile.expired": "Expired",
+
+    "settings.commission": "Platform fee",
+    "settings.commissionValue":
+      "{percent}% of each fare. Tips are 100% yours.",
+    "settings.version": "App version",
 
     "trip.error.invalidTransition":
       "That change is not allowed in the current trip status.",
@@ -628,6 +908,10 @@ export const strings = {
       "The change could not be saved. Check your connection and try again.",
     "trip.error.loadFailed":
       "The requests could not be loaded. Check your connection.",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "trip.error.notFinished": "The trip has not ended yet.",
+    "trip.error.alreadyRated": "You already rated this passenger.",
+    "trip.error.invalidRating": "Choose from 1 to 5 stars.",
 
     "save.saving": "Saving…",
     "save.notConfigured":

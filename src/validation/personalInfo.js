@@ -55,6 +55,17 @@ export const isValidEmail = (email) => {
 const hasFullName = (name) =>
   name.split(/\s+/).filter((word) => word.length >= 2).length >= 2;
 
+// AI-assisted: see docs/AI_LOG.md #30
+// Error key of the full name, or null. Shared by tab 1 and the profile.
+export const validateName = (value) => {
+  const name = value.trim();
+  if (name === "") return "errors.nameRequired";
+  if (name.length > MAX_NAME_LENGTH) return "errors.nameTooLong";
+  if (!NAME_REGEX.test(name)) return "errors.nameInvalid";
+  if (!hasFullName(name)) return "errors.nameIncomplete";
+  return null;
+};
+
 // today se puede inyectar para que las pruebas no dependan de la fecha real
 export const validatePersonalInfo = (data, today = new Date()) => {
   const errors = {};
@@ -63,16 +74,8 @@ export const validatePersonalInfo = (data, today = new Date()) => {
     errors.profilePhoto = "errors.profilePhotoRequired";
   }
 
-  const name = data.name.trim();
-  if (name === "") {
-    errors.name = "errors.nameRequired";
-  } else if (name.length > MAX_NAME_LENGTH) {
-    errors.name = "errors.nameTooLong";
-  } else if (!NAME_REGEX.test(name)) {
-    errors.name = "errors.nameInvalid";
-  } else if (!hasFullName(name)) {
-    errors.name = "errors.nameIncomplete";
-  }
+  const nameError = validateName(data.name);
+  if (nameError) errors.name = nameError;
 
   const documentId = data.documentId.trim();
   if (documentId === "") {

@@ -1,12 +1,13 @@
-// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #9, #10, #54
+// AI-assisted: see docs/AI_LOG.md #3, #4, #7, #9, #10, #54, #56
 import { useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import DateField from "../../components/DateField";
 import FormField from "../../components/FormField";
 import NextButton from "../../components/NextButton";
 import PhotoField from "../../components/PhotoField";
 import SelectField from "../../components/SelectField";
+import StepLayout from "../../components/StepLayout";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { RegistrationContext } from "../../contexts/RegistrationContext";
 import { yearsAgo } from "../../validation/dates";
@@ -67,10 +68,18 @@ export default function PersonalInfoScreen() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
+    <StepLayout
+      title={t("register.title.PersonalInfo")}
+      subtitle={t("register.subtitle.PersonalInfo")}
+      footer={
+        <NextButton
+          label={t("common.next")}
+          onPress={handleNext}
+          isSaving={isSaving}
+          error={saveError?.section === "personal" && t(saveError.code)}
+          style={styles.footerButton}
+        />
+      }
     >
       <PhotoField
         label={t("personal.profilePhoto")}
@@ -160,18 +169,10 @@ export default function PersonalInfoScreen() {
         onChange={handleLanguage}
         error={t(errors.language)}
       />
-
-      <NextButton
-        label={t("common.next")}
-        onPress={handleNext}
-        isSaving={isSaving}
-        error={saveError?.section === "personal" && t(saveError.code)}
-      />
-    </ScrollView>
+    </StepLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  content: { padding: 20 },
+  footerButton: { marginTop: 0 },
 });

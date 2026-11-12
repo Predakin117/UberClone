@@ -1,162 +1,128 @@
-// AI-assisted: see docs/AI_LOG.md #15
-import { useMemo, useState } from "react";
+// AI-assisted: see docs/AI_LOG.md #15, #28, #31
+// Earnings of the driver (section 5): today, this week (since Monday) and this
+// month, plus this month's balance with the platform. The trips come in real
+// time from useEarningsTrips (no limit); the totals from useEarnings.
 import {
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import { calculateFare } from "../../config/pricing";
+import WeekEarningsChart from "../../components/WeekEarningsChart";
+import { colors, radius, spacing, typography } from "../../config/theme";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { useEarnings } from "../../hooks/useEarnings";
+import { useEarningsTrips } from "../../hooks/useEarningsTrips";
+import { formatCop, formatSignedCop } from "../../i18n/format";
+import { PERIODS } from "../../services/earnings";
+
+const Row = ({ label, value, strong = false }) => (
+  <View style={styles.row}>
+    <Text style={[styles.rowLabel, strong && styles.strong]}>{label}</Text>
+    <Text style={[styles.rowValue, strong && styles.strong]}>{value}</Text>
+  </View>
+);
 
 export default function EarningsScreen() {
-  // Estados para nuestros inputs de prueba
-  const [distanceKm, setDistanceKm] = useState("5"); // 5 km por defecto
-  const [durationMin, setDurationMin] = useState("15"); // 15 min por defecto
-  const [tip, setTip] = useState("0");
-  const [isPremium, setIsPremium] = useState(false);
+  const { t } = useLanguage();
+  const { trips, isLoading, error } = useEarningsTrips();
+  const earnings = useEarnings(trips);
 
-  // useMemo re-ejecuta nuestra función pura en tiempo real si cambian los inputs
-  const tripMath = useMemo(() => {
-    return calculateFare({
-      distanceKm: parseFloat(distanceKm) || 0,
-      durationMin: parseFloat(durationMin) || 0,
-      category: isPremium ? "premium" : "economy",
-      tip: parseFloat(tip) || 0,
-    });
-  }, [distanceKm, durationMin, isPremium, tip]);
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator color={colors.black} />
+        <Text style={styles.caption}>{t("earnings.loading")}</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{t(error)}</Text>
+      </View>
+    );
+  }
+
+  const { balance } = earnings;
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Simulador de Ganancias 💰</Text>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <WeekEarningsChart days={earnings.weekDays} />
+      {PERIODS.map((period) => {
+        const summary = earnings[period];
+        return (
+          <View key={period} style={styles.card}>
+            <Text style={styles.cardTitle}>{t(`period.${period}`)}</Text>
+            <Row label={t("earnings.trips")} value={summary.tripCount} />
+            <Row
+              label={t("earnings.totalFare")}
+              value={formatCop(summary.totalFare)}
+            />
+            <Row
+              label={t("earnings.commission")}
+              value={`-${formatCop(summary.totalCommission)}`}
+            />
+            <Row
+              label={t("earnings.tips")}
+              value={`+${formatCop(summary.totalTips)}`}
+            />
+            <Row
+              label={t("earnings.net")}
+              value={formatCop(summary.netEarnings)}
+              strong
+            />
+            <Row
+              label={t("earnings.average")}
+              value={formatCop(summary.averagePerTrip)}
+            />
+          </View>
+        );
+      })}
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Distancia (Km):</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={distanceKm}
-          onChangeText={setDistanceKm}
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Tiempo (Minutos):</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={durationMin}
-          onChangeText={setDurationMin}
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Propina (COP):</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={tip}
-          onChangeText={setTip}
-        />
-      </View>
-
-      <View style={styles.switchContainer}>
-        <Text style={styles.label}>Categoría Premium:</Text>
-        <Switch value={isPremium} onValueChange={setIsPremium} />
-      </View>
-
-      {/* RESULTADOS VISUALES */}
-      <View style={styles.resultsCard}>
-        <Text style={styles.resultsTitle}>Resumen del Viaje</Text>
-
-        <View style={styles.row}>
-          <Text style={styles.textData}>Tarifa Total (Pasajero):</Text>
-          <Text style={styles.textValue}>
-            ${tripMath.fare.toLocaleString("es-CO")} COP
-          </Text>
-        </View>
-
-        <View style={styles.row}>
-          <Text style={styles.textData}>Comisión App (20%):</Text>
-          <Text style={[styles.textValue, { color: "#F44336" }]}>
-            - ${tripMath.commission.toLocaleString("es-CO")} COP
-          </Text>
-        </View>
-
-        <View style={styles.row}>
-          <Text style={styles.textData}>Propina (100% tuya):</Text>
-          <Text style={[styles.textValue, { color: "#4CAF50" }]}>
-            + ${tripMath.tip.toLocaleString("es-CO")} COP
-          </Text>
-        </View>
-
-        <View style={[styles.row, styles.totalRow]}>
-          <Text style={styles.textTotal}>Tu Ganancia Neta:</Text>
-          <Text style={styles.textTotalValue}>
-            ${tripMath.driverEarnings.toLocaleString("es-CO")} COP
-          </Text>
-        </View>
+      <View style={[styles.card, styles.balanceCard]}>
+        <Text style={[styles.cardTitle, styles.onBlack]}>
+          {t("earnings.balance")}
+        </Text>
+        <Text style={styles.balanceValue}>{formatSignedCop(balance)}</Text>
+        <Text style={styles.balanceLabel}>
+          {balance < 0 ? t("earnings.balanceDue") : t("earnings.balanceOwed")}
+        </Text>
+        <Text style={styles.balanceHint}>{t("earnings.balanceHint")}</Text>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#f5f5f5" },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  inputContainer: { marginBottom: 15 },
-  label: { fontSize: 16, fontWeight: "bold", color: "#333", marginBottom: 5 },
-  input: {
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-  },
-  switchContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  screen: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, gap: spacing.md },
+  centered: {
+    flex: 1,
     alignItems: "center",
-    marginBottom: 30,
+    justifyContent: "center",
+    padding: spacing.xl,
+    gap: spacing.sm,
+    backgroundColor: colors.background,
   },
-  resultsCard: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 15,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    gap: spacing.sm,
   },
-  resultsTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
-    borderBottomWidth: 1,
-    borderColor: "#eee",
-    paddingBottom: 10,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  textData: { fontSize: 16, color: "#555" },
-  textValue: { fontSize: 16, fontWeight: "bold" },
-  totalRow: {
-    marginTop: 15,
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderColor: "#eee",
-  },
-  textTotal: { fontSize: 18, fontWeight: "bold" },
-  textTotalValue: { fontSize: 22, fontWeight: "bold", color: "#2E7D32" },
+  cardTitle: { ...typography.section, marginBottom: spacing.xs },
+  row: { flexDirection: "row", justifyContent: "space-between", gap: spacing.md },
+  rowLabel: { ...typography.body, color: colors.textSecondary, flexShrink: 1 },
+  rowValue: { ...typography.body },
+  strong: { fontWeight: "700", color: colors.textPrimary },
+  balanceCard: { backgroundColor: colors.black },
+  onBlack: { color: colors.white },
+  balanceValue: { fontSize: 28, fontWeight: "700", color: colors.white },
+  balanceLabel: { ...typography.label, color: colors.white },
+  balanceHint: { ...typography.caption, color: colors.disabledText },
+  caption: { ...typography.caption, textAlign: "center" },
+  errorText: { ...typography.body, color: colors.error, textAlign: "center" },
 });

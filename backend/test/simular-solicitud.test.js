@@ -6,6 +6,7 @@ const {
   revisarProyecto,
   RUTAS,
   LUGARES,
+  PASAJERO_DE_EJEMPLO,
 } = require("../scripts/simular-solicitud");
 
 test("no deja escribir si la clave es de otro proyecto que la app", () => {
@@ -34,7 +35,10 @@ test("lee el proyecto de la app del .env de la raíz", () => {
 });
 
 // Campos de la tabla de la sección 6 del enunciado (los mismos de TRIP_FIELDS en
-// src/services/trips.js), más routePolyline para dibujar la ruta
+// src/services/trips.js), más routePolyline para dibujar la ruta.
+// AI-assisted: see docs/AI_LOG.md #31
+// passengerName and passengerPhone are extra fields of the example passenger.
+const CAMPOS_EXTRA = ["routePolyline", "passengerName", "passengerPhone"];
 const CAMPOS_DEL_ENUNCIADO = [
   "driverId", "passengerId", "origin", "destination", "distanceKm",
   "durationMin", "category", "fare", "commission", "tip", "driverEarnings",
@@ -55,13 +59,16 @@ test("crea una solicitud requested, sin conductor, con los campos del enunciado"
   const viaje = solicitud();
   assert.deepEqual(
     Object.keys(viaje).sort(),
-    [...CAMPOS_DEL_ENUNCIADO, "routePolyline"].sort(),
+    [...CAMPOS_DEL_ENUNCIADO, ...CAMPOS_EXTRA].sort(),
   );
   assert.equal(viaje.status, "requested");
   assert.equal(viaje.driverId, null);
   assert.equal(viaje.category, "xl");
   assert.equal(viaje.paymentMethod, "cash");
   assert.equal(viaje.routePolyline, "abc");
+  assert.equal(viaje.passengerName, PASAJERO_DE_EJEMPLO.name);
+  assert.equal(viaje.passengerPhone, PASAJERO_DE_EJEMPLO.phone);
+  assert.match(viaje.passengerPhone, /^\+\d{8,15}$/);
 });
 
 test("usa origin y destination como { lat, lng, address }", () => {

@@ -1,15 +1,29 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #21
+// AI-assisted: see docs/AI_LOG.md #6, #4, #21, #29, #31
 // Viaje en curso (sección 3 del enunciado). El viaje viene de Firestore por
 // TripContext y su status decide qué se muestra: la ruta hacia el punto de
 // recogida (driver_arriving) o la ruta hacia el destino (in_progress).
+// "Navigate" opens Google Maps towards the point of the current step. If the
+// trip has passengerPhone, the passenger can be called or texted.
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
+import CarMarker from "../../components/CarMarker";
+import {
+  CONTROL_HEIGHT,
+  colors,
+  radius,
+  spacing,
+  typography,
+} from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
+import { useCarPosition } from "../../hooks/useCarPosition";
+import { useNightMap } from "../../hooks/useNightMap";
+import { passengerContact } from "../../services/passengerContact";
 import { advanceTrip, completeTrip } from "../../services/tripRepository";
-import { tripRoute } from "../../services/tripRoute";
+import { navigationUrl, tripRoute } from "../../services/tripRoute";
 import { completionFields, TRIP_STATUS } from "../../services/trips";
 
 const MAP_PADDING = { top: 80, right: 50, bottom: 300, left: 50 };
@@ -18,6 +32,10 @@ export default function ActiveTripScreen() {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const { trip, isLoading, pickupRoute } = useTrip();
+  // The car on the map (read-only GPS; the home screen saves the location)
+  const carPosition = useCarPosition();
+  // Dark map between 6 p.m. and 6 a.m.
+  const nightMap = useNightMap();
   const mapRef = useRef(null);
   // Evita volver al inicio mientras se abre el resumen del viaje terminado
   const isFinishing = useRef(false);
@@ -101,6 +119,30 @@ export default function ActiveTripScreen() {
     }
   }, [trip]);
 
+  // Opens Google Maps (app or browser) with directions to the current stop
+  const handleNavigate = useCallback(async () => {
+    const url = navigationUrl(trip);
+    if (!url) return;
+    setError(null);
+    try {
+      await Linking.openURL(url);
+    } catch (navigateError) {
+      console.warn("Could not open Google Maps:", navigateError);
+      setError("activeTrip.navigateFailed");
+    }
+  }, [trip]);
+
+  // Opens the phone or the messages app with the passenger's number
+  const openContact = useCallback(async (url) => {
+    setError(null);
+    try {
+      await Linking.openURL(url);
+    } catch (contactError) {
+      console.warn("Could not contact the passenger:", contactError);
+      setError("activeTrip.contactFailed");
+    }
+  }, []);
+
   if (!trip) {
     return (
       <View style={styles.loading}>
@@ -111,13 +153,14 @@ export default function ActiveTripScreen() {
 
   const canAdvance =
     trip.status === TRIP_STATUS.DRIVER_ARRIVING || isInProgress;
+  const contact = passengerContact(trip);
 
   return (
     <View style={styles.container}>
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
-        showsUserLocation
+        {...nightMap}
         onMapReady={() => setIsMapReady(true)}
         initialRegion={{
           latitude: trip.origin.lat,
@@ -130,7 +173,9 @@ export default function ActiveTripScreen() {
           coordinate={{ latitude: trip.origin.lat, longitude: trip.origin.lng }}
           title={t("request.origin")}
           description={trip.origin.address}
-          pinColor="green"
+          // Android pins only take a hue (black would turn red): the theme's
+          // green tells the pickup apart from the destination
+          pinColor={colors.success}
         />
         {isInProgress && (
           <Marker
@@ -146,14 +191,38 @@ export default function ActiveTripScreen() {
           <Polyline
             coordinates={route.coordinates}
             strokeWidth={5}
-            strokeColor="#1a56db"
+            strokeColor={colors.black}
             // La línea recta de respaldo va punteada: no es la ruta real
             lineDashPattern={route.isReal ? undefined : [10, 10]}
           />
         )}
+        <CarMarker position={carPosition} />
       </MapView>
 
       <View style={styles.panel}>
+        {contact && (
+          <View style={styles.passengerRow}>
+            <Text style={styles.passengerName} numberOfLines={1}>
+              {contact.name ?? t("activeTrip.passenger")}
+            </Text>
+            <TouchableOpacity
+              style={styles.contactButton}
+              onPress={() => openContact(contact.callUrl)}
+              accessibilityRole="button"
+              accessibilityLabel={t("activeTrip.call")}
+            >
+              <Ionicons name="call" size={20} color={colors.black} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.contactButton}
+              onPress={() => openContact(contact.smsUrl)}
+              accessibilityRole="button"
+              accessibilityLabel={t("activeTrip.message")}
+            >
+              <Ionicons name="chatbubble-ellipses" size={20} color={colors.black} />
+            </TouchableOpacity>
+          </View>
+        )}
         <Text style={styles.stepText}>
           {isInProgress
             ? t("activeTrip.goingToDestination")
@@ -179,10 +248,19 @@ export default function ActiveTripScreen() {
 
         {error && <Text style={styles.errorText}>{t(error)}</Text>}
 
+        {canAdvance && (
+          <TouchableOpacity
+            style={styles.navigateButton}
+            onPress={handleNavigate}
+            accessibilityRole="link"
+          >
+            <Text style={styles.navigateText}>{t("activeTrip.navigate")}</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           style={[
             styles.button,
-            isInProgress ? styles.btnFinish : styles.btnBoard,
             (!canAdvance || isSending) && styles.disabled,
           ]}
           onPress={handleNext}
@@ -214,43 +292,80 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   loading: {
     flex: 1,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: colors.surface,
     justifyContent: "center",
     alignItems: "center",
   },
-  loadingText: { fontSize: 18, color: "#555" },
+  loadingText: { ...typography.subtitle },
   panel: {
     position: "absolute",
     bottom: 0,
     width: "100%",
-    backgroundColor: "white",
-    padding: 25,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: colors.background,
+    padding: spacing.xl,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
     elevation: 10,
-    shadowColor: "#000",
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.2,
   },
-  stepText: { fontSize: 14, color: "#666" },
-  addressText: { fontSize: 20, fontWeight: "bold", marginVertical: 6 },
-  detailText: { fontSize: 14, color: "#555", marginBottom: 8 },
-  hintText: { fontSize: 12, color: "#888", marginBottom: 8 },
-  errorText: { color: "red", fontSize: 13, marginBottom: 8 },
-  button: {
-    padding: 18,
-    borderRadius: 10,
+  // Passenger's name with round call and message buttons
+  passengerRow: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 8,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
-  btnBoard: { backgroundColor: "#FF9800" },
-  btnFinish: { backgroundColor: "#F44336" },
+  passengerName: { ...typography.label, fontSize: 16, flex: 1 },
+  contactButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepText: { ...typography.caption, fontSize: 14 },
+  addressText: { ...typography.section, marginVertical: spacing.xs + 2 },
+  detailText: {
+    ...typography.caption,
+    fontSize: 14,
+    marginBottom: spacing.sm,
+  },
+  hintText: { ...typography.caption, fontSize: 12, marginBottom: spacing.sm },
+  errorText: {
+    ...typography.caption,
+    color: colors.error,
+    marginBottom: spacing.sm,
+  },
+  // Secondary button: outlined pill
+  navigateButton: {
+    minHeight: 44,
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    borderColor: colors.black,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: spacing.xs,
+  },
+  navigateText: { ...typography.label, fontSize: 16 },
+  // Main button: black with white text
+  button: {
+    minHeight: CONTROL_HEIGHT + 4,
+    borderRadius: radius.md,
+    backgroundColor: colors.black,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: spacing.sm,
+  },
   disabled: { opacity: 0.6 },
-  buttonText: { color: "white", fontWeight: "bold", fontSize: 18 },
+  buttonText: { color: colors.white, fontWeight: "700", fontSize: 18 },
   cancelText: {
-    color: "#F44336",
+    color: colors.error,
     textAlign: "center",
-    marginTop: 14,
+    marginTop: spacing.md + 2,
     fontSize: 15,
+    fontWeight: "600",
   },
 });
