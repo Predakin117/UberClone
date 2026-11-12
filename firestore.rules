@@ -86,7 +86,10 @@ service cloud.firestore {
         let multiplier = {'economy': 1.0, 'xl': 1.4, 'premium': 1.8}[resource.data.category];
         let subtotal = 3500 + resource.data.distanceKm * 1200
           + resource.data.durationMin * 250;
-        let rounded = math.round(subtotal * multiplier / 100) * 100;
+        // floor(x + 0.5) es lo que hace Math.round de JavaScript con números
+        // positivos: en un empate (por ejemplo 214,5) redondea hacia arriba. Así
+        // no dependemos de cómo redondee math.round de las reglas en los empates.
+        let rounded = math.floor(subtotal * multiplier / 100 + 0.5) * 100;
         return fare == rounded || (rounded < 6000 && fare == 6000);
       }
 
