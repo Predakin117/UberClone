@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #21
+// AI-assisted: see docs/AI_LOG.md #21, #25
 // Simulador mínimo: crea UNA solicitud "requested" en trips para probar la app
 // mientras llega la API del pasajero de la profesora.
 //
@@ -10,40 +10,18 @@
 // Usa firebase-admin con backend/serviceAccountKey.json, que no pasa por las
 // reglas de Firestore. La ruta sale de OpenRouteService (backend/src/rutas.js);
 // si falla, se usan la distancia y la duración de respaldo de cada ruta.
-const fs = require("node:fs");
-const path = require("node:path");
 const { calcularRuta } = require("../src/rutas");
+const {
+  comprobarProyecto,
+  iniciarFirebaseAdmin,
+  leerVariableEnv,
+  revisarProyecto,
+} = require("./proyecto");
 
 const CATEGORIAS = ["economy", "xl", "premium"];
 const METODOS_DE_PAGO = ["mercadopago", "stripe", "cash"];
-const CLAVE = path.join(__dirname, "..", "serviceAccountKey.json");
-// El .env de la raíz dice a qué proyecto de Firebase se conecta la app
-const ENV_DE_LA_APP = path.join(__dirname, "..", "..", ".env");
-
-// Valor de una variable en el texto de un archivo .env (sin comillas), o null
-function leerVariableEnv(contenido, nombre) {
-  const linea = contenido
-    .split(/\r?\n/)
-    .find((l) => l.trim().startsWith(`${nombre}=`));
-  if (!linea) return null;
-  const valor = linea.slice(linea.indexOf("=") + 1).trim().replace(/^["']|["']$/g, "");
-  return valor || null;
-}
-
-/**
- * La clave de servicio debe ser del mismo proyecto que la app. Si no, el
- * simulador escribiría las solicitudes donde la app no las ve. Devuelve el
- * problema como texto, o null si coinciden.
- */
-function revisarProyecto(proyectoDeLaClave, proyectoDeLaApp) {
-  if (!proyectoDeLaApp) {
-    return "No se encontró EXPO_PUBLIC_FIREBASE_PROJECT_ID en el .env de la raíz: no se puede comprobar el proyecto";
-  }
-  if (proyectoDeLaClave !== proyectoDeLaApp) {
-    return `La clave de servicio es del proyecto "${proyectoDeLaClave}", pero la app usa "${proyectoDeLaApp}". Descarga la clave de "${proyectoDeLaApp}" en backend/serviceAccountKey.json`;
-  }
-  return null;
-}
+// Pasajero de todos los viajes simulados: npm run limpiar-simulados borra los suyos
+const PASAJERO_SIMULADO = "pasajero-simulado";
 
 // Lugares de Medellín. Coordenadas y direcciones consultadas una sola vez en
 // Nominatim (© OpenStreetMap contributors), como pide docs/APIS.md.
@@ -93,7 +71,7 @@ const aOrs = ({ lat, lng }) => [lng, lat];
 function crearSolicitud({ ruta, categoria, metodoDePago, calculada, ahora }) {
   return {
     driverId: null,
-    passengerId: "pasajero-simulado",
+    passengerId: PASAJERO_SIMULADO,
     origin: LUGARES[ruta.origen],
     destination: LUGARES[ruta.destino],
     distanceKm: calculada.distanceKm,
@@ -133,20 +111,8 @@ async function main() {
   if (!RUTAS[indice]) {
     throw new Error(`Ruta inválida "${numeroDeRuta}": usa un número del 1 al ${RUTAS.length}`);
   }
-  if (!fs.existsSync(CLAVE)) {
-    throw new Error("Falta backend/serviceAccountKey.json (descárgala de la consola de Firebase)");
-  }
-
   // Antes de gastar una ruta de ORS o escribir nada: mismo proyecto que la app
-  const proyectoDeLaClave = JSON.parse(fs.readFileSync(CLAVE, "utf8")).project_id;
-  const proyectoDeLaApp = fs.existsSync(ENV_DE_LA_APP)
-    ? leerVariableEnv(
-        fs.readFileSync(ENV_DE_LA_APP, "utf8"),
-        "EXPO_PUBLIC_FIREBASE_PROJECT_ID",
-      )
-    : null;
-  const problema = revisarProyecto(proyectoDeLaClave, proyectoDeLaApp);
-  if (problema) throw new Error(problema);
+  const proyectoDeLaClave = comprobarProyecto();
 
   const ruta = RUTAS[indice];
   let calculada;
@@ -162,10 +128,8 @@ async function main() {
     fuente = "respaldo";
   }
 
-  // Se carga aquí para que las pruebas de crearSolicitud no necesiten Firebase
-  const { initializeApp, cert } = require("firebase-admin/app");
+  iniciarFirebaseAdmin();
   const { getFirestore, FieldValue } = require("firebase-admin/firestore");
-  initializeApp({ credential: cert(CLAVE) });
 
   const viaje = crearSolicitud({
     ruta,
@@ -198,4 +162,5 @@ module.exports = {
   LUGARES,
   CATEGORIAS,
   METODOS_DE_PAGO,
+  PASAJERO_SIMULADO,
 };

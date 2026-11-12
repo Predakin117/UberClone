@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21
+// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21, #27
 // src/screens/trip/HomeScreen.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -34,8 +34,12 @@ export default function HomeScreen() {
   const canGoOnline = blockKey === null;
   const isActive = isOnline && canGoOnline;
 
-  // El rastreo de ubicación solo corre mientras el conductor está conectado
-  const { location, errorMsg } = useDriverLocation(isActive);
+  // El rastreo de ubicación solo corre mientras el conductor está conectado. Con
+  // un viaje en curso sigue guardando la ubicación, pero queda no disponible.
+  const { location, errorMsg } = useDriverLocation(
+    isActive,
+    Boolean(activeTrip.trip),
+  );
 
   // Solicitudes nuevas: solo conectado, aprobado y sin viaje en curso. Este inicio
   // sigue montado debajo del viaje, así que sin esta condición rechazaría

@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useEffect, useState } from "react";
 import { signOutAccount } from "../services/accountService";
+import { markDriverUnavailable } from "../services/driverLocation";
 
 export const AuthContext = createContext();
 
@@ -47,6 +48,10 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await AsyncStorage.removeItem("@driver_session");
+      // AI-assisted: see docs/AI_LOG.md #27
+      // Antes de cerrar la sesión de Firebase: después las reglas ya no dejan
+      // marcarlo no disponible. Nunca lanza y se rinde a los 5 s sin conexión.
+      await markDriverUnavailable();
       // AI-assisted: see docs/AI_LOG.md #53
       // Also closes the Firebase session, so the next login starts clean
       await signOutAccount();

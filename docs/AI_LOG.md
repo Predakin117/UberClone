@@ -662,10 +662,10 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Protección del simulador: `backend/scripts/simular-solicitud.js`, `backend/test/simular-solicitud.test.js` — 4c2963f
 - Verificación:
   - Parte 1: `npm test` en `backend/` pasa 22 pruebas (9 nuevas). El simulador se ejecutó una vez por ruta: OpenRouteService respondió con la llave en `Authorization` (8,3 km y 13 min; 11 km y 19 min; 3,3 km y 6 min, sin tráfico) y las polylines guardadas empiezan y terminan junto al origen y el destino. Un intento anterior, con la llave todavía sin guardar en `backend/.env`, creó 3 solicitudes con los valores de respaldo; la comprobación de la llave no detuvo el comando, y se corrigió para que se detenga.
-  - Parte 2: Jest pasa 143 pruebas (4 nuevas: orden por `createdAt` y textos de errores, categorías y métodos de pago en los dos idiomas), `npm test` en `backend/` pasa 22, `npx tsc --noEmit` no da errores, el bundle de Android se genera y `npx expo lint` queda sin errores (solo el aviso intencional de `emailVerification.test.js`). [Completar con la prueba en el celular: aparece la solicitud más antigua, el vencimiento de 15 s y el rechazo guardan `rejected`, aceptar guarda `accepted` con el `driverId`, y desconectado no se muestran solicitudes]
-  - Parte 3: Jest pasa 150 pruebas (7 nuevas: `canReceiveRequests` con el caso del bug, la ruta decodificada o en línea recta y el estado del pago), `npm test` en `backend/` pasa 22, `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. Con `firebase-admin` se comprobó que las consultas del viaje en curso y de las solicitudes no necesitan índice compuesto. [Completar con la prueba en el celular]
-  - Parte 3b: Jest pasa 155 pruebas (5 nuevas: `fetchRoute` y la ruta de recogida real o en línea recta), `npm test` en `backend/` pasa 25 (3 nuevas: respuesta correcta, puntos inválidos sin llamar a ORS y error de ORS sin detalles), `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. `POST /api/v1/rutas` se probó con la llave real: respondió 200 con 3,5 km, 5 min y una polyline de 212 caracteres. [Completar con la prueba en el celular]
-  - Corrección de las reglas: la fórmula nueva da lo mismo que `calculateFare` en 21 casos (las 7 distancias y duraciones del simulador y del enunciado, en las 3 categorías). [Completar: la consola acepta las reglas al publicarlas y la ruta 2 en Económico se completa sin "permiso denegado"]
+  - Parte 2: Jest pasa 143 pruebas (4 nuevas: orden por `createdAt` y textos de errores, categorías y métodos de pago en los dos idiomas), `npm test` en `backend/` pasa 22, `npx tsc --noEmit` no da errores, el bundle de Android se genera y `npx expo lint` queda sin errores (solo el aviso intencional de `emailVerification.test.js`). En el celular, con el conductor `approved`, la solicitud del simulador llegó en tiempo real y aceptarla llevó al viaje en curso. [Completar: el vencimiento de 15 s y el rechazo guardan `rejected`, y desconectado no se muestran solicitudes]
+  - Parte 3: Jest pasa 150 pruebas (7 nuevas: `canReceiveRequests` con el caso del bug, la ruta decodificada o en línea recta y el estado del pago), `npm test` en `backend/` pasa 22, `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. Con `firebase-admin` se comprobó que las consultas del viaje en curso y de las solicitudes no necesitan índice compuesto. En el celular, el viaje pasó por Aceptar, Pasajero a bordo y Finalizar siguiendo el `status` de Firestore, y el resumen de la ruta 2 en Económico mostró tarifa $21.500, comisión $4.300 y ganancia $17.200.
+  - Parte 3b: Jest pasa 155 pruebas (5 nuevas: `fetchRoute` y la ruta de recogida real o en línea recta), `npm test` en `backend/` pasa 25 (3 nuevas: respuesta correcta, puntos inválidos sin llamar a ORS y error de ORS sin detalles), `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. `POST /api/v1/rutas` se probó con la llave real: respondió 200 con 3,5 km, 5 min y una polyline de 212 caracteres. En el celular se dibujó la ruta hasta el pasajero y después la ruta hasta el destino.
+  - Corrección de las reglas: la fórmula nueva da lo mismo que `calculateFare` en 21 casos (las 7 distancias y duraciones del simulador y del enunciado, en las 3 categorías). Las reglas se publicaron en la consola y en el celular la ruta 2 en Económico se completó sin "permiso denegado", con tarifa $21.500, comisión $4.300 y ganancia $17.200: el redondeo de las reglas coincide con `calculateFare`.
   - Nota (corrección): las comprobaciones de la parte 1 que tocaron Firestore (las solicitudes creadas, las polylines guardadas) y la de la parte 3 sobre los índices se hicieron en `biblioteca-clase`, no en el proyecto de la app. Siguen siendo válidas las respuestas de OpenRouteService, que no dependen de Firebase, y la conclusión de los índices, que depende de la forma de la consulta y no del proyecto. La prueba en el celular de las partes 2, 3 y 3b debe hacerse con solicitudes creadas en `uber-clone-ba0e2`. La protección se probó con la clave equivocada: el simulador se negó antes de llamar a ORS y sin escribir nada; `npm test` en `backend/` pasa 27 pruebas (2 nuevas).
 - Aprendizaje: [Completar]
 
@@ -710,6 +710,189 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se descartó: pasar a datos móviles como solución, porque el celular dejaría de llegar al backend del PC (código por correo y ruta hasta el pasajero).
 - Archivos y commit: `src/config/firebase.js` — e6ecc93
 - Verificación: Jest pasa 155 pruebas, `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. Fast Refresh no aplica el cambio: hay que cerrar la app por completo o recargarla. [Completar con la prueba en el celular: el aviso "Could not reach Cloud Firestore backend" ya no aparece]
+- Aprendizaje: [Completar]
+
+### Entrada #23
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Publicar el contrato de `src/services/payments.js` (todavía sin implementar) para que Ximena pueda conectar los botones de pago del frontend mientras se hace el backend.
+- Prompt (mensaje completo; las entradas #24 a #27 son los puntos 2 a 5 de este mismo mensaje):
+  > Soy Tamiro. Sigo en una rama nueva tamiro/backend-pagos creada desde main
+  > actualizado. Ximena se encarga del frontend en ximena/frontend: no toques
+  > src/screens/main/, TripSummaryScreen.js, MainDrawer.js, useEarnings ni
+  > useTripHistory. Cada tarea con su commit y su entrada de bitácora, desde
+  > la #23. Muéstrame el diff antes de cada commit.
+  >
+  > 1. URGENTE, para desbloquear a Ximena: crea src/services/payments.js con
+  >    este contrato, por ahora sin implementar, y haz commit y push de
+  >    inmediato:
+  >    - startMercadoPagoPayment(tripId) → { ok, url } o { ok: false, codigoError }
+  >    - markCashReceived(tripId) → { ok } o { ok: false, codigoError }
+  >    Nunca lanzan errores, como routesApi.js.
+  >
+  > 2. Agrega ORS_API_KEY= sin valor a backend/.env.example, y en el README,
+  >    en Tecnologías, OpenRouteService y Nominatim con el crédito
+  >    "© OpenStreetMap contributors". Actualiza la sección Alcance con lo
+  >    que ya está hecho.
+  >
+  > 3. Simulador de viajes terminados para que Ximena pruebe historial y
+  >    ganancias: un script (npm run simular-historial -- <correo del
+  >    conductor>) que busque el uid con firebase-admin y cree unos 10 viajes
+  >    completed y paid a nombre de ese conductor, repartidos entre hoy, esta
+  >    semana y este mes, mezclando efectivo y mercadopago y las 3 categorías.
+  >    Los montos deben salir de calculateFare de src/config/pricing.js, sin
+  >    duplicar la fórmula si es posible (si no se puede, explícame por qué).
+  >    Todos con passengerId "pasajero-simulado". Agrega también
+  >    npm run limpiar-simulados, que borre solo los viajes con ese
+  >    passengerId, para dejar Firestore limpio antes del video. Los dos
+  >    scripts usan la misma protección de proyecto que el simulador.
+  >
+  > 4. Pago en efectivo, POST /api/v1/pagos/efectivo { tripId }: la app manda
+  >    el token de Firebase del conductor en Authorization: Bearer, y el
+  >    backend lo verifica con firebase-admin (verifyIdToken). Solo si el
+  >    viaje está completed, es de ese conductor y su paymentMethod es cash,
+  >    lo actualiza con paymentStatus "cash" y status "paid". Pruebas con
+  >    firebase-admin simulado. Luego implementa markCashReceived en
+  >    payments.js para llamar a esa ruta.
+  >
+  > 5. Ubicación a Firestore (sección 3): en useDriverLocation, mientras el
+  >    conductor está conectado, guarda en drivers/{uid} su ubicación
+  >    ({ lat, lng } y la hora del servidor) como máximo cada 10 segundos, y
+  >    un campo de disponibilidad. Al desconectarse o salir de la pantalla,
+  >    deja de guardar y marca no disponible. Revisa que firestore.rules lo
+  >    permita sin cambiar el status del conductor.
+  >
+  > 6. Mercado Pago: pregúntame antes de empezar. Necesitaré
+  >    MP_ACCESS_TOKEN y la URL pública del túnel de Cloudflare.
+  >
+  > Antes de cada commit: npm test en la raíz y en backend/, npx expo lint sin
+  > errores y npx tsc --noEmit.
+- Resumen de la respuesta: Claude avisó que la rama `tamiro/backend-pagos` no existía y que había 12 archivos del registro sin commit en `tamiro/fotos-documentos`; por decisión de Tamiro se guardaron en un commit WIP en esa rama (sin push) y se creó `tamiro/backend-pagos` desde `main`. Se creó `src/services/payments.js` con `startMercadoPagoPayment(tripId)` y `markCashReceived(tripId)`, que por ahora devuelven `{ ok: false, codigoError: "no_implementado" }` sin lanzar, y la lista `PAYMENT_ERROR_CODES` con los códigos que devolverán cuando estén implementadas, para que el frontend sepa cuáles traducir.
+- Qué se usó / modificó / descartó:
+  - Se usó: el mismo estilo de `routesApi.js` (nunca lanza, devuelve `codigoError`).
+  - Se descartó: agregar los textos `payment.error.<código>` a `strings.js` en este commit, para no chocar con los cambios de Ximena en el frontend.
+- Archivos y commit: `src/services/payments.js`, `src/services/payments.test.js` — ddd385f
+- Verificación: Jest pasa 158 pruebas (3 nuevas en `payments.test.js`), las 27 del backend pasan, `npx expo lint .` queda sin errores (3 avisos que ya existían) y `npx tsc --noEmit` no da errores.
+- Aprendizaje: [Completar]
+
+### Entrada #24
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Documentar la llave de OpenRouteService y el crédito de OpenStreetMap, y poner al día el alcance del README.
+- Prompt (punto 2 del mensaje copiado en la entrada #23):
+  > 2. Agrega ORS_API_KEY= sin valor a backend/.env.example, y en el README,
+  >    en Tecnologías, OpenRouteService y Nominatim con el crédito
+  >    "© OpenStreetMap contributors". Actualiza la sección Alcance con lo
+  >    que ya está hecho.
+
+  > 1. Sí, agrega a Tecnologías en este mismo commit: Firebase Auth y
+  >    Firestore, Cloudinary, el backend en Node.js (node:http, sin Express)
+  >    con Nodemailer para los códigos, y OpenRouteService y Nominatim con su
+  >    crédito. Mercado Pago ponlo como "en integración (modo de prueba)",
+  >    no como hecho, hasta que el pago funcione.
+  > 2. Sí, deja historial y ganancias en "En curso". Agrega ahí también el
+  >    pago (efectivo y Mercado Pago) y la ubicación a Firestore, que siguen
+  >    pendientes. Notificaciones push ponlas en "Pendiente".
+- Resumen de la respuesta: Se agregó `ORS_API_KEY=` sin valor a `backend/.env.example`, con un comentario de para qué sirve y dónde se saca la llave. En el README, la sección Tecnologías ahora incluye Firebase Auth y Firestore, Cloudinary, el backend en Node.js (`node:http`, sin Express) con Nodemailer, OpenRouteService (rutas desde el backend), Nominatim (direcciones del simulador, consultadas una sola vez), el crédito "© OpenStreetMap contributors" y Mercado Pago como "en integración (modo de prueba)". La sección Alcance separa lo que ya está en `main`, lo que sigue en curso (pago en efectivo y con Mercado Pago, ubicación en Firestore, historial y ganancias) y lo pendiente (notificaciones push).
+- Qué se usó / modificó / descartó:
+  - Se usó: el código de `main` para comprobar cada punto del alcance y de las tecnologías (por ejemplo, `ORS_API_KEY` en `backend/src/rutas.js`, los 15 segundos en `useTripRequests.js` y `node:http` y Nodemailer en el backend).
+  - Se modificó: la primera versión solo agregaba OpenRouteService y Nominatim a Tecnologías; Tamiro pidió completar la lista y marcar Mercado Pago como en integración, no como hecho.
+- Archivos y commit: `README.md`, `backend/.env.example` — 877fc79
+- Verificación: Jest de la raíz y las pruebas del backend pasan, `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores. [Pendiente: revisar cómo se ve el README en GitHub]
+- Aprendizaje: [Completar]
+
+### Entrada #25
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Crear viajes terminados y pagados de prueba para que Ximena pruebe el historial y las ganancias, y poder borrarlos antes del video.
+- Prompt (punto 3 del mensaje copiado en la entrada #23):
+  > 3. Simulador de viajes terminados para que Ximena pruebe historial y
+  >    ganancias: un script (npm run simular-historial -- <correo del
+  >    conductor>) que busque el uid con firebase-admin y cree unos 10 viajes
+  >    completed y paid a nombre de ese conductor, repartidos entre hoy, esta
+  >    semana y este mes, mezclando efectivo y mercadopago y las 3 categorías.
+  >    Los montos deben salir de calculateFare de src/config/pricing.js, sin
+  >    duplicar la fórmula si es posible (si no se puede, explícame por qué).
+  >    Todos con passengerId "pasajero-simulado". Agrega también
+  >    npm run limpiar-simulados, que borre solo los viajes con ese
+  >    passengerId, para dejar Firestore limpio antes del video. Los dos
+  >    scripts usan la misma protección de proyecto que el simulador.
+- Resumen de la respuesta: `npm run simular-historial -- <correo>` busca el uid con `getAuth().getUserByEmail` y crea en un solo lote 10 viajes con status `paid`: 3 de hoy, 3 de esta semana (desde el lunes, antes de hoy) y 4 de este mes (antes de esta semana). Mezclan efectivo y Mercado Pago, las 3 categorías y algunas propinas. Los de efectivo quedan con `paymentStatus: "cash"` y los de Mercado Pago con `"approved"` y un `paymentId` simulado. Si hoy es lunes o el mes empezó esta semana, esos viajes se pasan a hoy para no salirse del periodo. `npm run limpiar-simulados` borra solo los viajes de `trips` con `passengerId == "pasajero-simulado"`, en lotes de 500. La protección de proyecto del simulador se movió a `backend/scripts/proyecto.js` y la usan los tres scripts. Los scripts los corre Tamiro: Ximena no tiene `serviceAccountKey.json`, así que ella solo ve en la app los viajes que él crea con el correo de su cuenta.
+- Qué se usó / modificó / descartó:
+  - Se usó: `calculateFare` de `src/config/pricing.js` sin copiar la fórmula. El backend es CommonJS y `pricing.js` es un módulo ES, pero Node carga un módulo ES con `require` desde la versión 20.19 (aquí se usó Node 24.19). Por eso `engines` del backend pasó de `>=20.6` a `>=20.19`. Las rutas, los lugares y la distancia y duración de respaldo son los del simulador, así que no se gasta cupo de OpenRouteService.
+  - Se modificó: `simular-solicitud.js` ahora toma `leerVariableEnv`, `revisarProyecto` y la carga de la clave de `proyecto.js` (los sigue exportando para sus pruebas) y usa la constante `PASAJERO_SIMULADO`.
+  - Se descartó: pasar la clave de servicio como objeto en vez de ruta para quitar el aviso "keyFilename is deprecated", porque solo cambió por otro aviso igual ("fromJSON is deprecated"); los dos salen de dentro de `firebase-admin` y no afectan.
+- Archivos y commit: `backend/scripts/simular-historial.js`, `backend/scripts/limpiar-simulados.js`, `backend/scripts/proyecto.js`, `backend/scripts/simular-solicitud.js`, `backend/test/simular-historial.test.js`, `backend/package.json` — 632a7cf
+- Verificación: las pruebas del backend pasan 34 (7 nuevas: campos del enunciado, montos iguales a `calculateFare`, mezcla de pagos y categorías, fechas un miércoles, un lunes y el 1 de diciembre, y lotes de 500); Jest de la raíz pasa 158, `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores. `npm run simular-historial -- no-existe-prueba@example.com` comprobó el proyecto `uber-clone-ba0e2` y respondió "No hay ninguna cuenta con el correo…" sin escribir nada. Después se corrió con las cuentas de Tamiro (`tamirokrac@gmail.com`) y de Ximena (`ximerosa1307@gmail.com`) en `uber-clone-ba0e2`: cada una quedó con 10 viajes `paid`, confirmados con una consulta a Firestore. Ganancia neta esperada en cada cuenta: hoy 52.240 COP (3 viajes), semana desde el lunes 108.520 COP (6) y mes 182.680 COP (10). [Pendiente: ver los viajes en el historial y las ganancias de la app y luego `npm run limpiar-simulados` antes del video]
+- Aprendizaje: [Completar]
+
+### Entrada #26
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Que el conductor confirme el pago en efectivo y el viaje quede pagado, escribiendo `paymentStatus` y `paid` solo desde el backend.
+- Prompt (punto 4 del mensaje copiado en la entrada #23):
+  > 4. Pago en efectivo, POST /api/v1/pagos/efectivo { tripId }: la app manda
+  >    el token de Firebase del conductor en Authorization: Bearer, y el
+  >    backend lo verifica con firebase-admin (verifyIdToken). Solo si el
+  >    viaje está completed, es de ese conductor y su paymentMethod es cash,
+  >    lo actualiza con paymentStatus "cash" y status "paid". Pruebas con
+  >    firebase-admin simulado. Luego implementa markCashReceived en
+  >    payments.js para llamar a esa ruta.
+- Resumen de la respuesta: `backend/src/pagos.js` tiene `crearPagos({ auth, db })`, que recibe el Auth y el Firestore de firebase-admin. `confirmarEfectivo` lee el token de `Authorization: Bearer`, lo verifica con `verifyIdToken` y, en una transacción, revisa en este orden que el viaje exista, sea del conductor, sea en efectivo y esté `completed`; solo entonces escribe `{ paymentStatus: "cash", status: "paid" }`. `app.js` agrega la ruta `POST /api/v1/pagos/efectivo` y permite la cabecera `Authorization` en CORS. `server.js` inicia firebase-admin con `serviceAccountKey.json`; sin la clave el backend arranca igual y la ruta responde 503. En la app, `markCashReceived(tripId)` toma el token con `auth.currentUser.getIdToken()` y llama a la ruta; nunca lanza y devuelve `sin_backend`, `sin_sesion`, `sin_conexion` o el código del backend (los que la app no conoce llegan como `fallo`).
+- Qué se usó / modificó / descartó:
+  - Se usó: una transacción de Firestore, para que dos toques seguidos no escriban dos veces, y el mismo estilo de `routesApi.js` en la app (tiempo límite de 15 segundos, nunca lanza).
+  - Se modificó: además de lo pedido, si el viaje ya está `paid` en efectivo la ruta responde `{ ok: true }` sin volver a escribir, porque la app puede reintentar después de perder la respuesta. Un `tripId` vacío, que no es texto o con `/` responde 400 `datos_invalidos`. El comentario de `estado_invalido` en `PAYMENT_ERROR_CODES` dejó de decir "o ya está pagado".
+  - Se descartó: revisar que el proyecto de la clave coincida con el de la app (como en los scripts): si no coinciden, `verifyIdToken` rechaza el token y la ruta responde 401 sin escribir.
+- Archivos y commit: `backend/src/pagos.js`, `backend/src/app.js`, `backend/src/server.js`, `backend/test/pagos.test.js`, `backend/README.md`, `src/services/payments.js`, `src/services/payments.test.js` — 4cbf14f
+- Verificación:
+  - Las pruebas del backend pasan 42 (8 nuevas en `pagos.test.js`, con Auth y Firestore de firebase-admin simulados y peticiones HTTP reales al servidor): pago correcto, sin token o token inválido, viaje de otro conductor, método distinto de efectivo, viaje no terminado, viaje inexistente, `tripId` inválido, viaje ya pagado y backend sin firebase-admin.
+  - Jest de la raíz pasa 162 (6 en `payments.test.js`, 5 nuevas para `markCashReceived`), `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores.
+  - Con el backend corriendo de verdad y conectado a `uber-clone-ba0e2`: sin token y con un token falso responde 401 `no_autorizado`, y el preflight de CORS permite `Authorization`. Con un token real de la cuenta de Tamiro (sacado con `createCustomToken` y `signInWithCustomToken`), sobre los viajes simulados de la entrada #25: el de efectivo ya pagado respondió 200 sin cambiar el documento (mismo `updateTime`), el de Mercado Pago 409 `metodo_invalido` y uno inexistente 404 `no_encontrado`.
+  - [Pendiente: probar en el celular, con el botón de Ximena, un viaje real en efectivo que pase de `completed` a `paid`]
+- Aprendizaje: [Completar]
+
+### Entrada #27
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Guardar en Firestore la ubicación del conductor y si está disponible mientras está conectado, sin gastar escrituras de más.
+- Prompt (punto 5 del mensaje copiado en la entrada #23):
+  > 5. Ubicación a Firestore (sección 3): en useDriverLocation, mientras el
+  >    conductor está conectado, guarda en drivers/{uid} su ubicación
+  >    ({ lat, lng } y la hora del servidor) como máximo cada 10 segundos, y
+  >    un campo de disponibilidad. Al desconectarse o salir de la pantalla,
+  >    deja de guardar y marca no disponible. Revisa que firestore.rules lo
+  >    permita sin cambiar el status del conductor.
+
+  > 1. Los nombres de campo quedan así; la guía no los define.
+  > 2. Sí: con un viaje en curso, isAvailable en false; al terminar o
+  >    cancelar, vuelve a seguir al botón Disponible. Inclúyelo en este
+  >    mismo commit con su prueba.
+  > 3. Anota en docs/APIS.md (servicio 11) que un conductor con
+  >    locationUpdatedAt de hace más de 1 minuto se trata como desconectado.
+  > Luego haz los dos commits y el push. Mercado Pago todavía no: te aviso.
+- Resumen de la respuesta: `src/services/driverLocation.js` guarda en `drivers/{uid}` los campos `location: { lat, lng }`, `locationUpdatedAt` (hora del servidor) e `isAvailable`, con `updateDoc` y un tiempo límite de 5 segundos; nunca escribe `status` y nunca lanza. `shouldSaveLocation` deja pasar la primera ubicación y después una cada 10 segundos. `useDriverLocation` mueve el mapa con cada lectura de `expo-location` (cada 5 s o 5 m), pero solo guarda en Firestore cuando pasan 10 s; en la limpieza del `useEffect` (al desconectarse o al desmontarse la pantalla) quita la suscripción y marca `isAvailable: false`. `firestore.rules` no se cambió: el dueño ya puede actualizar su documento mientras el `status` quede igual. Por decisión de Tamiro, con un viaje en curso `isAvailable` queda en `false` (la ubicación se sigue guardando) y al terminar o cancelar el viaje vuelve a seguir al botón Disponible: `HomeScreen` le pasa al hook si hay un viaje en curso, `isDriverAvailable` calcula la disponibilidad y `availabilityOnTripChange` decide si hay que escribirla de una vez al empezar o terminar el viaje. En `docs/APIS.md` (servicio 11) quedaron los campos y la regla de que un conductor con `locationUpdatedAt` de hace más de 1 minuto se trata como desconectado.
+- Qué se usó / modificó / descartó:
+  - Se usó: `updateDoc` en vez de `setDoc` con `merge`, para no crear el documento de un conductor sin registro, y `withTimeout` de `src/services/withTimeout.js`.
+  - Se modificó: además del hook, `logout` de `AuthContext` llama a `markDriverUnavailable` antes de cerrar la sesión de Firebase, porque cuando la pantalla se desmonta la sesión ya está cerrada y las reglas rechazan la escritura. Los fallos se registran con `console.warn` (no `console.error`, que abre la pantalla roja en desarrollo) y el `not-found` de un conductor sin documento se ignora. Se quitaron los `console.log` de cada ubicación.
+  - Se modificó también: la primera versión dejaba `isAvailable` siguiendo solo al botón Disponible, también durante un viaje; Tamiro pidió ponerlo en `false` mientras haya un viaje en curso. El valor actual se guarda en un ref desde un `useEffect`, porque el linter de React no deja leer ni escribir refs durante el render ("Cannot access refs during render"), y así el rastreo no se reinicia al aceptar un viaje.
+  - Se descartó: cambiar `firestore.rules` (no hacía falta, así que tampoco hay que publicarlas) e instalar una librería para probar el hook; la lógica quedó en funciones puras de `driverLocation.js` con sus pruebas.
+- Archivos y commit: `src/services/driverLocation.js`, `src/services/driverLocation.test.js`, `src/hooks/useDriverLocation.js`, `src/contexts/AuthContext.js`, `src/screens/trip/HomeScreen.js`, `docs/APIS.md` — 0fc3c27
+- Verificación:
+  - Jest de la raíz pasa 176 (14 nuevas en `driverLocation.test.js`: la primera ubicación se guarda ya, una cada 10 s, 6 en un minuto con lecturas cada 5 s, campos sin `status`, solo el documento del conductor, sin sesión no escribe, los fallos no lanzan, no disponible durante un viaje, `false` al empezarlo y `true` al terminarlo, y nada que escribir si el viaje no cambió o está desconectado); las 42 del backend pasan, `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores.
+  - Con un token real de la cuenta de Tamiro y la API REST de Firestore (que pasa por las reglas publicadas en `uber-clone-ba0e2`), se escribieron la ubicación con la hora del servidor y luego `isAvailable: false`: las dos respondieron 200 y `status` siguió en `pending`.
+  - `docs/enunciado.pdf` no está en el repositorio; Tamiro confirmó que la guía no define los nombres de estos campos, así que quedan `location`, `locationUpdatedAt` e `isAvailable`.
+  - En el celular, con el conductor `approved`: durante el viaje `drivers/{uid}` quedó con `isAvailable: false` y al finalizarlo volvió a `true`.
+  - [Pendiente: ver en la consola que `location` cambia cada 10 s y que al desconectarse queda `isAvailable: false`]
 - Aprendizaje: [Completar]
 
 ### Entrada #50
