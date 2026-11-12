@@ -777,6 +777,34 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Verificación: Jest pasa 158 pruebas (3 nuevas en `payments.test.js`), las 27 del backend pasan, `npx expo lint .` queda sin errores (3 avisos que ya existían) y `npx tsc --noEmit` no da errores.
 - Aprendizaje: [Completar]
 
+### Entrada #24
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Documentar la llave de OpenRouteService y el crédito de OpenStreetMap, y poner al día el alcance del README.
+- Prompt (punto 2 del mensaje copiado en la entrada #23):
+  > 2. Agrega ORS_API_KEY= sin valor a backend/.env.example, y en el README,
+  >    en Tecnologías, OpenRouteService y Nominatim con el crédito
+  >    "© OpenStreetMap contributors". Actualiza la sección Alcance con lo
+  >    que ya está hecho.
+
+  > 1. Sí, agrega a Tecnologías en este mismo commit: Firebase Auth y
+  >    Firestore, Cloudinary, el backend en Node.js (node:http, sin Express)
+  >    con Nodemailer para los códigos, y OpenRouteService y Nominatim con su
+  >    crédito. Mercado Pago ponlo como "en integración (modo de prueba)",
+  >    no como hecho, hasta que el pago funcione.
+  > 2. Sí, deja historial y ganancias en "En curso". Agrega ahí también el
+  >    pago (efectivo y Mercado Pago) y la ubicación a Firestore, que siguen
+  >    pendientes. Notificaciones push ponlas en "Pendiente".
+- Resumen de la respuesta: Se agregó `ORS_API_KEY=` sin valor a `backend/.env.example`, con un comentario de para qué sirve y dónde se saca la llave. En el README, la sección Tecnologías ahora incluye Firebase Auth y Firestore, Cloudinary, el backend en Node.js (`node:http`, sin Express) con Nodemailer, OpenRouteService (rutas desde el backend), Nominatim (direcciones del simulador, consultadas una sola vez), el crédito "© OpenStreetMap contributors" y Mercado Pago como "en integración (modo de prueba)". La sección Alcance separa lo que ya está en `main`, lo que sigue en curso (pago en efectivo y con Mercado Pago, ubicación en Firestore, historial y ganancias) y lo pendiente (notificaciones push).
+- Qué se usó / modificó / descartó:
+  - Se usó: el código de `main` para comprobar cada punto del alcance y de las tecnologías (por ejemplo, `ORS_API_KEY` en `backend/src/rutas.js`, los 15 segundos en `useTripRequests.js` y `node:http` y Nodemailer en el backend).
+  - Se modificó: la primera versión solo agregaba OpenRouteService y Nominatim a Tecnologías; Tamiro pidió completar la lista y marcar Mercado Pago como en integración, no como hecho.
+- Archivos y commit: `README.md`, `backend/.env.example` — 877fc79
+- Verificación: Jest de la raíz y las pruebas del backend pasan, `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores. [Pendiente: revisar cómo se ve el README en GitHub]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
