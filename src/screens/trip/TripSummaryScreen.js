@@ -1,11 +1,32 @@
-// AI-assisted: see docs/AI_LOG.md #4, #21
+// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29, #31
 // Cobro y resumen del viaje (sección 3 del enunciado): tarifa final, comisión,
 // ganancia neta y estado del pago. Los montos son los que se guardaron al
-// completar el viaje, calculados con calculateFare.
+// completar el viaje, calculados con calculateFare. The trip is listened to in
+// real time so the payment status changes on screen when the backend writes it.
+// The driver can also rate the passenger once (PassengerRating).
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import FieldMessage from "../../components/FieldMessage";
+import PassengerRating from "../../components/PassengerRating";
+import {
+  CONTROL_HEIGHT,
+  colors,
+  radius,
+  spacing,
+  typography,
+} from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { paymentStatusKey } from "../../services/trips";
+import { useTrip } from "../../hooks/useTrip";
+import { markCashReceived } from "../../services/payments";
+import { TRIP_STATUS, paymentStatusKey } from "../../services/trips";
 
 const formatCop = (amount) => `$${amount.toLocaleString("es-CO")} COP`;
 
@@ -13,7 +34,13 @@ export default function TripSummaryScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { t } = useLanguage();
-  const trip = route.params?.trip;
+  const paramTrip = route.params?.trip;
+  // The live trip once the first snapshot arrives; the one from the route meanwhile
+  const { trip: liveTrip } = useTrip(paramTrip?.id);
+  const trip = liveTrip ?? paramTrip;
+
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [cashError, setCashError] = useState(null);
 
   if (!trip) {
     return (
@@ -24,9 +51,23 @@ export default function TripSummaryScreen() {
   }
 
   const commissionPercent = Math.round(trip.commissionRate * 100);
+  const canConfirmCash =
+    trip.paymentMethod === "cash" && trip.status !== TRIP_STATUS.PAID;
+
+  const confirmCash = async () => {
+    setCashError(null);
+    setIsConfirming(true);
+    const result = await markCashReceived(trip.id);
+    setIsConfirming(false);
+    // On success the snapshot brings status "paid" and the button goes away
+    if (!result.ok) setCashError(`payment.error.${result.codigoError}`);
+  };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+    >
       <Text style={styles.title}>{t("summary.title")}</Text>
 
       <View style={styles.card}>
@@ -62,6 +103,34 @@ export default function TripSummaryScreen() {
         </Text>
       </View>
 
+      {canConfirmCash && (
+        <View style={styles.cashBlock}>
+          <TouchableOpacity
+            style={[styles.cashButton, isConfirming && styles.cashButtonBusy]}
+            onPress={confirmCash}
+            disabled={isConfirming}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: isConfirming, busy: isConfirming }}
+          >
+            {isConfirming ? (
+              <View style={styles.busyRow}>
+                <ActivityIndicator color={colors.black} />
+                <Text style={styles.cashButtonText}>
+                  {t("summary.confirmingCash")}
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.cashButtonText}>
+                {t("summary.cashReceived")}
+              </Text>
+            )}
+          </TouchableOpacity>
+          <FieldMessage error={cashError ? t(cashError) : null} />
+        </View>
+      )}
+
+      <PassengerRating trip={trip} />
+
       <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.popToTop()}
@@ -69,49 +138,68 @@ export default function TripSummaryScreen() {
       >
         <Text style={styles.buttonText}>{t("summary.backToMap")}</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1, backgroundColor: colors.background },
   container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#fff",
+    flexGrow: 1,
+    padding: spacing.xl - 4,
+    backgroundColor: colors.background,
     justifyContent: "center",
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
+    ...typography.title,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: spacing.xl - 4,
   },
   card: {
-    backgroundColor: "#f5f5f5",
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
+    backgroundColor: colors.surface,
+    padding: spacing.xl - 4,
+    borderRadius: radius.md,
+    marginBottom: spacing.xl - 4,
   },
-  detailText: { fontSize: 16, marginBottom: 10, color: "#333" },
+  detailText: { ...typography.body, marginBottom: spacing.sm + 2 },
   receipt: {
-    backgroundColor: "#e8f5e9",
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 40,
+    backgroundColor: colors.surface,
+    padding: spacing.xl - 4,
+    borderRadius: radius.md,
+    marginBottom: spacing.xxl + 8,
   },
-  receiptText: { fontSize: 16, marginBottom: 10, color: "#424242" },
+  receiptText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm + 2,
+  },
   earnText: {
     fontSize: 22,
-    fontWeight: "bold",
-    color: "#2E7D32",
-    marginVertical: 10,
+    fontWeight: "700",
+    color: colors.success,
+    marginVertical: spacing.sm + 2,
   },
-  errorText: { fontSize: 18, color: "red", textAlign: "center" },
-  button: {
-    backgroundColor: "#000",
-    padding: 18,
-    borderRadius: 12,
+  errorText: { ...typography.body, fontSize: 18, color: colors.error, textAlign: "center" },
+  cashBlock: { marginTop: -spacing.xl, marginBottom: spacing.xl },
+  cashButton: {
+    minHeight: CONTROL_HEIGHT,
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    borderColor: colors.black,
+    backgroundColor: colors.white,
     alignItems: "center",
+    justifyContent: "center",
   },
-  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  cashButtonBusy: { borderColor: colors.border },
+  busyRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  cashButtonText: { color: colors.black, fontSize: 18, fontWeight: "700" },
+  // Main button: black with white text
+  button: {
+    minHeight: CONTROL_HEIGHT + 4,
+    backgroundColor: colors.black,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonText: { color: colors.white, fontSize: 18, fontWeight: "700" },
 });

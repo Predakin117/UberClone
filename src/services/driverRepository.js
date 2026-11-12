@@ -1,10 +1,21 @@
-// AI-assisted: see docs/AI_LOG.md #10, #12, #54
+// AI-assisted: see docs/AI_LOG.md #10, #12, #54, #30
 // Saves the driver's registration to Firestore, in the drivers/{uid} document.
 // Each tab goes in its own map: personal, vehicle and documents.
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { db, ensureSignedIn, isFirebaseConfigured } from "../config/firebase";
+import {
+  doc,
+  onSnapshot,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
+import {
+  auth,
+  db,
+  ensureSignedIn,
+  isFirebaseConfigured,
+} from "../config/firebase";
 import { isCloudinaryConfigured, uploadImage } from "./cloudinary";
-import { DOC_BUILDERS, photosToUpload } from "./driverDocs";
+import { DOC_BUILDERS, isUploaded, photosToUpload } from "./driverDocs";
 import { withTimeout } from "./withTimeout";
 
 // Without a connection, setDoc waits forever for the server's response
@@ -71,6 +82,56 @@ export const saveDriverSection = async (
       SAVE_TIMEOUT_MS,
     );
     return { uid: user.uid, photoUrls };
+  } catch (error) {
+    const code =
+      error.code === "permission-denied"
+        ? "save.permissionDenied"
+        : "save.failed";
+    throw new SaveError(code, error);
+  }
+};
+
+// AI-assisted: see docs/AI_LOG.md #30
+/**
+ * Listens to drivers/{uid} in real time. onDriver receives the document data,
+ * or null if the driver has no document yet. Returns the unsubscribe function.
+ */
+export const subscribeToDriver = (uid, onDriver, onError) =>
+  onSnapshot(
+    doc(db, "drivers", uid),
+    (snapshot) => onDriver(snapshot.exists() ? snapshot.data() : null),
+    onError,
+  );
+
+/**
+ * Saves the profile changes of the signed-in driver: update is the result of
+ * profileUpdate (dotted paths, never status). A new profile photo that is
+ * still local is uploaded to Cloudinary first. Throws a SaveError.
+ */
+export const updateDriverProfile = async (update) => {
+  const uid = auth?.currentUser?.uid;
+  if (!isFirebaseConfigured || !uid) throw new SaveError("save.notConfigured");
+
+  const changes = { ...update };
+  const photo = changes["personal.profilePhotoUrl"];
+  if (photo !== undefined && !isUploaded(photo)) {
+    if (!isCloudinaryConfigured) throw new SaveError("save.notConfigured");
+    try {
+      changes["personal.profilePhotoUrl"] = await uploadImage(photo);
+    } catch (error) {
+      throw new SaveError("save.photoFailed", error);
+    }
+  }
+
+  try {
+    await withTimeout(
+      updateDoc(doc(db, "drivers", uid), {
+        ...changes,
+        updatedAt: serverTimestamp(),
+      }),
+      SAVE_TIMEOUT_MS,
+    );
+    return changes;
   } catch (error) {
     const code =
       error.code === "permission-denied"

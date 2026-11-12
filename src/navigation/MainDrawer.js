@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #2, #4, #57
+// AI-assisted: see docs/AI_LOG.md #2, #4, #57, #28, #30
 // src/navigation/MainDrawer.js
 import {
   createDrawerNavigator,
@@ -13,37 +13,12 @@ import { colors, radius, spacing, typography } from "../config/theme";
 import { AuthContext } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import EarningsScreen from "../screens/main/EarningsScreen";
+import HistoryScreen from "../screens/main/HistoryScreen";
+import ProfileScreen from "../screens/main/ProfileScreen";
+import SettingsScreen from "../screens/main/SettingsScreen";
 import { TripStack } from "./TripStack";
 
 const Drawer = createDrawerNavigator();
-
-// Temporary mocks
-const ProfileScreen = () => (
-  <View>
-    <Text>Perfil del Conductor</Text>
-  </View>
-);
-const HistoryScreen = () => (
-  <View>
-    <Text>Historial de Carreras</Text>
-  </View>
-);
-const SettingsScreen = () => {
-  const { logout } = useContext(AuthContext);
-  const { t } = useLanguage();
-
-  return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={logout}
-        accessibilityRole="button"
-      >
-        <Text style={styles.logoutText}>{t("drawer.logout")}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
 
 // Panel of the menu: the driver on a black header, the screens and logout
 const DrawerContent = (props) => {
@@ -142,21 +117,6 @@ export const MainDrawer = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: spacing.xl - 4,
-    backgroundColor: colors.white,
-  },
-  logoutButton: {
-    marginTop: spacing.xl,
-    minHeight: 52,
-    borderRadius: radius.sm,
-    backgroundColor: colors.black,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoutText: { color: colors.white, fontSize: 16, fontWeight: "600" },
-
   drawer: { flex: 1, backgroundColor: colors.white },
   profile: {
     backgroundColor: colors.black,

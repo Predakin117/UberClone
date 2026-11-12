@@ -56,6 +56,14 @@ const validateExpiry = (value, prefix, today) => {
   return null;
 };
 
+// AI-assisted: see docs/AI_LOG.md #30
+// Error key of the Mercado Pago email, or null. Shared by tab 3 and the profile.
+export const validateMercadoPagoEmail = (email) => {
+  if (email.trim() === "") return "errors.mercadoPagoEmailRequired";
+  if (!isValidEmail(email)) return "errors.mercadoPagoEmailInvalid";
+  return null;
+};
+
 // today se puede inyectar para que las pruebas no dependan de la fecha real
 export const validateDocuments = (data, today = new Date()) => {
   const errors = {};
@@ -92,11 +100,8 @@ export const validateDocuments = (data, today = new Date()) => {
     if (techReviewExpiry) errors.techReviewExpiry = techReviewExpiry;
   }
 
-  if (data.mercadoPagoEmail.trim() === "") {
-    errors.mercadoPagoEmail = "errors.mercadoPagoEmailRequired";
-  } else if (!isValidEmail(data.mercadoPagoEmail)) {
-    errors.mercadoPagoEmail = "errors.mercadoPagoEmailInvalid";
-  }
+  const mercadoPagoEmailError = validateMercadoPagoEmail(data.mercadoPagoEmail);
+  if (mercadoPagoEmailError) errors.mercadoPagoEmail = mercadoPagoEmailError;
 
   if (data.acceptedTerms !== true) {
     errors.acceptedTerms = "errors.termsRequired";

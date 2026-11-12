@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21, #27, #57
+// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21, #27, #57, #31
 // src/screens/trip/HomeScreen.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
@@ -6,13 +6,18 @@ import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import CarMarker from "../../components/CarMarker";
 import IncomingRequestCard from "../../components/IncomingRequestCard";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
 import { useDriverLocation } from "../../hooks/useDriverLocation";
+import { useEarnings } from "../../hooks/useEarnings";
+import { useEarningsTrips } from "../../hooks/useEarningsTrips";
+import { useNightMap } from "../../hooks/useNightMap";
 import { useDriverStatus } from "../../hooks/useDriverStatus";
 import { useTripRequests } from "../../hooks/useTripRequests";
+import { formatCop } from "../../i18n/format";
 import {
   canReceiveRequests,
   getAvailabilityBlock,
@@ -29,6 +34,12 @@ export default function HomeScreen() {
   const [isOnline, setIsOnline] = useState(false);
   const activeTrip = useTrip();
   const activeTripId = activeTrip.trip?.id ?? null;
+  // AI-assisted: see docs/AI_LOG.md #31
+  // Today's net earnings for the pill on top, the same as the earnings screen
+  const { trips: earningsTrips } = useEarningsTrips();
+  const todayEarnings = useEarnings(earningsTrips).today.netEarnings;
+  // Dark map between 6 p.m. and 6 a.m.
+  const nightMap = useNightMap();
 
   // Solo un conductor aprobado puede ponerse Disponible (sección 2 del enunciado).
   // Si la cuenta no está aprobada queda desconectado, aunque la última vez quedara conectado.
@@ -76,7 +87,12 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!location) return;
     mapRef.current?.animateToRegion(
-      { ...location, latitudeDelta: 0.02, longitudeDelta: 0.02 },
+      {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      },
       500,
     );
   }, [location]);
@@ -98,7 +114,7 @@ export default function HomeScreen() {
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
-        showsUserLocation={isActive}
+        {...nightMap}
         showsMyLocationButton={false}
         initialRegion={{
           latitude: 6.2442,
@@ -106,7 +122,10 @@ export default function HomeScreen() {
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         }}
-      />
+      >
+        {/* The car replaces the blue dot while the driver is online */}
+        {isActive && <CarMarker position={location} />}
+      </MapView>
 
       {/* Barra superior: menú y estado */}
       <View style={[styles.topBar, { top: insets.top + spacing.md }]}>
@@ -134,8 +153,23 @@ export default function HomeScreen() {
         <View style={styles.menuSpacer} />
       </View>
 
+      {/* Today's net earnings, under the status chip */}
+      <View
+        style={[styles.earningsPill, { top: insets.top + spacing.md + 60 }]}
+        accessible
+        accessibilityLabel={`${t("home.todayEarnings")} ${formatCop(todayEarnings)}`}
+      >
+        <Text style={styles.earningsLabel}>{t("home.todayEarnings")}</Text>
+        <Text style={styles.earningsAmount}>{formatCop(todayEarnings)}</Text>
+      </View>
+
       {/* Avisos: cuenta sin aprobar, ubicación y solicitudes */}
-      <View style={[styles.notices, { top: insets.top + spacing.md + 60 }]}>
+      <View
+        style={[
+          styles.notices,
+          { top: insets.top + spacing.md + 60 + EARNINGS_PILL_SPACE },
+        ]}
+      >
         {blockKey && (
           <Text style={[styles.notice, styles.noticeInfo]}>{t(blockKey)}</Text>
         )}
@@ -199,6 +233,7 @@ export default function HomeScreen() {
           trip={request}
           timeLeft={timeLeft}
           driverStatus={driverState.status}
+          driverLocation={location}
         />
       )}
     </View>
@@ -206,6 +241,8 @@ export default function HomeScreen() {
 }
 
 const MENU_SIZE = 48;
+// Height of the earnings pill plus the gap below it
+const EARNINGS_PILL_SPACE = 52;
 const TRACK_WIDTH = 60;
 const THUMB_SIZE = 28;
 const TRACK_PADDING = 3;
@@ -264,6 +301,21 @@ const styles = StyleSheet.create({
   },
   statusDotOnline: { backgroundColor: colors.success },
   statusChipText: { fontSize: 15, fontWeight: "700", color: colors.black },
+
+  earningsPill: {
+    position: "absolute",
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: spacing.sm,
+    backgroundColor: colors.black,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    ...shadow,
+  },
+  earningsLabel: { ...typography.label, color: colors.disabledText },
+  earningsAmount: { fontSize: 18, fontWeight: "700", color: colors.white },
 
   notices: {
     position: "absolute",
