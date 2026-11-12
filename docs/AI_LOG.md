@@ -805,6 +805,33 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Verificación: Jest de la raíz y las pruebas del backend pasan, `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores. [Pendiente: revisar cómo se ve el README en GitHub]
 - Aprendizaje: [Completar]
 
+### Entrada #25
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Crear viajes terminados y pagados de prueba para que Ximena pruebe el historial y las ganancias, y poder borrarlos antes del video.
+- Prompt (punto 3 del mensaje copiado en la entrada #23):
+  > 3. Simulador de viajes terminados para que Ximena pruebe historial y
+  >    ganancias: un script (npm run simular-historial -- <correo del
+  >    conductor>) que busque el uid con firebase-admin y cree unos 10 viajes
+  >    completed y paid a nombre de ese conductor, repartidos entre hoy, esta
+  >    semana y este mes, mezclando efectivo y mercadopago y las 3 categorías.
+  >    Los montos deben salir de calculateFare de src/config/pricing.js, sin
+  >    duplicar la fórmula si es posible (si no se puede, explícame por qué).
+  >    Todos con passengerId "pasajero-simulado". Agrega también
+  >    npm run limpiar-simulados, que borre solo los viajes con ese
+  >    passengerId, para dejar Firestore limpio antes del video. Los dos
+  >    scripts usan la misma protección de proyecto que el simulador.
+- Resumen de la respuesta: `npm run simular-historial -- <correo>` busca el uid con `getAuth().getUserByEmail` y crea en un solo lote 10 viajes con status `paid`: 3 de hoy, 3 de esta semana (desde el lunes, antes de hoy) y 4 de este mes (antes de esta semana). Mezclan efectivo y Mercado Pago, las 3 categorías y algunas propinas. Los de efectivo quedan con `paymentStatus: "cash"` y los de Mercado Pago con `"approved"` y un `paymentId` simulado. Si hoy es lunes o el mes empezó esta semana, esos viajes se pasan a hoy para no salirse del periodo. `npm run limpiar-simulados` borra solo los viajes de `trips` con `passengerId == "pasajero-simulado"`, en lotes de 500. La protección de proyecto del simulador se movió a `backend/scripts/proyecto.js` y la usan los tres scripts. Los scripts los corre Tamiro: Ximena no tiene `serviceAccountKey.json`, así que ella solo ve en la app los viajes que él crea con el correo de su cuenta.
+- Qué se usó / modificó / descartó:
+  - Se usó: `calculateFare` de `src/config/pricing.js` sin copiar la fórmula. El backend es CommonJS y `pricing.js` es un módulo ES, pero Node carga un módulo ES con `require` desde la versión 20.19 (aquí se usó Node 24.19). Por eso `engines` del backend pasó de `>=20.6` a `>=20.19`. Las rutas, los lugares y la distancia y duración de respaldo son los del simulador, así que no se gasta cupo de OpenRouteService.
+  - Se modificó: `simular-solicitud.js` ahora toma `leerVariableEnv`, `revisarProyecto` y la carga de la clave de `proyecto.js` (los sigue exportando para sus pruebas) y usa la constante `PASAJERO_SIMULADO`.
+  - Se descartó: pasar la clave de servicio como objeto en vez de ruta para quitar el aviso "keyFilename is deprecated", porque solo cambió por otro aviso igual ("fromJSON is deprecated"); los dos salen de dentro de `firebase-admin` y no afectan.
+- Archivos y commit: `backend/scripts/simular-historial.js`, `backend/scripts/limpiar-simulados.js`, `backend/scripts/proyecto.js`, `backend/scripts/simular-solicitud.js`, `backend/test/simular-historial.test.js`, `backend/package.json` — 632a7cf
+- Verificación: las pruebas del backend pasan 34 (7 nuevas: campos del enunciado, montos iguales a `calculateFare`, mezcla de pagos y categorías, fechas un miércoles, un lunes y el 1 de diciembre, y lotes de 500); Jest de la raíz pasa 158, `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores. `npm run simular-historial -- no-existe-prueba@example.com` comprobó el proyecto `uber-clone-ba0e2` y respondió "No hay ninguna cuenta con el correo…" sin escribir nada. [Pendiente: correrlo con el correo real del conductor, ver los viajes en el historial y las ganancias de la app y luego `npm run limpiar-simulados`]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
