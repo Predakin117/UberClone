@@ -895,6 +895,64 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - [Pendiente: ver en la consola que `location` cambia cada 10 s y que al desconectarse queda `isAvailable: false`]
 - Aprendizaje: [Completar]
 
+### Entrada #28
+
+- Fecha: 2026-11-12
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Historial de viajes y ganancias reales (sección 5) a partir de Firestore, y confirmar el pago en efectivo desde el resumen del viaje.
+- Prompt (puntos de código; se omiten las líneas sobre ramas y commits):
+  > Usa src/config/theme.js de Ximena para los colores. Todo texto con t() en
+  > español e inglés. Siguiente entrada de bitácora: #28.
+  >
+  > 1. src/hooks/useTripHistory.js: escucha con onSnapshot los viajes del
+  >    conductor (driverId == uid) en status completed o paid, ordenados del
+  >    más reciente al más antiguo por completedAt, con limit(20). Si Firestore
+  >    pide índice compuesto, dame el link. Con limpieza en el useEffect.
+  >
+  > 2. src/hooks/useEarnings.js (hook OBLIGATORIO, sección 5): recibe la lista
+  >    de viajes y con useMemo calcula para hoy, esta semana (desde el lunes) y
+  >    este mes: número de viajes, total facturado (fare), comisiones,
+  >    propinas, ganancia neta (driverEarnings) y promedio por viaje. Además el
+  >    saldo: driverEarnings de viajes pagados con mercadopago menos commission
+  >    de viajes en efectivo. Lógica en funciones puras con pruebas Jest.
+  >
+  > 3. EarningsScreen: reemplaza el simulador por useTripHistory + useEarnings,
+  >    con tres bloques Hoy / Semana / Mes y el saldo.
+  >
+  > 4. HistoryScreen nueva en src/screens/main/ (hoy es un mock en
+  >    MainDrawer): FlatList con fecha y hora, origen → destino, categoría,
+  >    tarifa, ganancia neta y estado del pago; filtros Hoy / Semana / Mes;
+  >    mensaje cuando no hay viajes. Conéctala en MainDrawer sin cambiar el
+  >    resto de su diseño.
+  >
+  > 5. TripSummaryScreen: escucha el viaje con onSnapshot (por trip.id) para
+  >    ver el estado del pago en tiempo real. Si paymentMethod es cash y el
+  >    viaje no está paid, botón "Recibí efectivo" que llama a
+  >    markCashReceived de src/services/payments.js, con estado de carga y el
+  >    error debajo usando payment.error.<código>. Agrega esos textos.
+
+  > Un cambio: useEarnings no puede depender del limit(20) del historial,
+  > porque los totales del mes saldrían incompletos. Para ganancias usa una
+  > consulta aparte con los viajes del conductor en completed o paid con
+  > completedAt desde el inicio del mes (sin limit); usa el mismo índice.
+  > Quita la nota "Calculado con tus últimos 20 viajes". El historial sigue
+  > con limit(20).
+  >
+  > Lo demás de tus decisiones está bien.
+- Resumen de la respuesta: `src/services/earnings.js` tiene las funciones puras: `periodStarts` (inicio de hoy, del lunes y del día 1, en la hora del celular), `filterTripsByPeriod`, `summarizeTrips` (viajes, total facturado, comisiones, propinas, ganancia neta y promedio por viaje), `calculateBalance` y `calculateEarnings`, que junta los tres periodos y el saldo. Solo suman los montos que se guardaron al completar cada viaje; no recalculan tarifas. `useEarnings(trips)` las envuelve en `useMemo`. En `tripRepository.js`, `subscribeToTripHistory` escucha los últimos 20 viajes `completed` o `paid` del conductor y `subscribeToTripsSince` los de un periodo sin límite; las dos leen `completedAt` con `serverTimestamps: "estimate"` para que un viaje recién terminado no llegue con fecha vacía. `useTripHistory` y `useEarningsTrips` comparten `useDriverTrips` (espera la sesión de Firebase y limpia las dos suscripciones en el `useEffect`). `EarningsScreen` muestra Hoy / Esta semana / Este mes y el saldo del mes; `HistoryScreen` es una `FlatList` con filtros, que reemplaza el mock de `MainDrawer`. `TripSummaryScreen` escucha el viaje con `useTrip` y, si es en efectivo y no está `paid`, muestra el botón "Recibí efectivo" con carga y el error debajo (`FieldMessage`). Los textos van en `strings.js` en español e inglés, y `src/i18n/format.js` formatea pesos y fecha/hora.
+- Qué se usó / modificó / descartó:
+  - Se usó: el mismo patrón de `useActiveTrip` (escuchar la sesión y luego el viaje), `theme.js` de Ximena para los colores de las pantallas nuevas y `FieldMessage` para el error.
+  - Se modificó: la consulta de ganancias empieza en el lunes o en el día 1, el que sea más temprano, porque la semana puede empezar en el mes anterior (por ejemplo, si el 1 de noviembre es domingo); el saldo se calcula solo con los viajes del mes. El promedio por viaje es la ganancia neta entre el número de viajes. Para Mercado Pago el saldo cuenta solo los viajes `paid`; para efectivo resta la comisión de todos. `paymentStatusKey` devuelve "Efectivo recibido" cuando un viaje en efectivo ya está `paid`, para que el resumen cambie en vivo al tocar el botón. El historial abre en "Este mes".
+  - Se descartó: la primera versión calculaba las ganancias con los 20 viajes del historial y mostraba la nota "Calculado con tus últimos 20 viajes"; Tamiro pidió una consulta aparte sin límite. También se descartó cambiar los estilos que ya tenía `TripSummaryScreen` (solo el botón nuevo usa `theme.js`).
+- Archivos y commit: `src/services/earnings.js`, `src/services/earnings.test.js`, `src/services/tripRepository.js`, `src/hooks/useDriverTrips.js`, `src/hooks/useTripHistory.js`, `src/hooks/useEarningsTrips.js`, `src/hooks/useEarnings.js`, `docs/APIS.md` — a0c9fe9; `src/screens/main/EarningsScreen.js`, `src/screens/main/HistoryScreen.js`, `src/navigation/MainDrawer.js`, `src/i18n/format.js`, `src/i18n/format.test.js`, `src/i18n/strings.js` — 6cf7e16; `src/screens/trip/TripSummaryScreen.js`, `src/hooks/useTrip.js`, `src/services/trips.js`, `src/services/trips.test.js`, `src/services/payments.test.js`, `src/i18n/strings.js` — 3eb36ae
+- Verificación:
+  - Jest de la raíz pasa 209 (22 en `earnings.test.js`: inicio de la semana en lunes, domingo y lunes, semana que empieza en el mes anterior, límites de cada periodo, totales, promedio sin dividir por cero, saldo con Mercado Pago pagado y sin pagar, efectivo y saldo solo del mes; 5 en `format.test.js`; 1 nueva en `payments.test.js` que revisa que cada código de error tenga su texto en los dos idiomas; 1 caso nuevo de `paymentStatusKey`). Las 42 del backend pasan, `npx expo lint` queda sin errores y `npx tsc --noEmit` no da errores.
+  - Con firebase-admin (solo lectura) se lanzaron las consultas del historial y de ganancias contra `uber-clone-ba0e2`: las dos pidieron el mismo índice compuesto (`driverId` ↑, `status` ↑, `completedAt` ↓), que quedó anotado en `docs/APIS.md`. Tamiro lo creó en la consola, pero en la última prueba antes del push Firestore todavía respondía que faltaba. [Pendiente: confirmar que el índice esté "Habilitado" y que las dos consultas respondan]
+  - `docs/enunciado.pdf` no está en el repositorio; se siguió `src/services/trips.js` (secciones 3 y 6).
+  - [Pendiente: probar en el celular el historial y las ganancias con `npm run simular-historial`, y un viaje real en efectivo que pase de `completed` a `paid` con el botón]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
