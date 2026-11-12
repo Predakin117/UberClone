@@ -859,6 +859,41 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - [Pendiente: probar en el celular, con el botón de Ximena, un viaje real en efectivo que pase de `completed` a `paid`]
 - Aprendizaje: [Completar]
 
+### Entrada #27
+
+- Fecha: 2026-11-11
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Guardar en Firestore la ubicación del conductor y si está disponible mientras está conectado, sin gastar escrituras de más.
+- Prompt (punto 5 del mensaje copiado en la entrada #23):
+  > 5. Ubicación a Firestore (sección 3): en useDriverLocation, mientras el
+  >    conductor está conectado, guarda en drivers/{uid} su ubicación
+  >    ({ lat, lng } y la hora del servidor) como máximo cada 10 segundos, y
+  >    un campo de disponibilidad. Al desconectarse o salir de la pantalla,
+  >    deja de guardar y marca no disponible. Revisa que firestore.rules lo
+  >    permita sin cambiar el status del conductor.
+
+  > 1. Los nombres de campo quedan así; la guía no los define.
+  > 2. Sí: con un viaje en curso, isAvailable en false; al terminar o
+  >    cancelar, vuelve a seguir al botón Disponible. Inclúyelo en este
+  >    mismo commit con su prueba.
+  > 3. Anota en docs/APIS.md (servicio 11) que un conductor con
+  >    locationUpdatedAt de hace más de 1 minuto se trata como desconectado.
+  > Luego haz los dos commits y el push. Mercado Pago todavía no: te aviso.
+- Resumen de la respuesta: `src/services/driverLocation.js` guarda en `drivers/{uid}` los campos `location: { lat, lng }`, `locationUpdatedAt` (hora del servidor) e `isAvailable`, con `updateDoc` y un tiempo límite de 5 segundos; nunca escribe `status` y nunca lanza. `shouldSaveLocation` deja pasar la primera ubicación y después una cada 10 segundos. `useDriverLocation` mueve el mapa con cada lectura de `expo-location` (cada 5 s o 5 m), pero solo guarda en Firestore cuando pasan 10 s; en la limpieza del `useEffect` (al desconectarse o al desmontarse la pantalla) quita la suscripción y marca `isAvailable: false`. `firestore.rules` no se cambió: el dueño ya puede actualizar su documento mientras el `status` quede igual. Por decisión de Tamiro, con un viaje en curso `isAvailable` queda en `false` (la ubicación se sigue guardando) y al terminar o cancelar el viaje vuelve a seguir al botón Disponible: `HomeScreen` le pasa al hook si hay un viaje en curso, `isDriverAvailable` calcula la disponibilidad y `availabilityOnTripChange` decide si hay que escribirla de una vez al empezar o terminar el viaje. En `docs/APIS.md` (servicio 11) quedaron los campos y la regla de que un conductor con `locationUpdatedAt` de hace más de 1 minuto se trata como desconectado.
+- Qué se usó / modificó / descartó:
+  - Se usó: `updateDoc` en vez de `setDoc` con `merge`, para no crear el documento de un conductor sin registro, y `withTimeout` de `src/services/withTimeout.js`.
+  - Se modificó: además del hook, `logout` de `AuthContext` llama a `markDriverUnavailable` antes de cerrar la sesión de Firebase, porque cuando la pantalla se desmonta la sesión ya está cerrada y las reglas rechazan la escritura. Los fallos se registran con `console.warn` (no `console.error`, que abre la pantalla roja en desarrollo) y el `not-found` de un conductor sin documento se ignora. Se quitaron los `console.log` de cada ubicación.
+  - Se modificó también: la primera versión dejaba `isAvailable` siguiendo solo al botón Disponible, también durante un viaje; Tamiro pidió ponerlo en `false` mientras haya un viaje en curso. El valor actual se guarda en un ref desde un `useEffect`, porque el linter de React no deja leer ni escribir refs durante el render ("Cannot access refs during render"), y así el rastreo no se reinicia al aceptar un viaje.
+  - Se descartó: cambiar `firestore.rules` (no hacía falta, así que tampoco hay que publicarlas) e instalar una librería para probar el hook; la lógica quedó en funciones puras de `driverLocation.js` con sus pruebas.
+- Archivos y commit: `src/services/driverLocation.js`, `src/services/driverLocation.test.js`, `src/hooks/useDriverLocation.js`, `src/contexts/AuthContext.js`, `src/screens/trip/HomeScreen.js`, `docs/APIS.md` — 0fc3c27
+- Verificación:
+  - Jest de la raíz pasa 176 (14 nuevas en `driverLocation.test.js`: la primera ubicación se guarda ya, una cada 10 s, 6 en un minuto con lecturas cada 5 s, campos sin `status`, solo el documento del conductor, sin sesión no escribe, los fallos no lanzan, no disponible durante un viaje, `false` al empezarlo y `true` al terminarlo, y nada que escribir si el viaje no cambió o está desconectado); las 42 del backend pasan, `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores.
+  - Con un token real de la cuenta de Tamiro y la API REST de Firestore (que pasa por las reglas publicadas en `uber-clone-ba0e2`), se escribieron la ubicación con la hora del servidor y luego `isAvailable: false`: las dos respondieron 200 y `status` siguió en `pending`.
+  - `docs/enunciado.pdf` no está en el repositorio; Tamiro confirmó que la guía no define los nombres de estos campos, así que quedan `location`, `locationUpdatedAt` e `isAvailable`.
+  - [Pendiente: probar en el celular con un conductor aprobado: conectarse, ver en la consola que `location` cambia cada 10 s, aceptar un viaje y ver `isAvailable: false`, terminarlo y ver `true`, desconectarse y ver `false`]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
