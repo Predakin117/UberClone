@@ -362,6 +362,15 @@ export const strings = {
     "earnings.balance": "Saldo",
     "earnings.balanceOwed": "La plataforma te debe",
     "earnings.balanceDue": "Le debes a la plataforma",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "earnings.weekChart": "Ganancia neta de la semana",
+    "weekday.mon": "L",
+    "weekday.tue": "M",
+    "weekday.wed": "X",
+    "weekday.thu": "J",
+    "weekday.fri": "V",
+    "weekday.sat": "S",
+    "weekday.sun": "D",
     "earnings.balanceHint":
       "Este mes: ganancias de viajes pagados con Mercado Pago menos la comisión de los viajes en efectivo.",
 
@@ -825,6 +834,15 @@ export const strings = {
     "earnings.balance": "Balance",
     "earnings.balanceOwed": "The platform owes you",
     "earnings.balanceDue": "You owe the platform",
+    // AI-assisted: see docs/AI_LOG.md #31
+    "earnings.weekChart": "Net earnings this week",
+    "weekday.mon": "M",
+    "weekday.tue": "T",
+    "weekday.wed": "W",
+    "weekday.thu": "T",
+    "weekday.fri": "F",
+    "weekday.sat": "S",
+    "weekday.sun": "S",
     "earnings.balanceHint":
       "This month: earnings from trips paid with Mercado Pago minus the fee of cash trips.",
 

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #28
+// AI-assisted: see docs/AI_LOG.md #28, #31
 // Earnings of the driver (section 5): pure functions that useEarnings and the
 // history screen use. They only add up the amounts saved on each trip when it
 // was completed (calculateFare in src/config/pricing.js); they never recompute
@@ -117,10 +117,42 @@ export const calculateBalance = (trips) =>
     return balance;
   }, 0);
 
+// Days of the week in the chart, Monday first (keys "weekday.<day>")
+export const WEEK_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
 /**
- * Everything the earnings screen shows: { today, week, month, balance }.
- * Each period has the totals of summarizeTrips; the balance is the one of
- * this month's trips.
+ * Net earnings of each day of this week, Monday to Sunday: seven items
+ * { day, netEarnings, isToday }. Days without trips have 0.
+ */
+export const weeklyEarnings = (trips, now = new Date()) => {
+  const weekStart = new Date(periodStarts(now).week);
+  return WEEK_DAYS.map((day, index) => {
+    const start = new Date(
+      weekStart.getFullYear(),
+      weekStart.getMonth(),
+      weekStart.getDate() + index,
+    ).getTime();
+    const end = new Date(
+      weekStart.getFullYear(),
+      weekStart.getMonth(),
+      weekStart.getDate() + index + 1,
+    ).getTime();
+    const dayTrips = trips.filter((trip) => {
+      const completedAt = completedAtMillis(trip);
+      return completedAt !== null && completedAt >= start && completedAt < end;
+    });
+    return {
+      day,
+      netEarnings: summarizeTrips(dayTrips).netEarnings,
+      isToday: start === periodStarts(now).today,
+    };
+  });
+};
+
+/**
+ * Everything the earnings screen shows: { today, week, month, balance,
+ * weekDays }. Each period has the totals of summarizeTrips; the balance is the
+ * one of this month's trips; weekDays is weeklyEarnings for the chart.
  */
 export const calculateEarnings = (trips, now = new Date()) => {
   const byPeriod = Object.fromEntries(
@@ -131,5 +163,6 @@ export const calculateEarnings = (trips, now = new Date()) => {
       PERIODS.map((period) => [period, summarizeTrips(byPeriod[period])]),
     ),
     balance: calculateBalance(byPeriod.month),
+    weekDays: weeklyEarnings(trips, now),
   };
 };

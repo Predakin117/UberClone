@@ -8,6 +8,7 @@ import {
   filterTripsByPeriod,
   periodStarts,
   summarizeTrips,
+  weeklyEarnings,
 } from "./earnings";
 
 // Thursday, 12 November 2026, 15:00 local time. Monday of that week is the 9th.
@@ -236,5 +237,63 @@ describe("earningsQueryStart", () => {
     expect(earningsQueryStart(at(2026, 10, 1, 12, 0))).toBe(
       at(2026, 9, 26).getTime(),
     );
+  });
+});
+
+// AI-assisted: see docs/AI_LOG.md #31
+describe("weeklyEarnings", () => {
+  it("has the seven days from Monday to Sunday and marks today", () => {
+    const days = weeklyEarnings([], NOW);
+    expect(days.map((item) => item.day)).toEqual([
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun",
+    ]);
+    // NOW is Thursday
+    expect(days.map((item) => item.isToday)).toEqual([
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+    ]);
+    expect(days.every((item) => item.netEarnings === 0)).toBe(true);
+  });
+
+  it("adds each trip's net earnings to the day it was completed", () => {
+    const monday = makeTrip({ id: "mon", completedAt: at(2026, 10, 9, 0, 0) });
+    const monday2 = makeTrip({ id: "mon2", completedAt: at(2026, 10, 9, 23, 59) });
+    const today = makeTrip({ id: "thu", completedAt: at(2026, 10, 12, 9, 0), tip: 1000 });
+    const days = weeklyEarnings([monday, monday2, today], NOW);
+
+    expect(days[0].netEarnings).toBe(monday.driverEarnings + monday2.driverEarnings);
+    expect(days[3].netEarnings).toBe(today.driverEarnings);
+    expect(days[1].netEarnings).toBe(0);
+  });
+
+  it("leaves out trips from last week and trips without completedAt", () => {
+    const lastSunday = makeTrip({ id: "sun", completedAt: at(2026, 10, 8, 23, 59) });
+    const pending = makeTrip({ id: "p", completedAt: null });
+    const days = weeklyEarnings([lastSunday, pending], NOW);
+    expect(days.every((item) => item.netEarnings === 0)).toBe(true);
+  });
+
+  it("works when the week started in the previous month", () => {
+    // Sunday 1 November: Monday was 26 October
+    const sunday = at(2026, 10, 1, 12, 0);
+    const october = makeTrip({ id: "oct", completedAt: at(2026, 9, 27, 9, 0) });
+    const days = weeklyEarnings([october], sunday);
+    expect(days[1].netEarnings).toBe(october.driverEarnings);
+    expect(days[6].isToday).toBe(true);
+  });
+
+  it("comes with calculateEarnings for useEarnings", () => {
+    expect(calculateEarnings([], NOW).weekDays).toHaveLength(7);
   });
 });

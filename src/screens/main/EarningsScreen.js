@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #15, #28
+// AI-assisted: see docs/AI_LOG.md #15, #28, #31
 // Earnings of the driver (section 5): today, this week (since Monday) and this
 // month, plus this month's balance with the platform. The trips come in real
 // time from useEarningsTrips (no limit); the totals from useEarnings.
@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import WeekEarningsChart from "../../components/WeekEarningsChart";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useEarnings } from "../../hooks/useEarnings";
@@ -49,6 +50,7 @@ export default function EarningsScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <WeekEarningsChart days={earnings.weekDays} />
       {PERIODS.map((period) => {
         const summary = earnings[period];
         return (
