@@ -1,22 +1,20 @@
-// AI-assisted: see docs/AI_LOG.md #60
+// AI-assisted: see docs/AI_LOG.md #60, #61
 // Details of a finished trip (section 6), opened from the history: the route
 // drawn on the map from the saved polyline (no new route request, section 7),
 // the date, the net earnings, duration, distance, the fare breakdown with
 // commission and tip, the payment status and the ratings. The trip is read in
-// real time, so a payment confirmed later shows up here too.
+// real time, so a payment confirmed later shows up here too. While it loads,
+// gray blocks in the shape of the screen.
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
 import { useMemo, useRef } from "react";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
+import FareBreakdown from "../../components/FareBreakdown";
 import PaymentStatusChip from "../../components/PaymentStatusChip";
 import RouteStops from "../../components/RouteStops";
+import Skeleton, { SkeletonBox } from "../../components/Skeleton";
+import TripStats from "../../components/TripStats";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useNightMap } from "../../hooks/useNightMap";
@@ -41,25 +39,6 @@ const Stars = ({ rating }) => (
   </View>
 );
 
-const Stat = ({ icon, label, value }) => (
-  <View style={styles.stat}>
-    <Ionicons name={icon} size={20} color={colors.black} />
-    <Text style={styles.statValue}>{value}</Text>
-    <Text style={styles.caption}>{label}</Text>
-  </View>
-);
-
-const AmountRow = ({ label, value, isTotal = false }) => (
-  <View style={[styles.amountRow, isTotal && styles.totalRow]}>
-    <Text style={isTotal ? styles.totalLabel : styles.amountLabel}>
-      {label}
-    </Text>
-    <Text style={isTotal ? styles.totalValue : styles.amountValue}>
-      {value}
-    </Text>
-  </View>
-);
-
 export default function TripDetailScreen() {
   const { tripId } = useRoute().params;
   const { t, language } = useLanguage();
@@ -68,20 +47,33 @@ export default function TripDetailScreen() {
   const mapRef = useRef(null);
   const route = useMemo(() => (trip ? tripRoute(trip) : null), [trip]);
 
-  if (!trip) {
+  if (error) {
     return (
       <View style={styles.loading}>
-        {!error && <ActivityIndicator color={colors.black} />}
-        <Text style={[styles.loadingText, error && styles.errorText]}>
-          {error ? t(error) : t("tripDetail.loading")}
-        </Text>
+        <Text style={[styles.loadingText, styles.errorText]}>{t(error)}</Text>
       </View>
     );
   }
 
+  if (!trip) {
+    return (
+      <Skeleton label={t("tripDetail.loading")} style={styles.screen}>
+        <SkeletonBox height={260} style={styles.squareBox} />
+        <View style={styles.body}>
+          <SkeletonBox width={160} height={14} />
+          <SkeletonBox width={200} height={36} />
+          <SkeletonBox width={110} height={24} round />
+          <SkeletonBox height={80} style={styles.skeletonGap} />
+          <SkeletonBox height={72} />
+          <SkeletonBox height={160} style={styles.skeletonGap} />
+        </View>
+      </Skeleton>
+    );
+  }
+
   const ratingRow = (label, rating) => (
-    <View style={styles.amountRow}>
-      <Text style={styles.amountLabel}>{label}</Text>
+    <View style={styles.ratingRow}>
+      <Text style={styles.ratingLabel}>{label}</Text>
       {Number.isInteger(rating) ? (
         <Stars rating={rating} />
       ) : (
@@ -157,46 +149,10 @@ export default function TripDetailScreen() {
           )}
         </View>
 
-        <View style={styles.stats}>
-          <Stat
-            icon="time-outline"
-            label={t("request.duration")}
-            value={t("request.minutes").replace("{minutes}", trip.durationMin)}
-          />
-          <Stat
-            icon="navigate-outline"
-            label={t("request.distance")}
-            value={t("request.km").replace("{km}", trip.distanceKm)}
-          />
-          <Stat
-            icon={
-              trip.paymentMethod === "cash" ? "cash-outline" : "card-outline"
-            }
-            label={t("summary.payment")}
-            value={t(`payment.${trip.paymentMethod}`)}
-          />
-        </View>
+        <TripStats trip={trip} style={styles.stats} />
 
         <Text style={styles.sectionTitle}>{t("tripDetail.breakdown")}</Text>
-        <View style={styles.card}>
-          <AmountRow label={t("summary.fare")} value={formatCop(trip.fare)} />
-          <AmountRow
-            label={t("summary.commission").replace(
-              "{percent}",
-              Math.round(trip.commissionRate * 100),
-            )}
-            value={`- ${formatCop(trip.commission)}`}
-          />
-          <AmountRow
-            label={t("summary.tip")}
-            value={`+ ${formatCop(trip.tip ?? 0)}`}
-          />
-          <AmountRow
-            label={t("summary.earnings")}
-            value={formatCop(trip.driverEarnings)}
-            isTotal
-          />
-        </View>
+        <FareBreakdown trip={trip} />
 
         <Text style={styles.sectionTitle}>{t("tripDetail.ratings")}</Text>
         <View style={styles.card}>
@@ -234,15 +190,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   note: { marginTop: spacing.md },
-  stats: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.md },
-  stat: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: 2,
-  },
-  statValue: { ...typography.label, fontSize: 15, marginTop: spacing.xs },
+  stats: { marginTop: spacing.md },
   sectionTitle: { ...typography.section, fontSize: 18, marginTop: spacing.xl },
   card: {
     backgroundColor: colors.surface,
@@ -250,22 +198,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
-  amountRow: {
+  ratingRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: spacing.sm,
     gap: spacing.md,
   },
-  amountLabel: { ...typography.body, fontSize: 15, flexShrink: 1 },
-  amountValue: { ...typography.body, fontSize: 15 },
-  totalRow: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    marginTop: spacing.xs,
-    paddingTop: spacing.md,
-  },
-  totalLabel: { ...typography.label, fontSize: 16, flexShrink: 1 },
-  totalValue: { fontSize: 17, fontWeight: "700", color: colors.success },
+  ratingLabel: { ...typography.body, fontSize: 15, flexShrink: 1 },
+  squareBox: { borderRadius: 0 },
+  skeletonGap: { marginTop: spacing.lg },
   stars: { flexDirection: "row", gap: 2 },
 });

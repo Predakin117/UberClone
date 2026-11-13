@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #31
+// AI-assisted: see docs/AI_LOG.md #31, #61
 // Five stars for the driver to rate the passenger once the trip ends. It is
 // saved in passengerRating (not in rating, which is the driver's own rating).
 // After saving, the trip snapshot brings the value and the stars stay fixed.
@@ -18,7 +18,8 @@ import FieldMessage from "./FieldMessage";
 
 const STARS = [1, 2, 3, 4, 5];
 
-export default function PassengerRating({ trip }) {
+// style lets the trip summary put it in a card without the bottom margin
+export default function PassengerRating({ trip, style }) {
   const { t } = useLanguage();
   const [selected, setSelected] = useState(0);
   const [isSending, setIsSending] = useState(false);
@@ -41,7 +42,7 @@ export default function PassengerRating({ trip }) {
   };
 
   return (
-    <View style={styles.block}>
+    <View style={[styles.block, style]}>
       <Text style={styles.title}>
         {saved
           ? t("summary.ratedPassenger").replace("{stars}", saved)
