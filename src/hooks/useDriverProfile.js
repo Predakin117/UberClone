@@ -1,8 +1,9 @@
-// AI-assisted: see docs/AI_LOG.md #30
+// AI-assisted: see docs/AI_LOG.md #30, #61
 // Listens in real time to the driver's document (drivers/{uid}) and to the
 // ratings of their finished trips. Returns { driver, rating, isLoading,
-// error }: driver is null without a registration; rating is { average, count }
-// of averageRating; error is a key of src/i18n/strings.js.
+// error, tripCount }: driver is null without a registration; rating is
+// { average, count } of averageRating; tripCount is the number of finished
+// trips; error is a key of src/i18n/strings.js.
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useMemo, useState } from "react";
 import { auth, isFirebaseConfigured } from "../config/firebase";
@@ -57,5 +58,5 @@ export const useDriverProfile = () => {
     };
   }, []);
 
-  return { ...state, rating };
+  return { ...state, rating, tripCount: trips.length };
 };
