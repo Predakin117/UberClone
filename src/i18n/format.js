@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #28, #31, #60
+// AI-assisted: see docs/AI_LOG.md #28, #31, #60, #61
 // Formats for amounts and dates shown on screen, by language.
 
 const LOCALES = { es: "es-CO", en: "en-US" };
@@ -44,4 +44,21 @@ export const formatTime = (millis, language) =>
     : new Date(millis).toLocaleTimeString(LOCALES[language] ?? LOCALES.es, {
         hour: "numeric",
         minute: "2-digit",
+      });
+
+// AI-assisted: see docs/AI_LOG.md #61
+// Short date for the week navigator, e.g. "9 nov" in Spanish
+export const formatShortDate = (millis, language) =>
+  new Date(millis).toLocaleDateString(LOCALES[language] ?? LOCALES.es, {
+    day: "numeric",
+    month: "short",
+  });
+
+// Month and year for "member since", e.g. "nov 2026" in Spanish
+export const formatMonthYear = (millis, language) =>
+  millis == null
+    ? ""
+    : new Date(millis).toLocaleDateString(LOCALES[language] ?? LOCALES.es, {
+        month: "short",
+        year: "numeric",
       });

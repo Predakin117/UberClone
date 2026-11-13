@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #56, #59, #60
+// AI-assisted: see docs/AI_LOG.md #56, #59, #60, #61
 // Visual theme of the app: black and white with light gray surfaces, bold
 // type and pill-shaped secondary buttons. Screens and components take their
 // colors, sizes and spacing from here instead of writing them by hand.
@@ -29,6 +29,8 @@ export const colors = {
   surfaceDark: "#1F1F1F",
   borderDark: "#333333",
   textOnDark: "#B3B3B3",
+  // Vehicle plate on the profile: Colombian plates are yellow
+  plate: "#FFD400",
 };
 
 export const radius = { sm: 8, md: 12, lg: 16, pill: 999 };

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56, #58, #59, #60
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56, #58, #59, #60, #61
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -598,6 +598,21 @@ export const strings = {
     "home.goOnline": "Conectarme",
     "home.goOffline": "Desconectarme",
     "home.searching": "Buscando viajes…",
+    // AI-assisted: see docs/AI_LOG.md #61
+    "earnings.lastWeek": "Semana pasada",
+    "earnings.previousWeek": "Semana anterior",
+    "earnings.nextWeek": "Semana siguiente",
+    "earnings.tapDay": "Toca una barra para ver la ganancia de ese día",
+    "earnings.summary": "Resumen",
+    "summary.completed": "¡Viaje completado!",
+    "profile.statRating": "Calificación",
+    "profile.statTrips": "Viajes",
+    "profile.statSince": "Conductor desde",
+    "profile.docValid": "Vigente",
+    "profile.changePhoto": "Tomar una nueva foto de perfil",
+    "settings.preferences": "Preferencias",
+    "settings.about": "Acerca de la app",
+    "drawer.viewProfile": "Ver perfil",
   },
 
   en: {
@@ -1145,6 +1160,21 @@ export const strings = {
     "home.goOnline": "Go online",
     "home.goOffline": "Go offline",
     "home.searching": "Finding trips…",
+    // AI-assisted: see docs/AI_LOG.md #61
+    "earnings.lastWeek": "Last week",
+    "earnings.previousWeek": "Previous week",
+    "earnings.nextWeek": "Next week",
+    "earnings.tapDay": "Tap a bar to see that day's earnings",
+    "earnings.summary": "Summary",
+    "summary.completed": "Trip completed!",
+    "profile.statRating": "Rating",
+    "profile.statTrips": "Trips",
+    "profile.statSince": "Driver since",
+    "profile.docValid": "Valid",
+    "profile.changePhoto": "Take a new profile photo",
+    "settings.preferences": "Preferences",
+    "settings.about": "About the app",
+    "drawer.viewProfile": "View profile",
   },
 };
 

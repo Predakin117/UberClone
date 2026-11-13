@@ -1,9 +1,11 @@
-// AI-assisted: see docs/AI_LOG.md #28, #31
+// AI-assisted: see docs/AI_LOG.md #28, #31, #61
 import {
   formatCop,
   formatDateTime,
   formatDay,
   formatDecimal,
+  formatMonthYear,
+  formatShortDate,
   formatSignedCop,
   formatTime,
 } from "./format";
@@ -57,5 +59,19 @@ describe("formatDay and formatTime", () => {
   it("shows the hour and minutes of a trip", () => {
     expect(formatTime(millis, "en")).toMatch(/3:05/);
     expect(formatTime(null, "en")).toBe("");
+  });
+});
+
+// AI-assisted: see docs/AI_LOG.md #61
+describe("formatShortDate and formatMonthYear", () => {
+  const millis = new Date(2026, 10, 9, 10, 0).getTime();
+
+  it("shows the day and month of the week navigator", () => {
+    expect(formatShortDate(millis, "en")).toMatch(/Nov.*9|9.*Nov/);
+  });
+
+  it("shows the month and year of member since", () => {
+    expect(formatMonthYear(millis, "en")).toMatch(/Nov.*2026/);
+    expect(formatMonthYear(null, "en")).toBe("");
   });
 });
