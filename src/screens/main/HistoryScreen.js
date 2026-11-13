@@ -1,13 +1,13 @@
-// AI-assisted: see docs/AI_LOG.md #28, #60
+// AI-assisted: see docs/AI_LOG.md #28, #60, #61
 // Trip history of the driver (section 6): the finished trips (completed or
 // paid) in real time, newest first, 20 per load. Filters: today, this week,
 // this month or a date range, and the payment method. Trips are grouped by
 // day like Uber, and tapping one opens its details (TripDetailScreen).
+// While the first trips load, gray rows in the shape of the list.
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   ScrollView,
   StyleSheet,
@@ -18,6 +18,7 @@ import {
 import DateField from "../../components/DateField";
 import PaymentStatusChip from "../../components/PaymentStatusChip";
 import RouteStops from "../../components/RouteStops";
+import Skeleton, { SkeletonBox } from "../../components/Skeleton";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTripHistory } from "../../hooks/useTripHistory";
@@ -237,18 +238,30 @@ export default function HistoryScreen() {
         )
       }
       ListEmptyComponent={
-        <View style={styles.empty}>
-          {isLoading ? (
-            <ActivityIndicator color={colors.black} />
-          ) : (
+        isLoading ? (
+          <Skeleton label={emptyText} style={styles.skeleton}>
+            <SkeletonBox width={120} height={14} />
+            {[0, 1, 2, 3].map((row) => (
+              <View key={row} style={styles.skeletonRow}>
+                <View style={styles.skeletonTexts}>
+                  <SkeletonBox width="40%" height={14} />
+                  <SkeletonBox width="85%" height={14} />
+                  <SkeletonBox width="70%" height={14} />
+                </View>
+                <SkeletonBox width={72} height={18} />
+              </View>
+            ))}
+          </Skeleton>
+        ) : (
+          <View style={styles.empty}>
             <View style={styles.emptyIcon}>
               <Ionicons name="car-outline" size={32} color={colors.black} />
             </View>
-          )}
-          <Text style={[styles.emptyText, error && styles.errorText]}>
-            {emptyText}
-          </Text>
-        </View>
+            <Text style={[styles.emptyText, error && styles.errorText]}>
+              {emptyText}
+            </Text>
+          </View>
+        )
       }
       // 20 more trips per load (section 6). The filters only see the trips
       // already loaded, so the button stays while there may be older ones.
@@ -347,6 +360,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   emptyText: { ...typography.subtitle, textAlign: "center" },
+  skeleton: { padding: spacing.lg, gap: spacing.lg },
+  skeletonRow: { flexDirection: "row", gap: spacing.lg },
+  skeletonTexts: { flex: 1, gap: spacing.sm },
   errorText: { color: colors.error },
   loadMore: {
     marginHorizontal: spacing.lg,
