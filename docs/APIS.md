@@ -133,20 +133,53 @@ qué paso se crea.
 - **Reglas:** la URL cambia cada vez que se abre el túnel, así que nunca se
   escribe en el código.
 
-## Pendientes
-
 ### 9. Mercado Pago Checkout Pro (modo prueba)
 
 - **Para qué:** cobrar el viaje con tarjetas de prueba (sección 4 del enunciado).
-- **Dónde:** backend. Lo implementa Ximena.
-- **Variable:** `MP_ACCESS_TOKEN` en `backend/.env`. El token de prueba empieza
-  por `APP_USR`.
+- **Dónde:**
+  - Backend: `backend/src/mercadoPago.js` es el único archivo que llama a la API
+    de Mercado Pago, con el `fetch` de Node (sin SDK). La lógica del cobro está en
+    `createMercadoPagoPayments` de `backend/src/pagos.js`.
+  - App: `src/services/payments.js` (`startMercadoPagoPayment` y
+    `checkMercadoPagoPayment`) y el botón `src/components/MercadoPagoCharge.js`
+    del resumen del viaje, que abre el checkout con `expo-web-browser`.
+- **Variables:** `MP_ACCESS_TOKEN` en `backend/.env`: el Access Token de prueba
+  de la cuenta de prueba del vendedor, que empieza por `APP_USR`.
+  `PUBLIC_BACKEND_URL` (el túnel, sección 8) es opcional.
+- **Rutas del backend** (bajo `/api/v1`):
+  - `POST /pagos/mercadopago` `{ tripId, amount }`, con el token del conductor:
+    crea la preferencia y responde `{ ok, url }`.
+  - `POST /pagos/mercadopago/verificar` `{ tripId }`, con el token del
+    conductor: busca el pago del viaje en Mercado Pago y lo guarda.
+  - `POST /pagos/mercadopago/webhook`: aviso de Mercado Pago (sin token).
+  - `GET /pagos/mercadopago/retorno`: página a la que vuelve el pasajero después
+    de pagar (sin token).
+- **Flujo:**
+  1. El conductor toca "Cobrar con Mercado Pago" en el resumen del viaje.
+  2. La app manda `tripId` y el monto (tarifa + propina). El backend revisa que el
+     viaje sea del conductor, esté `completed`, sea `mercadopago` y que el monto
+     coincida, y crea la preferencia con `external_reference = tripId`.
+  3. La app abre el checkout y el pasajero paga con una tarjeta de prueba.
+  4. El backend se entera por el webhook, por la página de regreso o porque la
+     app pregunta al volver del navegador (`verificar`). En los tres casos
+     consulta el pago a Mercado Pago y guarda `paymentStatus`, `paymentId` y, si
+     está aprobado, `status: "paid"`.
+  5. El resumen escucha el viaje en tiempo real y muestra el estado.
 - **Reglas:**
-  - La preferencia se crea con `external_reference = tripId`.
-  - El pago se confirma consultando a Mercado Pago, y el backend actualiza el
-    viaje con `firebase-admin`.
+  - El pago siempre se confirma consultando a Mercado Pago: un aviso falso no
+    puede marcar un viaje como pagado.
+  - Un pago aprobado solo deja el viaje en `paid` si es en COP y por el monto del
+    viaje.
   - La app nunca escribe `paymentStatus`, `paymentId` ni el estado `paid`; las
     reglas de Firestore lo impiden.
+  - Sin `PUBLIC_BACKEND_URL` no hay webhook ni página de regreso, porque Mercado
+    Pago necesita una dirección https pública. El cobro funciona igual, porque la
+    app pregunta al volver del navegador.
+  - Sin `MP_ACCESS_TOKEN` o sin `serviceAccountKey.json`, las rutas responden 503
+    (`pagos_no_configurados`).
+  - Solo credenciales de prueba durante todo el proyecto.
+
+## Pendientes
 
 ### 10. Notificaciones push (servicio de Expo o FCM)
 
