@@ -239,25 +239,22 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Herramienta: Claude Code (Claude Opus 5.5)
 - Objetivo: Traducir el interruptor "CONECTADO / DESCONECTADO" de la pantalla de inicio.
 - Prompt:
+
   > 1. Entrada #54 de la bitácora (fila 96) · 20 min
-  > El código la cita en 4 archivos y no existe. Está en tu rango de números.
-  >
+  >    El código la cita en 4 archivos y no existe. Está en tu rango de números.
   > 2. Hashes de la bitácora (fila 97) · 15 min
-  > Cambiar “el commit siguiente” por el hash real en las entradas #50, #51 y #52, y quitar PrimaryButton.js de la #53.
-  >
+  >    Cambiar “el commit siguiente” por el hash real en las entradas #50, #51 y #52, y quitar PrimaryButton.js de la #53.
   > 3. “CONECTADO / DESCONECTADO” traducido (fila 22) · 10 min
-  > Dos claves en strings.js. Opcional, pero se nota si la profe cambia a inglés.
+  >    Dos claves en strings.js. Opcional, pero se nota si la profe cambia a inglés.
   >
   > Después, la cadena principal (en este orden)
   >
   > 4. Colección trips y sus reglas (filas 82 y 74) · 1 hora · lo más importante ahora
-  > Sin esto no hay dónde guardar viajes, y de ahí cuelgan historial, ganancias y pagos. Pónganse de acuerdo primero en los campos (tabla de la sección 6 del PDF) pa’ poder trabajar en paralelo.
-  >
+  >    Sin esto no hay dónde guardar viajes, y de ahí cuelgan historial, ganancias y pagos. Pónganse de acuerdo primero en los campos (tabla de la sección 6 del PDF) pa’ poder trabajar en paralelo.
   > 5. Solicitud real desde Firestore (filas 48, 86, 39, 72 y 50) · 2 horas
-  > Script en el backend que crea la solicitud, la app la escucha con onSnapshot, los estados se guardan en el viaje, y la tarjeta muestra distancia, duración, categoría y ganancia neta calculadas con calculateFare (no los 75.000 fijos).
-  >
+  >    Script en el backend que crea la solicitud, la app la escucha con onSnapshot, los estados se guardan en el viaje, y la tarjeta muestra distancia, duración, categoría y ganancia neta calculadas con calculateFare (no los 75.000 fijos).
   > 6. Ubicación a Firestore (fila 37) · 30 min
-  > Ya tienen el patrón de useDriverStatus; es guardar la ubicación en drivers/{uid} cada pocos segundos dentro de useDriverLocation.
+  >    Ya tienen el patrón de useDriverStatus; es guardar la ubicación en drivers/{uid} cada pocos segundos dentro de useDriverLocation.
 
   > Correcciones a lo que te pasé. Soy Tamiro José Solano Muriel.
   >
@@ -273,6 +270,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > 5. Antes de cada commit, muéstrame el diff para revisarlo.
   > 6. Mis entradas de bitácora siguen desde la #17. Este mensaje y el anterior
   >    van copiados tal cual en la entrada que corresponda.
+
 - Resumen de la respuesta: Se agregaron las claves `home.online` y `home.offline` en español e inglés, y `HomeScreen` las usa con `t()` en vez del texto fijo. Antes de la corrección, Claude ya había hecho los pasos 1 y 2 en una rama local (`tamiro/viajes`); con la corrección se rehízo solo el paso 3 en `tamiro/viajes-firestore` y ese trabajo no se subió.
 - Qué se usó / modificó / descartó:
   - Se usó: el cambio de traducción tal cual.
@@ -288,10 +286,12 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Herramienta: Claude Code (Claude Opus 5.5)
 - Objetivo: Crear la colección `trips` con los campos y estados del enunciado, y sus reglas de Firestore.
 - Prompt:
+
   > Sí, haz el commit del paso 3. Recuerda que la entrada #17 debe existir
   > antes de cualquier push.
   >
   > Para el paso 4, ten en cuenta en firestore.rules:
+  >
   > - Un conductor puede leer los viajes donde driverId es su uid, y también
   >   los que están en status "requested" (todavía sin conductor), o nunca
   >   verá las solicitudes nuevas. Las consultas de la app deben filtrar igual
@@ -304,9 +304,9 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > - paymentStatus, paymentId y el status "paid" solo los escribe el backend
   >   con firebase-admin; la app no puede.
   > - Nadie borra viajes.
-  > Agrega pruebas para las funciones puras que valides los cambios de estado
-  > y muéstrame el diff antes del commit. Avísame cuando haya que publicar las
-  > reglas en la consola.
+  >   Agrega pruebas para las funciones puras que valides los cambios de estado
+  >   y muéstrame el diff antes del commit. Avísame cuando haya que publicar las
+  >   reglas en la consola.
 
   > Cambio de plan: la profesora nos va a dar una API del pasajero para simular
   > los viajes. Todavía no sabemos cómo funciona.
@@ -327,6 +327,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > validateDriverUpdate y sus pruebas, muéstrame el diff y luego haz el commit.
   >
   > El plan del paso 5 me parece bien, con estos ajustes:
+  >
   > 1. La suscripción a solicitudes nuevas va dentro de useTripRequests (hook
   >    obligatorio del enunciado), activa solo mientras el conductor está
   >    conectado y aprobado, con limpieza en el useEffect.
@@ -340,6 +341,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    con distancia y duración fijas, y recibir la categoría como argumento.
   >
   > Cada paso con su commit y su entrada de bitácora (desde la #17).
+
 - Resumen de la respuesta: `trips` es una colección de primer nivel con los 19 campos de la sección 6 y los estados de la sección 3 (incluido `rejected`, que la sección 3 menciona al explicar `accepted`). En `firestore.rules`, el conductor lee sus viajes y las solicitudes en `requested`; solo un conductor aprobado puede aceptar o rechazar una solicitud sin conductor, y queda a su nombre; después avanza en orden y puede cancelar antes de `in_progress`. Al completar, los montos deben coincidir con `calculateFare`. Nadie crea ni borra viajes desde la app, y el pago queda para el backend. `src/services/trips.js` repite esas reglas como funciones puras.
 - Qué se usó / modificó / descartó:
   - Se usó: los nombres exactos de la sección 6 y la sección 3 como contrato con la API del pasajero.
@@ -356,12 +358,14 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Herramienta: Claude Code (Claude Opus 5.5)
 - Objetivo: Corregir el error de lint de `AuthContext.js` que reportaba `npx expo lint`.
 - Prompt:
+
   > corre esto en todo el proyecto npx expo lint
 
   > Sí: arregla AuthContext.js en un commit aparte (fix: lint), antes del
   > paso 5, y muéstrame el diff. El de useTripRequests se resuelve en el paso
   > 5 como dijiste. El aviso del test déjalo así: es intencional.
   > Al terminar el paso 5, npx expo lint debe quedar sin errores.
+
 - Resumen de la respuesta: `npx expo lint` reportó 2 errores y 1 aviso, todos anteriores: `AuthContext.js` usaba `checkSession` antes de declararla, `useTripRequests.js` cambiaba el estado dentro de un `useEffect` y `emailVerification.test.js` tiene un `import` después de los `jest.mock`. Se movió `checkSession` dentro del `useEffect` de `AuthContext`, sin cambiar lo que hace.
 - Qué se usó / modificó / descartó:
   - Se usó: el arreglo de `AuthContext.js` tal cual.
@@ -378,7 +382,9 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Herramienta: Claude Code (Claude Opus 5.5)
 - Objetivo: Crear `docs/APIS.md`, la guía de las APIs y servicios externos del proyecto, para que los dos integrantes y cualquier sesión de Claude Code trabajen con las mismas reglas.
 - Prompt:
+
   > Aclaraciones antes de la tarea:
+  >
   > - CLAUDE.md ya existe y ya tiene la línea @docs/APIS.md: no lo reescribas,
   >   solo inclúyelo en el commit tal como está.
   > - Esta tarea es la entrada #20 de la bitácora.
@@ -394,8 +400,9 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > variable de entorno si tiene, y las reglas o límites.
   >
   > ## Reglas generales
+  >
   > - Toda llave secreta va solo en backend/.env. En la app solo van variables
-  >   EXPO_PUBLIC_ que no son secretas. Cada variable nueva se agrega sin valor
+  >   EXPO*PUBLIC* que no son secretas. Cada variable nueva se agrega sin valor
   >   al .env.example que corresponda.
   > - Cada API externa se usa desde un solo módulo, para poder cambiar de
   >   proveedor sin tocar las pantallas.
@@ -406,6 +413,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >   enunciado). La ruta se guarda en el viaje para no volver a pedirla.
   >
   > ## Activas
+  >
   > 1. OpenRouteService (rutas) — backend, backend/src/rutas.js, ORS_API_KEY.
   >    calcularRuta(origen, destino) devuelve { distanceKm, durationMin,
   >    encodedPolyline }. Recibe coordenadas como [longitud, latitud]. Cupo
@@ -436,28 +444,31 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    backend de PUBLIC_BACKEND_URL. Nunca se escribe en el código.
   >
   > ## Pendientes
+  >
   > 9. Mercado Pago Checkout Pro (modo prueba) — backend, MP_ACCESS_TOKEN (el
   >    token de prueba empieza por APP_USR). Lo implementa Ximena. Crea la
   >    preferencia con external_reference = tripId, confirma el pago
   >    consultando a Mercado Pago y actualiza el viaje con firebase-admin. La
   >    app nunca escribe paymentStatus, paymentId ni el status paid.
   > 10. Notificaciones push (servicio de Expo o FCM) — app y backend. Avisan de
-  >    solicitudes nuevas con la app en segundo plano. No funcionan en Expo
-  >    Go: requieren development build. Se hace al final si alcanza el tiempo.
+  >     solicitudes nuevas con la app en segundo plano. No funcionan en Expo
+  >     Go: requieren development build. Se hace al final si alcanza el tiempo.
   > 11. API del pasajero de la profesora — todavía no sabemos cómo funciona.
-  >    Solo src/services/tripRequestsSource.js sabe de dónde vienen las
-  >    solicitudes; al llegar la API se cambia ese archivo.
+  >     Solo src/services/tripRequestsSource.js sabe de dónde vienen las
+  >     solicitudes; al llegar la API se cambia ese archivo.
   >
   > ## En veremos
+  >
   > 12. Google Routes API — reemplazaría a OpenRouteService dentro de
-  >    backend/src/rutas.js. Requiere facturación activa en Google Cloud,
-  >    restringir la llave y alertas de presupuesto.
+  >     backend/src/rutas.js. Requiere facturación activa en Google Cloud,
+  >     restringir la llave y alertas de presupuesto.
   >
   > No cambies código en esta tarea: solo docs/APIS.md y CLAUDE.md. Muéstrame
   > el diff antes del commit y registra este prompt tal cual en la entrada #20.
   > El paso 5 (entrada #21) lo hacemos después, en commits aparte.
   >
   > Sobre docs/enunciado.pdf: lo copio yo ahora a docs/ y queda fuera de Git.
+
 - Resumen de la respuesta: Se escribió `docs/APIS.md` con las reglas generales y los 12 servicios en el formato pedido. Para los archivos que todavía no existen (`backend/src/rutas.js` y el simulador) se indica que se crean en el paso 5. Se agregaron los nombres exactos de las variables de Firebase y Cloudinary del `.env.example`, el cupo del plan gratuito de OpenRouteService (unas 2.000 rutas al día y 40 por minuto) y que el backend solo lee `MAIL_PASS` al arrancar. `CLAUDE.md` se incluyó tal como lo dejó el equipo.
 - Qué se usó / modificó / descartó:
   - Se usó: la estructura y el contenido del prompt.
@@ -474,10 +485,12 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Herramienta: Claude Code (Claude Opus 5.5)
 - Objetivo: Paso 5 del plan: solicitudes reales desde Firestore, rutas con OpenRouteService y un simulador mínimo de solicitudes, en cuatro partes con su propio commit (backend; servicios y hook de la app; pantallas y navegación; README y `.env.example`).
 - Prompt:
+
   > Paso 5 (entrada #21). Ya publiqué las reglas en la consola. Sigue
   > docs/APIS.md para todo lo de APIs.
   >
   > Solicitudes:
+  >
   > 1. src/services/tripRequestsSource.js es el único lugar que sabe de dónde
   >    vienen las solicitudes: subscribeToNewRequests(onRequests, onError) con
   >    onSnapshot sobre trips en "requested". Muestra la más antigua por
@@ -495,18 +508,15 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    categoría, método de pago, tarifa y ganancia neta con calculateFare.
   >    Aceptar y rechazar con useCallback. Todo texto con t().
   >
-  > Rutas y mapa:
-  > 6. backend/src/rutas.js con calcularRuta(origen, destino) usando
-  >    OpenRouteService, como dice docs/APIS.md. Pruebas con fetch simulado.
-  > 7. backend/scripts/simular-solicitud.js: crea UN viaje "requested" con
-  >    firebase-admin, eligiendo entre unas pocas rutas de Medellín, con la
-  >    categoría como argumento. Usa calcularRuta para distanceKm, durationMin y
-  >    routePolyline; si ORS falla, valores fijos de respaldo. Las direcciones
-  >    sácalas una vez con Nominatim y déjalas escritas en el código. Agrega un
-  >    script en backend/package.json para correrlo.
-  > 8. ActiveTripScreen: dibuja routePolyline con @mapbox/polyline (instálalo
-  >    con npx expo install) y marcadores de origen y destino. El botón que
-  >    cambia a in_progress dice "Pasajero a bordo", como el enunciado.
+  > Rutas y mapa: 6. backend/src/rutas.js con calcularRuta(origen, destino) usando
+  > OpenRouteService, como dice docs/APIS.md. Pruebas con fetch simulado. 7. backend/scripts/simular-solicitud.js: crea UN viaje "requested" con
+  > firebase-admin, eligiendo entre unas pocas rutas de Medellín, con la
+  > categoría como argumento. Usa calcularRuta para distanceKm, durationMin y
+  > routePolyline; si ORS falla, valores fijos de respaldo. Las direcciones
+  > sácalas una vez con Nominatim y déjalas escritas en el código. Agrega un
+  > script en backend/package.json para correrlo. 8. ActiveTripScreen: dibuja routePolyline con @mapbox/polyline (instálalo
+  > con npx expo install) y marcadores de origen y destino. El botón que
+  > cambia a in_progress dice "Pasajero a bordo", como el enunciado.
   >
   > Al terminar: README con OpenRouteService y Nominatim y el crédito
   > "© OpenStreetMap contributors"; ORS_API_KEY= en backend/.env.example.
@@ -520,12 +530,13 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > reglas en la consola.
   >
   > Divídelo en commits que pueda revisar por separado, en este orden:
+  >
   > 1. backend: rutas.js y el simulador, con sus pruebas;
   > 2. app: tripRequestsSource, tripRepository y useTripRequests;
   > 3. app: pantallas (solicitud, viaje en curso con la ruta) y navegación
   >    según el estado;
   > 4. README y .env.example.
-  > Muéstrame el diff de cada uno antes de su commit. Todo va en la entrada #21.
+  >    Muéstrame el diff de cada uno antes de su commit. Todo va en la entrada #21.
 
   > Listo: serviceAccountKey.json ya está en backend/ y ORS_API_KEY en
   > backend/.env. Haz la prueba real: ejecuta el simulador una vez por ruta,
@@ -570,6 +581,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > así cada 15 s.
   >
   > En la parte 3, junto con la navegación según el estado:
+  >
   > 1. useTripRequests escucha solo con el conductor conectado, aprobado y
   >    SIN viaje activo (usa subscribeToActiveTrip, que ya existe). Con un
   >    viaje activo, no hay cuenta regresiva ni rechazo automático.
@@ -586,6 +598,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > Luego, una parte 3b antes del README: la ruta hacia el punto de recogida
   > es un requisito de la sección 3 ("ruta hacia el punto de recogida; al
   > tocar Pasajero a bordo, la ruta cambia hacia el destino").
+  >
   > 1. Backend: POST /api/v1/rutas { origen, destino } que use calcularRuta,
   >    en el mismo estilo de app.js, con pruebas.
   > 2. App: al aceptar (o al reabrir con un viaje en driver_arriving), pide
@@ -594,8 +607,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    punteada.
   > 3. En driver_arriving muestra esa ruta; en in_progress, la de origen a
   >    destino.
-  > Muéstrame el diff antes del commit. Después pásame los pasos para
-  > probar todo en el celular, y haz push.
+  >    Muéstrame el diff antes del commit. Después pásame los pasos para
+  >    probar todo en el celular, y haz push.
 
   > Sí: haz el commit, completa la entrada #21 con la parte 3b, pásame los
   > pasos para probar todo en el celular y haz push. La protección de
@@ -603,8 +616,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > pendiente en docs/APIS.md (servicio 1).
 
   > Antes de que pruebe: en firestore.rules, en isExpectedFare, reemplaza
-  > math.round(subtotal * multiplier / 100) por
-  > math.floor(subtotal * multiplier / 100 + 0.5), que para números positivos
+  > math.round(subtotal _ multiplier / 100) por
+  > math.floor(subtotal _ multiplier / 100 + 0.5), que para números positivos
   > es exactamente lo que hace Math.round de JavaScript. Así no dependemos de
   > cómo redondee math.round de las reglas en los empates como el 214,5 de la
   > ruta 2. Deja un comentario explicándolo. Haz commit y push, y avísame
@@ -633,13 +646,15 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    escriba nada si no coinciden. Haz lo mismo para el endpoint de rutas
   >    solo si usa Firebase (si no, no). Muéstrame el diff antes del commit.
   > 3. Sí, corrige la #21 con una nota que explique lo que pasó.
-  > Cuando termines el punto 1, te aviso para cambiar la clave.
+  >    Cuando termines el punto 1, te aviso para cambiar la clave.
 
   > Sí a todo:
+  >
   > 1. Borra esos 6 documentos y confirma que quedan 0.
   > 2. Haz los commits de la protección del simulador y de la #21, agrega el
   >    hash a la #21 y haz push.
-  > Te aviso cuando haya cambiado la clave.
+  >    Te aviso cuando haya cambiado la clave.
+
 - Resumen de la respuesta:
   - Parte 1 (backend): `backend/src/rutas.js` es el único módulo que llama a OpenRouteService; `calcularRuta` devuelve la distancia con un decimal, la duración en minutos enteros y la polyline codificada. `backend/scripts/simular-solicitud.js` crea una solicitud `requested` con `firebase-admin`, con los campos de la sección 6 más `routePolyline`, eligiendo entre tres rutas de Medellín cuyas direcciones se consultaron una vez en Nominatim ("Parque Lleras" no aparece en Nominatim y se cambió por otros lugares). Recibe la categoría, el método de pago y el número de ruta como argumentos, y si ORS falla usa valores de respaldo.
   - Parte 2 (servicios y hook de la app): `src/services/tripRequestsSource.js` es el único módulo que sabe de dónde vienen las solicitudes y las entrega de la más antigua a la más nueva por `createdAt`, ordenadas en la app para no necesitar un índice compuesto. `useTripRequests` escucha solo con el conductor conectado y aprobado, con limpieza en el `useEffect`, y al vencerse los 15 segundos guarda `rejected` en el viaje. `src/services/tripRepository.js` acepta o rechaza con `runTransaction` y valida cada cambio con `validateDriverUpdate`. La tarjeta de solicitud muestra todos los datos que pide la sección 3, con la tarifa y la ganancia neta de `calculateFare`, aceptar y rechazar con `useCallback` y textos con `t()`.
@@ -676,9 +691,10 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Herramienta: Claude Code (Claude Opus 5.5)
 - Objetivo: Evitar que Firestore se quede "sin conexión" en el celular cuando la red corta la conexión de streaming que usa por defecto.
 - Prompt:
+
   > Console Error
   >
-  > [2026-11-12T01:37:09.059Z]  @firebase/firestore: Firestore (13.2.0): Could not reach Cloud Firestore backend. Backend didn't respond within 10 seconds.
+  > [2026-11-12T01:37:09.059Z] @firebase/firestore: Firestore (13.2.0): Could not reach Cloud Firestore backend. Backend didn't respond within 10 seconds.
   > This typically indicates that your device does not have a healthy Internet connection at the moment. The client will operate in offline mode until it is able to successfully connect to the backend.
   >
   > Source:
@@ -691,8 +707,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > console.level (D:\Projects\uberclone-driver\node_modules\react-native\Libraries\Core\setUpDeveloperTools.js:42)
   > defaultLogHandler (D:\Projects\uberclone-driver\node_modules\@firebase\logger\dist\esm\index.esm.js:78)
   > Logger#error (D:\Projects\uberclone-driver\node_modules\@firebase\logger\dist\esm\index.esm.js:161)
-  > __PRIVATE_logError (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:104)
-  > __PRIVATE_OnlineStateTracker#du (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:24528)
+  > **PRIVATE_logError (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:104)
+  > **PRIVATE_OnlineStateTracker#du (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:24528)
   > asyncQueue.enqueueAfterDelay$argument_2 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:24498)
   > asyncQueue.enqueueAndForget$argument_0 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:25204)
   > IE$argument_0 (D:\Projects\uberclone-driver\node_modules\@firebase\firestore\dist\common-t6SaU14p.rn.js:28803)
@@ -704,6 +720,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > ya creada (Fast Refresh), para no inicializar Firestore dos veces.
   > Commit aparte, muéstrame el diff antes. Va en mi siguiente entrada de
   > bitácora (#22).
+
 - Resumen de la respuesta: Claude explicó que el aviso no era de permisos ni de código, sino que el celular no llegaba al servidor de Firestore en 10 segundos, y que Firestore seguía funcionando desde el PC. Propuso revisar la conexión del celular y, si se repetía con buena conexión, forzar long polling. En `src/config/firebase.js`, Firestore se crea con `initializeFirestore(app, { experimentalForceLongPolling: true })` al iniciar la app, y con Fast Refresh se reutiliza esa instancia con `getFirestore(app)`.
 - Qué se usó / modificó / descartó:
   - Se usó: la opción `experimentalForceLongPolling`, que se confirmó en los tipos de Firebase 13.2.0 instalado.
@@ -730,13 +747,11 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    inmediato:
   >    - startMercadoPagoPayment(tripId) → { ok, url } o { ok: false, codigoError }
   >    - markCashReceived(tripId) → { ok } o { ok: false, codigoError }
-  >    Nunca lanzan errores, como routesApi.js.
-  >
+  >      Nunca lanzan errores, como routesApi.js.
   > 2. Agrega ORS_API_KEY= sin valor a backend/.env.example, y en el README,
   >    en Tecnologías, OpenRouteService y Nominatim con el crédito
   >    "© OpenStreetMap contributors". Actualiza la sección Alcance con lo
   >    que ya está hecho.
-  >
   > 3. Simulador de viajes terminados para que Ximena pruebe historial y
   >    ganancias: un script (npm run simular-historial -- <correo del
   >    conductor>) que busque el uid con firebase-admin y cree unos 10 viajes
@@ -748,7 +763,6 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    npm run limpiar-simulados, que borre solo los viajes con ese
   >    passengerId, para dejar Firestore limpio antes del video. Los dos
   >    scripts usan la misma protección de proyecto que el simulador.
-  >
   > 4. Pago en efectivo, POST /api/v1/pagos/efectivo { tripId }: la app manda
   >    el token de Firebase del conductor en Authorization: Bearer, y el
   >    backend lo verifica con firebase-admin (verifyIdToken). Solo si el
@@ -756,14 +770,12 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    lo actualiza con paymentStatus "cash" y status "paid". Pruebas con
   >    firebase-admin simulado. Luego implementa markCashReceived en
   >    payments.js para llamar a esa ruta.
-  >
   > 5. Ubicación a Firestore (sección 3): en useDriverLocation, mientras el
   >    conductor está conectado, guarda en drivers/{uid} su ubicación
   >    ({ lat, lng } y la hora del servidor) como máximo cada 10 segundos, y
   >    un campo de disponibilidad. Al desconectarse o salir de la pantalla,
   >    deja de guardar y marca no disponible. Revisa que firestore.rules lo
   >    permita sin cambiar el status del conductor.
-  >
   > 6. Mercado Pago: pregúntame antes de empezar. Necesitaré
   >    MP_ACCESS_TOKEN y la URL pública del túnel de Cloudflare.
   >
@@ -784,6 +796,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Herramienta: Claude Code (Claude Opus 5.5)
 - Objetivo: Documentar la llave de OpenRouteService y el crédito de OpenStreetMap, y poner al día el alcance del README.
 - Prompt (punto 2 del mensaje copiado en la entrada #23):
+
   > 2. Agrega ORS_API_KEY= sin valor a backend/.env.example, y en el README,
   >    en Tecnologías, OpenRouteService y Nominatim con el crédito
   >    "© OpenStreetMap contributors". Actualiza la sección Alcance con lo
@@ -797,6 +810,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > 2. Sí, deja historial y ganancias en "En curso". Agrega ahí también el
   >    pago (efectivo y Mercado Pago) y la ubicación a Firestore, que siguen
   >    pendientes. Notificaciones push ponlas en "Pendiente".
+
 - Resumen de la respuesta: Se agregó `ORS_API_KEY=` sin valor a `backend/.env.example`, con un comentario de para qué sirve y dónde se saca la llave. En el README, la sección Tecnologías ahora incluye Firebase Auth y Firestore, Cloudinary, el backend en Node.js (`node:http`, sin Express) con Nodemailer, OpenRouteService (rutas desde el backend), Nominatim (direcciones del simulador, consultadas una sola vez), el crédito "© OpenStreetMap contributors" y Mercado Pago como "en integración (modo de prueba)". La sección Alcance separa lo que ya está en `main`, lo que sigue en curso (pago en efectivo y con Mercado Pago, ubicación en Firestore, historial y ganancias) y lo pendiente (notificaciones push).
 - Qué se usó / modificó / descartó:
   - Se usó: el código de `main` para comprobar cada punto del alcance y de las tecnologías (por ejemplo, `ORS_API_KEY` en `backend/src/rutas.js`, los 15 segundos en `useTripRequests.js` y `node:http` y Nodemailer en el backend).
@@ -866,6 +880,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Herramienta: Claude Code (Claude Opus 5.5)
 - Objetivo: Guardar en Firestore la ubicación del conductor y si está disponible mientras está conectado, sin gastar escrituras de más.
 - Prompt (punto 5 del mensaje copiado en la entrada #23):
+
   > 5. Ubicación a Firestore (sección 3): en useDriverLocation, mientras el
   >    conductor está conectado, guarda en drivers/{uid} su ubicación
   >    ({ lat, lng } y la hora del servidor) como máximo cada 10 segundos, y
@@ -879,7 +894,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    mismo commit con su prueba.
   > 3. Anota en docs/APIS.md (servicio 11) que un conductor con
   >    locationUpdatedAt de hace más de 1 minuto se trata como desconectado.
-  > Luego haz los dos commits y el push. Mercado Pago todavía no: te aviso.
+  >    Luego haz los dos commits y el push. Mercado Pago todavía no: te aviso.
+
 - Resumen de la respuesta: `src/services/driverLocation.js` guarda en `drivers/{uid}` los campos `location: { lat, lng }`, `locationUpdatedAt` (hora del servidor) e `isAvailable`, con `updateDoc` y un tiempo límite de 5 segundos; nunca escribe `status` y nunca lanza. `shouldSaveLocation` deja pasar la primera ubicación y después una cada 10 segundos. `useDriverLocation` mueve el mapa con cada lectura de `expo-location` (cada 5 s o 5 m), pero solo guarda en Firestore cuando pasan 10 s; en la limpieza del `useEffect` (al desconectarse o al desmontarse la pantalla) quita la suscripción y marca `isAvailable: false`. `firestore.rules` no se cambió: el dueño ya puede actualizar su documento mientras el `status` quede igual. Por decisión de Tamiro, con un viaje en curso `isAvailable` queda en `false` (la ubicación se sigue guardando) y al terminar o cancelar el viaje vuelve a seguir al botón Disponible: `HomeScreen` le pasa al hook si hay un viaje en curso, `isDriverAvailable` calcula la disponibilidad y `availabilityOnTripChange` decide si hay que escribirla de una vez al empezar o terminar el viaje. En `docs/APIS.md` (servicio 11) quedaron los campos y la regla de que un conductor con `locationUpdatedAt` de hace más de 1 minuto se trata como desconectado.
 - Qué se usó / modificó / descartó:
   - Se usó: `updateDoc` en vez de `setDoc` con `merge`, para no crear el documento de un conductor sin registro, y `withTimeout` de `src/services/withTimeout.js`.
@@ -902,6 +918,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Herramienta: Claude Code (Claude Opus 5.5)
 - Objetivo: Historial de viajes y ganancias reales (sección 5) a partir de Firestore, y confirmar el pago en efectivo desde el resumen del viaje.
 - Prompt (puntos de código; se omiten las líneas sobre ramas y commits):
+
   > Usa src/config/theme.js de Ximena para los colores. Todo texto con t() en
   > español e inglés. Siguiente entrada de bitácora: #28.
   >
@@ -909,23 +926,19 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    conductor (driverId == uid) en status completed o paid, ordenados del
   >    más reciente al más antiguo por completedAt, con limit(20). Si Firestore
   >    pide índice compuesto, dame el link. Con limpieza en el useEffect.
-  >
   > 2. src/hooks/useEarnings.js (hook OBLIGATORIO, sección 5): recibe la lista
   >    de viajes y con useMemo calcula para hoy, esta semana (desde el lunes) y
   >    este mes: número de viajes, total facturado (fare), comisiones,
   >    propinas, ganancia neta (driverEarnings) y promedio por viaje. Además el
   >    saldo: driverEarnings de viajes pagados con mercadopago menos commission
   >    de viajes en efectivo. Lógica en funciones puras con pruebas Jest.
-  >
   > 3. EarningsScreen: reemplaza el simulador por useTripHistory + useEarnings,
   >    con tres bloques Hoy / Semana / Mes y el saldo.
-  >
   > 4. HistoryScreen nueva en src/screens/main/ (hoy es un mock en
   >    MainDrawer): FlatList con fecha y hora, origen → destino, categoría,
   >    tarifa, ganancia neta y estado del pago; filtros Hoy / Semana / Mes;
   >    mensaje cuando no hay viajes. Conéctala en MainDrawer sin cambiar el
   >    resto de su diseño.
-  >
   > 5. TripSummaryScreen: escucha el viaje con onSnapshot (por trip.id) para
   >    ver el estado del pago en tiempo real. Si paymentMethod es cash y el
   >    viaje no está paid, botón "Recibí efectivo" que llama a
@@ -945,6 +958,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    pago en efectivo, la ubicación del conductor en Firestore, el
   >    historial y las ganancias. Mercado Pago queda "en integración (modo de
   >    prueba)" y las notificaciones push en "Pendiente".
+
 - Resumen de la respuesta: `src/services/earnings.js` tiene las funciones puras: `periodStarts` (inicio de hoy, del lunes y del día 1, en la hora del celular), `filterTripsByPeriod`, `summarizeTrips` (viajes, total facturado, comisiones, propinas, ganancia neta y promedio por viaje), `calculateBalance` y `calculateEarnings`, que junta los tres periodos y el saldo. Solo suman los montos que se guardaron al completar cada viaje; no recalculan tarifas. `useEarnings(trips)` las envuelve en `useMemo`. En `tripRepository.js`, `subscribeToTripHistory` escucha los últimos 20 viajes `completed` o `paid` del conductor y `subscribeToTripsSince` los de un periodo sin límite; las dos leen `completedAt` con `serverTimestamps: "estimate"` para que un viaje recién terminado no llegue con fecha vacía. `useTripHistory` y `useEarningsTrips` comparten `useDriverTrips` (espera la sesión de Firebase y limpia las dos suscripciones en el `useEffect`). `EarningsScreen` muestra Hoy / Esta semana / Este mes y el saldo del mes; `HistoryScreen` es una `FlatList` con filtros, que reemplaza el mock de `MainDrawer`. `TripSummaryScreen` escucha el viaje con `useTrip` y, si es en efectivo y no está `paid`, muestra el botón "Recibí efectivo" con carga y el error debajo (`FieldMessage`). Los textos van en `strings.js` en español e inglés, y `src/i18n/format.js` formatea pesos y fecha/hora.
 - Qué se usó / modificó / descartó:
   - Se usó: el mismo patrón de `useActiveTrip` (escuchar la sesión y luego el viaje), `theme.js` de Ximena para los colores de las pantallas nuevas y `FieldMessage` para el error.
@@ -1045,6 +1059,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Herramienta: Claude Code (Claude Opus 5.5)
 - Objetivo: Detalles de la app del conductor parecidos a Uber Driver (tarjeta de solicitud, calificar al pasajero, gráfica semanal, contacto con el pasajero, carro en el mapa, píldora de ganancias y mapa oscuro de noche), sin cambiar la lógica de estados, tarifas ni pagos.
 - Prompt (se omiten las líneas sobre la rama, los commits y el push):
+
   > Detalles estilo Uber Driver. [...] Usa theme.js y t() en español e
   > inglés. [...] No cambies la lógica de estados, tarifas ni pagos.
   >
@@ -1053,14 +1068,12 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    #2E7D32, #E53935, #e8f5e9, grises sueltos) por theme.js. Botón
   >    principal negro; verde solo para dinero; rojo solo para errores y
   >    cancelar.
-  >
   > 1. Tarjeta de solicitud: arriba "N min · X km de distancia" hasta el punto
   >    de recogida, calculado en línea recta (Haversine) desde la ubicación
   >    actual del conductor con una velocidad promedio de 25 km/h. NO llames
   >    a OpenRouteService aquí (sección 7: solo al crear y al aceptar). La
   >    cuenta regresiva como barra que se achica, "Aceptar" grande negro y
   >    "Rechazar" como X discreta.
-  >
   > 2. Calificar al pasajero: en TripSummaryScreen, 5 estrellas para
   >    calificarlo, una sola vez. Guárdalo en un campo NUEVO passengerRating
   >    (entero 1 a 5), no en rating, que es la calificación del conductor y
@@ -1069,27 +1082,22 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   >    completed o paid, y repite la regla en trips.js con pruebas.
   >    Muéstrame el diff de las reglas y espera mi sí antes de publicarlas
   >    con firebase-admin; luego confirma que las publicadas coinciden.
-  >
   > 3. Ganancias: gráfica de barras de la semana (lunes a domingo) con la
   >    ganancia neta de cada día, hecha con Views (sin librerías nuevas),
   >    resaltando el día de hoy. Los datos salen de useEarnings, con una
   >    función pura nueva y sus pruebas.
-  >
   > 4. Llamar y mensaje: en ActiveTripScreen, junto al nombre del pasajero,
   >    botones con íconos de teléfono y chat que abren tel: y sms: con
   >    Linking. Solo si el viaje tiene passengerPhone. En el simulador
   >    (simular-solicitud.js) agrega passengerName y passengerPhone de
   >    ejemplo como campos extra, sin cambiar los del enunciado; actualiza
   >    su prueba que revisa los campos y docs/APIS.md.
-  >
   > 5. Ícono de carro: en el mapa del inicio y del viaje, un Marker propio
   >    con forma de carro (hecho con Views o un ícono de @expo/vector-icons,
   >    sin imágenes nuevas) que rota según el heading de la ubicación, en
   >    vez del punto azul.
-  >
   > 6. Píldora de ganancias: si HomeScreen no la tiene ya, una píldora negra
   >    arriba al centro con la ganancia neta de hoy desde useEarnings.
-  >
   > 7. Mapa oscuro de noche: entre las 6 p. m. y las 6 a. m., customMapStyle
   >    oscuro en los mapas del inicio, el viaje y el historial. Si en iOS no
   >    aplica, que no falle.
@@ -1098,6 +1106,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   > errores y npx tsc --noEmit.
 
   Respuesta de Tamiro al diff de las reglas: "Sí, publícalas".
+
 - Resumen de la respuesta:
   - 0: los tres archivos ya usaban `theme.js` desde la entrada #29 (también la barra, la X y "Aceptar" del punto 1), así que no hubo commit.
   - 1: `pickupEstimate` (en `src/services/pickupEstimate.js`) calcula con Haversine la distancia en línea recta desde la ubicación que ya tenía `HomeScreen` y los minutos a 25 km/h (redondeados hacia arriba, mínimo 1). La tarjeta muestra "6 min · 2,4 km de distancia" con `formatDecimal` según el idioma. No llama a OpenRouteService.
@@ -1183,8 +1192,8 @@ Se descartó: La plantilla genérica inicial de Expo que venía por defecto en e
 - Objetivo: Agregar una pantalla de inicio de sesión con número de celular antes de las pestañas del registro, con opción de cambiar el país. No está en el enunciado; es una funcionalidad adicional.
 - Prompt: "Quiero hacer una pestaña inicial antes de la pestaña 1 y 2, será el inicio de sesión y aunque no este en la guia quiero hacer el inicio de seión, donde se pueda inciar sesion por numero de telefono, le de la ocpion de cambiar el pais y que pueda colocar el numero, Primero quiero hacer esa parte"
 - Resumen de la respuesta: Se creó la rama `ximena/login` desde `main`. Se agregó `LoginScreen` como primera pantalla sin sesión, con un selector de país (`CountryPicker`) que muestra bandera, nombre y código, y busca por nombre en español o inglés o por código. `src/validation/phone.js` tiene 20 países con la cantidad de dígitos de sus celulares, valida el número y lo convierte a formato internacional (+573001234567). Los textos están en español e inglés en `strings.js`. Por ahora "Continuar" lleva al registro; la verificación por SMS queda para el siguiente paso.
-- Qué se usó / modificó / descartó: 
-Se usó:
+- Qué se usó / modificó / descartó:
+  Se usó:
 
 El módulo de validación de teléfonos (src/validation/phone.js) configurado con 20 países, sus respectivas reglas de longitud de dígitos y conversión a formato internacional (ej. +573001234567).
 
@@ -1206,8 +1215,8 @@ Implementar la verificación por código SMS en esta primera iteración (se opt�
 
 - Archivos y commit: `src/validation/phone.js`, `src/validation/phone.test.js`, `src/components/CountryPicker.js`, `src/screens/auth/LoginScreen.js`, `src/navigation/AppNavigator.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — 95dd67b (código) y el commit siguiente (bitácora)
 - Verificación: `npx jest` pasa 49 tests (13 nuevos en `phone.test.js`), `npx tsc --noEmit` no da errores, `npx expo lint` no reporta problemas en los archivos nuevos y `npx expo export --platform android` genera el bundle. [Pendiente la prueba en el emulador: elegir otro país y buscarlo, número con menos o más dígitos, número correcto que lleva al registro, y textos en inglés]
-- Aprendizaje: 
-Diseño modular y componentes reutilizables: Implementar flujos adicionales no contemplados en la guía inicial (como la pantalla de inicio de sesión) exige estructurar desde el inicio componentes independientes y limpios, como el CountryPicker y los módulos de validación separados (phone.js).
+- Aprendizaje:
+  Diseño modular y componentes reutilizables: Implementar flujos adicionales no contemplados en la guía inicial (como la pantalla de inicio de sesión) exige estructurar desde el inicio componentes independientes y limpios, como el CountryPicker y los módulos de validación separados (phone.js).
 
 Pruebas unitarias como base de confianza: Escribir tests exhaustivos en Jest para los distintos formatos de números internacionales y cantidad de dígitos permite validar la lógica de entrada antes de conectar la interfaz gráfica, reduciendo errores en la experiencia de usuario.
 
@@ -1229,7 +1238,7 @@ Pruebas unitarias como base de confianza: Escribir tests exhaustivos en Jest par
   - En el celular, el primer intento mostró "Unable to resolve module firebase/auth": el servidor de Expo se había iniciado antes de instalar `firebase`. Se resolvió reiniciándolo con `npx expo start --clear`.
   - Después, la pantalla de login abrió bien, pero al buscar un número salió "La base de datos rechazó la operación" (`permission-denied`). La app estaba usando el Firebase de Tamiro porque no existía `.env.local`, y ese proyecto no tiene las reglas de `loginIndex`. Se configuró el proyecto propio (correo/contraseña y anónimo habilitados, Firestore en modo producción, reglas de `firestore.rules` publicadas) y se creó `.env.local` con sus valores.
   - [Pendiente la prueba en el celular con el proyecto de Firebase propio: cuenta no encontrada, crear cuenta, contraseña incorrecta y correcta, correo o celular repetido, y correo para restablecer la contraseña]
-- Aprendizaje: 
+- Aprendizaje:
 
 Seguridad y prevención de suplantación en autenticación: Permitir el acceso únicamente verificando la existencia de un correo o número telefónico en la base de datos representaba una brecha crítica de seguridad (cualquier persona habría podido ingresar a la cuenta de otro conductor con solo conocer su número). Implementar Firebase Auth con contraseña garantiza que solo el titular legítimo pueda acceder.
 
@@ -1251,7 +1260,7 @@ Gestión de entornos locales y caché en desarrollo: Trabajar con configuracione
   - Se descartó: `PrimaryButton`, porque hacía lo mismo que `NextButton`, y el temporizador repetido en dos servicios, que quedó una sola vez en `withTimeout.js`. Tampoco se recargan las pestañas que el conductor ya había guardado en Firestore al volver a iniciar sesión: solo se llenan el correo y el celular.
 - Archivos y commit: `src/validation/textLimit.js`, `src/validation/textLimit.test.js`, `src/validation/personalInfo.js`, `src/validation/personalInfo.test.js`, `src/validation/vehicle.js`, `src/validation/vehicle.test.js`, `src/validation/documents.js`, `src/validation/documents.test.js`, `src/validation/account.js`, `src/validation/account.test.js`, `src/validation/phone.js`, `src/validation/phone.test.js`, `src/components/FieldMessage.js`, `src/components/FormField.js`, `src/components/NextButton.js`, `src/components/PasswordField.js`, `src/components/PrimaryButton.js` (borrado), `src/components/formStyles.js`, `src/contexts/RegistrationContext.js`, `src/navigation/AuthTabs.js`, `src/screens/auth/LoginScreen.js`, `src/screens/auth/LoginPasswordScreen.js`, `src/screens/auth/CreateAccountScreen.js`, `src/screens/auth/PersonalInfoScreen.js`, `src/screens/auth/VehicleScreen.js`, `src/screens/auth/DocumentsScreen.js`, `src/services/accountService.js`, `src/services/accountService.test.js`, `src/services/driverRepository.js`, `src/services/withTimeout.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — e8d7331 (merge de `main`), 7621b1d (reglas de validación), 0443794 (avisos de límite, pestaña 1 desde la cuenta y flujo) y el commit siguiente (bitácora)
 - Verificación: `npx jest` pasa 115 tests, incluidas las pruebas nuevas de `accountService.test.js`, que comprueban que la cuenta guarda sus 3 documentos o ninguno y que no se crea si el celular ya existe. `npx expo export --platform android` genera el bundle. [Pendiente la prueba en el celular: crear una cuenta con `1234567899` (debe rechazarlo) y con la contraseña `12345678` (debe pedir letras), ver el correo y el celular bloqueados en la pestaña 1, el aviso al llegar al límite de caracteres, y entrar con una cuenta sin registro enviado para confirmar que vuelve a las pestañas]
-- Aprendizaje: 
+- Aprendizaje:
 
 ### Entrada #55
 
@@ -1267,7 +1276,7 @@ Gestión de entornos locales y caché en desarrollo: Trabajar con configuracione
   - Se descartó: pedir el código antes de la contraseña, porque cualquiera podría llenar de correos la bandeja de otro conductor con solo saber su celular. Si el conductor vuelve atrás sin confirmar, se cierra la sesión de Firebase para que nadie quede con sesión sin el código.
 - Archivos y commit: `src/screens/auth/VerifyLoginScreen.js`, `src/screens/auth/LoginPasswordScreen.js`, `src/hooks/useEmailVerification.js`, `src/navigation/AppNavigator.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — bf2f150 y el commit siguiente (bitácora)
 - Verificación: `npx jest` pasa 119 tests, `npx tsc --noEmit` no da errores y `npx expo lint` solo reporta los 2 errores que ya existían en `AuthContext.js` y `useTripRequests.js`. Se comprobó con `transporter.verify()` que el Gmail del backend acepta las credenciales. [Pendiente la prueba en el celular con el backend encendido: código correcto, incorrecto, vencido, reenviar a los 60 s y volver atrás sin confirmar]
-- Aprendizaje: 
+- Aprendizaje:
 
 Seguridad en flujos de doble factor (2FA): Secuenciar la verificación por código después de autenticar con contraseña (y no antes) es fundamental para evitar ataques de denegación de servicio o saturación de bandejas de correo a terceros, ya que requiere validar primero la identidad del propietario de la cuenta.
 
@@ -1289,7 +1298,7 @@ Reutilización y extensión de lógica existente: Aprovechar componentes y servi
   - Se descartó: calcular el porcentaje dentro de `RegistrationContext`, para no tocar la lógica del registro. Contar como completo todo campo sin error, porque la revisión técnico-mecánica de un carro nuevo no tiene error aunque esté vacía y el registro empezaba en 8 %; ahora solo cuentan los campos llenos y válidos, y el 100 % solo aparece cuando las 3 pestañas son válidas. Instalar una librería de íconos: la flecha de las listas se dibuja con bordes (`Chevron`). Guardar la animación con `useRef`, porque `npx expo lint` lo marca como error (`react-hooks/refs`); se usa `useState`.
 - Archivos y commit: `src/config/theme.js`, `src/validation/progress.js`, `src/validation/progress.test.js`, `src/components/RegistrationStepBar.js`, `src/components/StepLayout.js`, `src/components/Chevron.js`, `src/components/formStyles.js`, `src/components/FormField.js`, `src/components/SelectField.js`, `src/components/DateField.js`, `src/components/PhotoField.js`, `src/components/CheckboxField.js`, `src/components/NextButton.js`, `src/navigation/AuthTabs.js`, `src/screens/auth/PersonalInfoScreen.js`, `src/screens/auth/VehicleScreen.js`, `src/screens/auth/DocumentsScreen.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — d6cdad6 (campos), 81f600e (barra y pantallas), e0aa3f0 (tema y porcentaje) y el commit siguiente (bitácora)
 - Verificación: `npx jest` pasa 160 tests (5 nuevos en `progress.test.js`: 0 % con el formulario vacío, 100 % solo con las 3 pestañas válidas, pestaña completa marcada, valores inválidos que no cuentan y revisión técnico-mecánica que no se exige). `npm test` en `backend/` pasa 27 tests, `npx tsc --noEmit` no da errores y `npx expo lint` no reporta errores (solo un aviso que ya existía en `emailVerification.test.js`). [Pendiente la prueba en el celular: la barra sube al llenar campos, tocar los pasos, botón fijo con el teclado abierto, listas desde abajo, fotos con cámara y galería, y textos en inglés]
-- Aprendizaje: 
+- Aprendizaje:
 
 Estrategia de diseño modular sin alterar la lógica de negocio: Mejorar la experiencia de usuario (UX) e implementar interfaces estilo Uber en un formulario existente es posible encapsulando los cambios visuales en componentes reutilizables (StepLayout, RegistrationStepBar, estilos centralizados en theme.js) sin necesidad de tocar las reglas del backend ni la máquina de estados.
 
@@ -1303,7 +1312,7 @@ Optimización de animaciones y cumplimiento de linters: Gestionar transiciones f
 - Integrante: Ximena Rosales Lopez
 - Herramienta: Claude Code
 - Objetivo: Agregar un ícono a cada paso de la barra del registro y darle a la pantalla de inicio (mapa con el interruptor Disponible / No disponible) y al menú lateral el mismo estilo parecido al de Uber, sin cambiar la lógica.
-- Prompt: "Me gustaria que editaramos las pestaña y agregaramos un icono represnetativo, lo quiero masomenos asi, ademas de que el dlujo en este moemnto me lleva al mapa yme gustaria que tuviera un home: La guia exige Inicio: mapa con la ubicación actual y un interruptor Disponible / No disponible. Mientras está Disponible, la ubicación se actualiza en la base de datos cada pocos segundos; al pasar a No disponible o salir de la pantalla, el seguimiento se detiene (función de limpieza de useEffect) Sin dañar nada solo ayudame ocn los cambios menores sin modificar archivos demas y un home llamativo que cumpla con estas exigencias y ekl panela  ala derecha tambiéj el mismoe estilo"
+- Prompt: "Me gustaria que editaramos las pestaña y agregaramos un icono represnetativo, lo quiero masomenos asi, ademas de que el dlujo en este moemnto me lleva al mapa yme gustaria que tuviera un home: La guia exige Inicio: mapa con la ubicación actual y un interruptor Disponible / No disponible. Mientras está Disponible, la ubicación se actualiza en la base de datos cada pocos segundos; al pasar a No disponible o salir de la pantalla, el seguimiento se detiene (función de limpieza de useEffect) Sin dañar nada solo ayudame ocn los cambios menores sin modificar archivos demas y un home llamativo que cumpla con estas exigencias y ekl panela ala derecha tambiéj el mismoe estilo"
 - Resumen de la respuesta: La IA revisó el inicio y encontró que en esta rama la ubicación todavía no se guardaba en la base de datos (`useDriverLocation` tenía un TODO), pero que Tamiro ya lo había resuelto en `main` con `driverLocation.js` (entrada #27). Se trajo `main` a `ximena/frontend` (merge sin conflictos) y solo se cambió lo visual. Cada paso del registro muestra ahora su número y un ícono (persona, carro y documento) en lugar del nombre. El inicio tiene el mapa a pantalla completa, un botón redondo para abrir el menú, una etiqueta "Disponible" / "No disponible" con un punto verde o gris, los avisos como tarjetas y un panel inferior con "Estás conectado" / "Estás desconectado" y un interruptor grande. El menú lateral tiene un encabezado negro con la inicial y el nombre del conductor, las opciones en letra grande y "Cerrar sesión" abajo.
 - Qué se usó / modificó / descartó:
   - Se usó: el tema de la entrada #56 (`src/config/theme.js`), `DrawerActions.openDrawer()` para abrir el menú desde el mapa, `getFocusedRouteNameFromRoute` para ocultar el encabezado del menú solo en el mapa, `drawerContent` con `DrawerContentScrollView` y `DrawerItemList` de React Navigation, y `useSafeAreaInsets` para no tapar el notch ni la barra inferior.
@@ -1311,7 +1320,7 @@ Optimización de animaciones y cumplimiento de linters: Gestionar transiciones f
   - Se descartó: instalar una librería de íconos, porque cambia `package.json` y la regla del equipo pide aprobación para librerías nuevas; los íconos se dibujan con bordes (`StepIcon`). Escribir la ubicación en la base de datos desde esta rama, porque ya estaba hecho en `main`. Quitar el encabezado del menú en las pantallas del viaje: solo se quita en el mapa, que tiene su propio botón de menú.
 - Archivos y commit: `src/components/StepIcon.js`, `src/components/RegistrationStepBar.js`, `src/screens/trip/HomeScreen.js`, `src/navigation/MainDrawer.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — 4f84503 (merge de `main`), los commits "feat: add icons to the registration steps" y "feat: restyle the home screen and the side menu", y el commit siguiente (bitácora)
 - Verificación: `npx jest` pasa 181 tests, `npx tsc --noEmit` no da errores y `npx expo lint` no reporta errores (solo el aviso que ya existía en `emailVerification.test.js`). [Pendiente la prueba en el celular: íconos de los pasos, botón del menú, interruptor conectado y desconectado, cuenta sin aprobar, solicitud nueva encima del panel, volver al viaje en curso y textos en inglés]
-- Aprendizaje: 
+- Aprendizaje:
 
 Integración fluida y fusión de ramas (Merge de main): Cuando la lógica de negocio (como el rastreo de ubicación con driverLocation.js) ya ha sido resuelta por otros compañeros en la rama principal, la estrategia correcta en un equipo ágil es integrar main de manera limpia antes de aplicar las capas de rediseño visual, evitando duplicar esfuerzo o romper flujos existentes.
 
@@ -1356,7 +1365,7 @@ Optimización de la entrada de códigos (OTP): Superponer un TextInput invisible
 - Archivos y commit: `src/screens/auth/WelcomeScreen.js`, `src/screens/auth/RegistrationSubmittedScreen.js`, `src/contexts/RegistrationContext.js`, `src/screens/auth/VerifyEmailScreen.js`, `src/screens/auth/VerifyLoginScreen.js`, `src/screens/auth/PersonalInfoScreen.js`, `src/components/IncomingRequestCard.js`, `src/components/CarMarker.js`, `src/navigation/AppNavigator.js`, `src/navigation/AuthTabs.js`, `src/config/theme.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — los commits siguientes
 - Verificación: `npx jest` pasa 260 tests, `npm test` en `backend/` no tiene fallos, `npx tsc --noEmit` no da errores, `npx expo lint` no reporta errores (solo el aviso que ya existía en `emailVerification.test.js`) y `npx expo export --platform android` genera el bundle. [Pendiente la prueba en el celular: bienvenida en un celular pequeño, cambio de idioma ES | EN, "Comenzar", volver atrás desde el login, enviar el registro completo y ver "Registro enviado" con la revisión técnico-mecánica solo si aplica, botón atrás de Android e "Ir al inicio", cuenta pendiente en el mapa, vibración al llegar una solicitud y textos en inglés]
 - Aprendizaje:
-Separación de incumbencias y cumplimiento de reglas de equipo: Reemplazar llamadas bloqueantes e intrusivas como alert() dentro de contextos globales (RegistrationContext) por flujos basados en navegación declarativa (RegistrationSubmittedScreen) permite cumplir estrictamente con las normativas del equipo (cero alertas nativas y centralización de textos en strings.js).
+  Separación de incumbencias y cumplimiento de reglas de equipo: Reemplazar llamadas bloqueantes e intrusivas como alert() dentro de contextos globales (RegistrationContext) por flujos basados en navegación declarativa (RegistrationSubmittedScreen) permite cumplir estrictamente con las normativas del equipo (cero alertas nativas y centralización de textos en strings.js).
 
 Mejora de la experiencia sensorial y de notificaciones: Integrar retroalimentación háptica nativa (Vibration) al recibir nuevas alertas de viajes en el mapa incrementa la inmediatez y la atención del conductor sin necesidad de instalar dependencias de terceros ni comprometer el rendimiento.
 
@@ -1392,16 +1401,62 @@ Estandarización de calidad de código y localización: Mantener el estándar de
     - Usar `useRef` en el botón deslizable, porque la regla `react-hooks/refs` del lint no deja leerlo durante el render; se usa `useMemo`.
 - Archivos y commit: `src/services/historyFilters.js`, `src/services/historyFilters.test.js`, `src/validation/dateRange.js`, `src/validation/dateRange.test.js`, `src/services/tripRepository.js`, `src/hooks/useTripHistory.js`, `src/i18n/format.js`, `src/i18n/format.test.js`, `src/components/RouteStops.js`, `src/components/PaymentStatusChip.js`, `src/screens/main/HistoryScreen.js`, `src/screens/main/TripDetailScreen.js`, `src/navigation/HistoryStack.js`, `src/navigation/MainDrawer.js`, `src/components/SwipeButton.js`, `src/screens/trip/ActiveTripScreen.js`, `src/components/GoButton.js`, `src/components/SearchingBar.js`, `src/screens/trip/HomeScreen.js`, `src/components/CountdownRing.js`, `src/components/IncomingRequestCard.js`, `src/config/theme.js`, `src/i18n/strings.js`, `docs/AI_LOG.md` — los commits siguientes
 - Verificación: `npx jest` pasa 274 tests (14 nuevos), `npm test` en `backend/` no tiene fallos, `npx tsc --noEmit` no da errores, `npx expo lint` no reporta errores (solo el aviso que ya existía en `emailVerification.test.js`) y `npx expo export --platform android` genera el bundle.
-    - Historial: cada filtro, un rango con la fecha inicial después de la final, el método de pago, "Cargar más" y el detalle de un viaje con ruta real y con línea recta.
-    - Viaje en curso: deslizar a medias (debe volver), deslizar completo para iniciar y para finalizar, y "Navegar".
-    - Inicio: el botón "IR" conectado y desconectado, cuenta sin aprobar y la barra "Buscando viajes…".
-    - Solicitud nueva: el anillo durante los 15 segundos, aceptar, rechazar y que el tiempo se acabe.
-    - Textos en inglés.
+  - Historial: cada filtro, un rango con la fecha inicial después de la final, el método de pago, "Cargar más" y el detalle de un viaje con ruta real y con línea recta.
+  - Viaje en curso: deslizar a medias (debe volver), deslizar completo para iniciar y para finalizar, y "Navegar".
+  - Inicio: el botón "IR" conectado y desconectado, cuenta sin aprobar y la barra "Buscando viajes…".
+  - Solicitud nueva: el anillo durante los 15 segundos, aceptar, rechazar y que el tiempo se acabe.
+  - Textos en inglés.
 - Aprendizaje:
-Evolución y unificación de interfaces en código heredado: Rediseñar componentes clave creados inicialmente por compañeros (como el flujo del viaje en curso, las solicitudes y la pantalla de inicio) exige coordinar con el equipo permisos de modificación y respetar la lógica subyacente de negocio. Aislar el refactor exclusivamente en la capa de vista (JSX y estilos) permite adoptar la identidad visual de Uber ("GO", botones deslizables con PanResponder, anillos de tiempo y barras animadas de búsqueda) sin alterar las máquinas de estados ni los servicios de backend.
+  Evolución y unificación de interfaces en código heredado: Rediseñar componentes clave creados inicialmente por compañeros (como el flujo del viaje en curso, las solicitudes y la pantalla de inicio) exige coordinar con el equipo permisos de modificación y respetar la lógica subyacente de negocio. Aislar el refactor exclusivamente en la capa de vista (JSX y estilos) permite adoptar la identidad visual de Uber ("GO", botones deslizables con PanResponder, anillos de tiempo y barras animadas de búsqueda) sin alterar las máquinas de estados ni los servicios de backend.
 
 Optimización de consultas y paginación en historiales: Implementar filtros avanzados por rangos de fechas (fromDate, toDate) y métodos de pago sin sobrecargar el servidor se beneficia de combinar una carga por lotes eficiente (paginación de 20 en 20 con loadMore) junto con funciones puros de filtrado y ordenamiento en cliente (historyFilters.js), garantizando respuestas fluidas y soporte completo mediante pruebas unitarias exhaustivas en Jest.
 
 Soluciones nativas y animadas sin dependencias externas: Resolver interacciones complejas —como el botón de "deslizar para iniciar/finalizar", el pulso de conexión del botón "GO" y el anillo dinámico de cuenta regresiva de 15 segundos— utilizando herramientas nativas de React Native (Animated, PanResponder) en lugar de instalar librerías externas de terceros previene conflictos de compatibilidad en nativo (como react-native-svg), reduce el peso del bundle y asegura la estabilidad del linter (react-hooks/refs).
 
 Consistencia en la experiencia de navegación (Stacks y Drawers): Gestionar adecuadamente la navegación anidada (como la transición entre la lista de historial y el detalle con HistoryStack, o el comportamiento del menú lateral mediante popToTopOnBlur) es indispensable para que la aplicación mantenga un flujo de usuario intuitivo, limpio y libre de pantallas huérfanas al cambiar de sección.
+
+### Entrada #61
+
+- Fecha: 2026-11-12
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Seguir con las sugerencias pendientes para que la app se parezca a Uber, sin tocar el backend: Ganancias (navegar entre semanas y tocar una barra), Resumen del viaje (estilo recibo), Perfil (foto grande, estadísticas y estado de los documentos), Configuración y menú lateral (filas con íconos y la foto de perfil) y los bloques grises de carga. Tamiro dio permiso para cambiar sus pantallas.
+- Prompt: "¡Sí! Sigamos con esos."
+- Resumen de la respuesta:
+  - Ganancias: arriba se cambia de semana con flechas (hasta 11 semanas atrás) y se ve la ganancia neta de la semana en grande. Al tocar una barra de la gráfica se ve la ganancia y los viajes de ese día. Hoy, Esta semana y Este mes salen lado a lado, y al tocar uno se ve su detalle (viajes, facturado, comisiones, propinas, neta y promedio). El saldo con la plataforma sigue abajo.
+  - Resumen del viaje: parece un recibo de Uber, con un check verde, "¡Viaje completado!", la ganancia neta en grande con el estado del pago, la ruta, la duración, la distancia, el pago y el desglose. El botón "Volver al mapa" queda fijo abajo.
+  - Perfil: la foto es grande y al tocarla se toma una selfie nueva (o se elige de la galería). El estado de la cuenta sale como etiqueta de color y hay tres datos: calificación, viajes y "Conductor desde". Las secciones tienen íconos, el vehículo muestra la placa amarilla y cada documento tiene la etiqueta "Vigente", "Vence en N días" o "Vencido".
+  - Menú lateral y Configuración: el menú muestra la foto, el nombre, la calificación y "Ver perfil", y cada opción tiene su ícono. Configuración está en grupos de filas con íconos y "Cerrar sesión" en rojo.
+  - Carga: el historial, el detalle del viaje, las ganancias y el perfil muestran bloques grises con la forma de la pantalla mientras cargan.
+- Qué se usó / modificó / descartó:
+  - Se usó:
+    - De Tamiro: `summarizeTrips`, `periodStarts`, `earningsQueryStart`, `completedAtMillis` y `WEEK_DAYS` de `src/services/earnings.js`, `useDriverTrips`, `subscribeToTripsSince`, `useDriverProfile`, `expiryStatus` y `PassengerRating`.
+    - De la app: `Avatar` y `usePhotoPicker` (#58), `PaymentStatusChip` y `RouteStops` (#60), los íconos `Ionicons` y `Animated` de React Native para los bloques de carga.
+  - Se modificó:
+    - Ganancias: las semanas están en `src/services/earningsWeeks.js` (`weekStart`, `earningsSince` y `weekEarnings`) con pruebas. `useEarningsTrips` recibe la semana más antigua que se abrió y escucha los viajes desde ahí. `WeekEarningsChart` deja tocar las barras.
+    - Componentes nuevos: `FareBreakdown` y `TripStats` salieron del detalle del viaje para usarlos también en el resumen, y `Skeleton` es el de los bloques grises.
+    - Perfil: `submittedAtMillis` en `src/services/driverProfile.js` (con pruebas) da la fecha de "Conductor desde", y `useDriverProfile` devuelve también el número de viajes. La foto se guarda igual que antes, con "Guardar cambios".
+    - Navegación: el encabezado del menú ya no sale en el resumen del viaje, porque tiene su propia parte de arriba.
+    - Pequeños cambios: `PassengerRating` recibe `style`, `formatShortDate` y `formatMonthYear` están en `src/i18n/format.js`, y el tema tiene el color `plate`.
+    - Comentarios: se tradujeron al inglés los comentarios en español de `TripSummaryScreen`.
+  - Se descartó:
+    - Pedir a Firestore cada semana por separado: se escucha desde la semana más antigua abierta y las semanas se calculan en el teléfono.
+    - Juntar Hoy, Esta semana y Este mes en una sola pestaña escondida: se ven los tres a la vez, como pide la sección 5.
+    - Una librería de gráficas o de bloques de carga, porque serían librerías nuevas.
+- Archivos y commit: `src/services/earningsWeeks.js`, `src/services/earningsWeeks.test.js`, `src/hooks/useEarningsTrips.js`, `src/components/WeekEarningsChart.js`, `src/screens/main/EarningsScreen.js`, `src/components/FareBreakdown.js`, `src/components/TripStats.js`, `src/components/PassengerRating.js`, `src/screens/main/TripDetailScreen.js`, `src/screens/trip/TripSummaryScreen.js`, `src/services/driverProfile.js`, `src/services/driverProfile.test.js`, `src/hooks/useDriverProfile.js`, `src/screens/main/ProfileScreen.js`, `src/screens/main/SettingsScreen.js`, `src/navigation/MainDrawer.js`, `src/components/Skeleton.js`, `src/screens/main/HistoryScreen.js`, `src/i18n/format.js`, `src/i18n/format.test.js`, `src/i18n/strings.js`, `src/config/theme.js`, `docs/AI_LOG.md` — los commits siguientes
+- Verificación: `npx jest` pasa 284 tests (10 nuevos), `npm test` en `backend/` no tiene fallos, `npx tsc --noEmit` no da errores, `npx expo lint` no reporta errores (solo el aviso que ya existía en `emailVerification.test.js`) y `npx expo export --platform android` genera el bundle.
+  - [Pendiente la prueba en el celular]
+    - Ganancias: ir a semanas anteriores y volver, tocar una barra y tocarla otra vez, y los tres periodos.
+    - Resumen del viaje: un viaje en efectivo ("Recibí efectivo") y uno con Mercado Pago, calificar al pasajero y "Volver al mapa".
+    - Perfil: tomar una selfie nueva, elegir de la galería, guardar, y los documentos vigentes, por vencer y vencidos.
+    - Menú lateral: la foto, la calificación y "Ver perfil". Configuración: cambiar el idioma y cerrar sesión.
+    - Bloques grises con la conexión lenta, y los textos en inglés.
+- Aprendizaje:
+
+Extracción y modularización de componentes transversales: Aislar bloques visuales compartidos como el desglose de tarifas (FareBreakdown) y las métricas de recorrido (TripStats) para reutilizarlos entre el detalle del historial y el recibo final del viaje elimina la duplicación de código y garantiza coherencia visual en toda la aplicación.
+
+Optimización de consultas en tiempo real y procesamiento en cliente: En la sección de ganancias, escuchar los viajes desde la semana más antigua consultada y calcular los cortes semanales localmente en el dispositivo (earningsWeeks.js) evita disparar múltiples suscripciones o lecturas redundantes a Firestore cada vez que el usuario navega hacia atrás entre semanas.
+
+Percepción de rendimiento con Skeleton Screens nativos: Implementar estados de carga con bloques grises animados (Skeleton) que imitan la estructura de cada pantalla mediante la API Animated de React Native mejora drásticamente la experiencia de usuario ante conexiones lentas sin agregar el peso ni los conflictos de dependencias externas.
+
+Colaboración en código compartido y estándares de equipo: Intervenir pantallas desarrolladas previamente por compañeros requiere acuerdo previo, validación con pruebas unitarias sobre las nuevas utilidades (earningsWeeks.test.js, driverProfile.test.js) y disciplina para estandarizar comentarios al inglés, manteniendo intacta la lógica del backend.
