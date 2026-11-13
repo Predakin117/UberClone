@@ -3,8 +3,10 @@ import { auth } from "../config/firebase";
 import { strings } from "../i18n/strings";
 import {
   PAYMENT_ERROR_CODES,
+  checkMercadoPagoPayment,
   markCashReceived,
   startMercadoPagoPayment,
+  tripChargeAmount,
 } from "./payments";
 
 // Jest sube estos mocks antes de los imports: ni Firebase real ni .env
@@ -22,13 +24,80 @@ const respuesta = (status, body) =>
 
 const conductor = auth.currentUser;
 
+// AI-assisted: see docs/AI_LOG.md #62
 describe("startMercadoPagoPayment", () => {
-  it("responde sin lanzar mientras no está implementada", async () => {
-    await expect(startMercadoPagoPayment("viaje-1")).resolves.toEqual({
-      ok: false,
-      codigoError: "no_implementado",
+  const trip = { id: "viaje-1", fare: 19200, tip: 2000 };
+
+  beforeEach(() => {
+    global.fetch = jest.fn();
+    env.backendApiUrl = "http://192.168.0.10:3000/api/v1";
+    auth.currentUser = conductor;
+  });
+
+  it("sends the tripId and the amount (fare + tip) and returns the checkout link", async () => {
+    global.fetch.mockReturnValue(
+      respuesta(200, { ok: true, url: "https://mp.test/checkout" }),
+    );
+    await expect(startMercadoPagoPayment(trip)).resolves.toEqual({
+      ok: true,
+      url: "https://mp.test/checkout",
     });
-    expect(PAYMENT_ERROR_CODES).toContain("no_implementado");
+    const [url, opciones] = global.fetch.mock.calls[0];
+    expect(url).toBe("http://192.168.0.10:3000/api/v1/pagos/mercadopago");
+    expect(opciones.headers.Authorization).toBe("Bearer token-123");
+    expect(JSON.parse(opciones.body)).toEqual({
+      tripId: "viaje-1",
+      amount: 21200,
+    });
+  });
+
+  it("returns the backend error without throwing", async () => {
+    global.fetch.mockReturnValue(
+      respuesta(409, { ok: false, codigoError: "monto_invalido" }),
+    );
+    await expect(startMercadoPagoPayment(trip)).resolves.toEqual({
+      ok: false,
+      codigoError: "monto_invalido",
+    });
+  });
+});
+
+describe("checkMercadoPagoPayment", () => {
+  beforeEach(() => {
+    global.fetch = jest.fn();
+    env.backendApiUrl = "http://192.168.0.10:3000/api/v1";
+    auth.currentUser = conductor;
+  });
+
+  it("asks the backend for the trip's payment", async () => {
+    global.fetch.mockReturnValue(
+      respuesta(200, { ok: true, paymentStatus: "approved" }),
+    );
+    await expect(checkMercadoPagoPayment("viaje-1")).resolves.toEqual({
+      ok: true,
+      paymentStatus: "approved",
+    });
+    const [url, opciones] = global.fetch.mock.calls[0];
+    expect(url).toBe(
+      "http://192.168.0.10:3000/api/v1/pagos/mercadopago/verificar",
+    );
+    expect(JSON.parse(opciones.body)).toEqual({ tripId: "viaje-1" });
+  });
+
+  it("warns when there is no connection", async () => {
+    global.fetch.mockRejectedValue(new TypeError("Network request failed"));
+    await expect(checkMercadoPagoPayment("viaje-1")).resolves.toEqual({
+      ok: false,
+      codigoError: "sin_conexion",
+    });
+  });
+});
+
+describe("tripChargeAmount", () => {
+  it("is the fare plus the tip, in integer pesos", () => {
+    expect(tripChargeAmount({ fare: 19200, tip: 2000 })).toBe(21200);
+    expect(tripChargeAmount({ fare: 6000 })).toBe(6000);
+    expect(tripChargeAmount(null)).toBe(0);
   });
 });
 
@@ -62,7 +131,7 @@ describe("markCashReceived", () => {
 
   it("un código que la app no conoce llega como fallo", async () => {
     global.fetch.mockReturnValue(
-      respuesta(503, { ok: false, codigoError: "pagos_no_configurados" }),
+      respuesta(500, { ok: false, codigoError: "codigo_desconocido" }),
     );
     await expect(markCashReceived("viaje-1")).resolves.toEqual({
       ok: false,
