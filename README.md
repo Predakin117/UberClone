@@ -19,10 +19,15 @@ Aplicación móvil para iOS y Android, inspirada en Uber, desde el lado del cond
   - el pago en efectivo: el conductor confirma con "Recibí efectivo" y el backend deja el viaje en `paid`;
   - la ubicación del conductor y su disponibilidad guardadas en Firestore;
   - el historial de viajes, con filtros Hoy / Esta semana / Este mes;
-  - las ganancias de hoy, de la semana y del mes, y el saldo con la plataforma;
+  - las ganancias de hoy, de la semana y del mes, con una gráfica de la semana y el saldo con la plataforma;
+  - el perfil del conductor (foto, nombre y correo de Mercado Pago editables; vehículo y documentos con aviso de vencimiento) y la configuración (idioma, comisión, versión y cierre de sesión);
+  - calificar al pasajero al terminar el viaje;
+  - detalles estilo Uber Driver: tiempo y distancia hasta la recogida en la solicitud, llamar o enviar un mensaje al pasajero, el carro que gira en el mapa, la ganancia de hoy en el inicio y el mapa oscuro de noche;
   - un simulador de solicitudes en el backend (`npm run simular`) mientras llega la API del pasajero.
-- **En integración (modo de prueba):** el pago con Mercado Pago.
-- **Pendiente:** las notificaciones push de solicitudes nuevas.
+- **En integración:** el pago con Mercado Pago (modo de prueba).
+- **Pendiente:**
+  - las notificaciones push de solicitudes nuevas (FCM, que requieren un development build);
+  - el detalle del viaje con su ruta en el historial.
 
 ## Tecnologías
 
