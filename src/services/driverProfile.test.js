@@ -1,9 +1,10 @@
-// AI-assisted: see docs/AI_LOG.md #30
+// AI-assisted: see docs/AI_LOG.md #30, #61
 import {
   averageRating,
   expiryStatus,
   profileUpdate,
   profileValues,
+  submittedAtMillis,
 } from "./driverProfile";
 
 const TODAY = new Date(2026, 10, 12, 15, 30);
@@ -99,5 +100,22 @@ describe("profileUpdate", () => {
       "personal.name": "Tamiro José Solano",
     });
     expect(update).not.toHaveProperty("status");
+  });
+});
+
+// AI-assisted: see docs/AI_LOG.md #61
+describe("submittedAtMillis", () => {
+  it("reads a Firestore Timestamp, a Date or milliseconds", () => {
+    const millis = TODAY.getTime();
+    expect(submittedAtMillis({ submittedAt: { toMillis: () => millis } })).toBe(
+      millis,
+    );
+    expect(submittedAtMillis({ submittedAt: TODAY })).toBe(millis);
+    expect(submittedAtMillis({ submittedAt: millis })).toBe(millis);
+  });
+
+  it("is null without a registration date", () => {
+    expect(submittedAtMillis({})).toBeNull();
+    expect(submittedAtMillis(null)).toBeNull();
   });
 });

@@ -1,37 +1,17 @@
-// AI-assisted: see docs/AI_LOG.md #7, #9, #56
+// AI-assisted: see docs/AI_LOG.md #7, #9, #56, #58
 import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors, radius, spacing } from "../config/theme";
 import { useLanguage } from "../contexts/LanguageContext";
+import { usePhotoPicker } from "../hooks/usePhotoPicker";
 import { formStyles } from "./formStyles";
 
 export default function PhotoField({ label, uri, onChange, error }) {
   const { t } = useLanguage();
-  // Guarda la clave del error para que cambie si se cambia el idioma
-  const [pickerError, setPickerError] = useState(null);
+  // The permission and the camera or gallery live in usePhotoPicker
+  const { pick, errorKey } = usePhotoPicker(onChange);
 
-  const pickFrom = async (requestPermission, launchPicker) => {
-    setPickerError(null);
-    try {
-      const { granted } = await requestPermission();
-      if (!granted) {
-        setPickerError("photo.permissionDenied");
-        return;
-      }
-
-      const result = await launchPicker({ mediaTypes: "images", quality: 0.7 });
-      if (!result.canceled) {
-        onChange(result.assets[0].uri);
-      }
-    } catch (pickError) {
-      console.error("Error seleccionando la foto:", pickError);
-      setPickerError("photo.pickError");
-    }
-  };
-
-  const message = t(pickerError) || error;
+  const message = t(errorKey) || error;
   const hasPhoto = uri !== "";
 
   return (
@@ -67,12 +47,7 @@ export default function PhotoField({ label, uri, onChange, error }) {
             style={styles.button}
             activeOpacity={0.7}
             accessibilityRole="button"
-            onPress={() =>
-              pickFrom(
-                ImagePicker.requestCameraPermissionsAsync,
-                ImagePicker.launchCameraAsync,
-              )
-            }
+            onPress={() => pick("camera")}
           >
             <Text style={styles.buttonText}>{t("photo.takePhoto")}</Text>
           </TouchableOpacity>
@@ -80,12 +55,7 @@ export default function PhotoField({ label, uri, onChange, error }) {
             style={styles.button}
             activeOpacity={0.7}
             accessibilityRole="button"
-            onPress={() =>
-              pickFrom(
-                ImagePicker.requestMediaLibraryPermissionsAsync,
-                ImagePicker.launchImageLibraryAsync,
-              )
-            }
+            onPress={() => pick("library")}
           >
             <Text style={styles.buttonText}>
               {t("photo.chooseFromGallery")}

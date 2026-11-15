@@ -7,7 +7,9 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CarMarker from "../../components/CarMarker";
+import GoButton from "../../components/GoButton";
 import IncomingRequestCard from "../../components/IncomingRequestCard";
+import SearchingBar from "../../components/SearchingBar";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
@@ -23,7 +25,7 @@ import {
   getAvailabilityBlock,
 } from "../../services/driverStatus";
 
-// REGLA: AsyncStorage guarda el último estado de disponibilidad
+// RULE: AsyncStorage keeps the last availability state
 const AVAILABILITY_KEY = "@driver_availability";
 
 export default function HomeScreen() {
@@ -32,6 +34,8 @@ export default function HomeScreen() {
   const mapRef = useRef(null);
   const insets = useSafeAreaInsets();
   const [isOnline, setIsOnline] = useState(false);
+  // Height of the bottom sheet, to place the GO button right above it
+  const [sheetHeight, setSheetHeight] = useState(0);
   const activeTrip = useTrip();
   const activeTripId = activeTrip.trip?.id ?? null;
   // AI-assisted: see docs/AI_LOG.md #31
@@ -41,23 +45,24 @@ export default function HomeScreen() {
   // Dark map between 6 p.m. and 6 a.m.
   const nightMap = useNightMap();
 
-  // Solo un conductor aprobado puede ponerse Disponible (sección 2 del enunciado).
-  // Si la cuenta no está aprobada queda desconectado, aunque la última vez quedara conectado.
+  // Only an approved driver can go Available (section 2 of the project
+  // statement). An account that isn't approved stays offline, even if it was
+  // online last time.
   const driverState = useDriverStatus();
   const blockKey = getAvailabilityBlock(driverState);
   const canGoOnline = blockKey === null;
   const isActive = isOnline && canGoOnline;
 
-  // El rastreo de ubicación solo corre mientras el conductor está conectado. Con
-  // un viaje en curso sigue guardando la ubicación, pero queda no disponible.
+  // Location tracking only runs while the driver is online. With a current
+  // trip it keeps saving the location, but the driver is not available.
   const { location, errorMsg } = useDriverLocation(
     isActive,
     Boolean(activeTrip.trip),
   );
 
-  // Solicitudes nuevas: solo conectado, aprobado y sin viaje en curso. Este inicio
-  // sigue montado debajo del viaje, así que sin esta condición rechazaría
-  // solicitudes que el conductor no ve.
+  // New requests: only online, approved and without a current trip. This
+  // home screen stays mounted under the trip, so without this condition it
+  // would decline requests the driver can't see.
   const {
     request,
     timeLeft,
@@ -67,8 +72,8 @@ export default function HomeScreen() {
     driverState.status,
   );
 
-  // El status del viaje en Firestore controla la pantalla (sección 3): con un
-  // viaje en curso se va a él, también al reabrir la app
+  // The trip status in Firestore controls the screen (section 3): with a
+  // current trip it goes to it, also when the app opens again
   useEffect(() => {
     if (activeTripId) navigation.navigate("ActiveTrip");
   }, [activeTripId, navigation]);
@@ -79,11 +84,11 @@ export default function HomeScreen() {
         if (stored !== null) setIsOnline(stored === "true");
       })
       .catch((error) =>
-        console.error("Error leyendo la disponibilidad:", error),
+        console.error("Error reading the availability:", error),
       );
   }, []);
 
-  // Centra el mapa en el conductor sin bloquear el desplazamiento manual
+  // Centers the map on the driver without blocking manual scrolling
   useEffect(() => {
     if (!location) return;
     mapRef.current?.animateToRegion(
@@ -102,7 +107,7 @@ export default function HomeScreen() {
     const next = !isActive;
     setIsOnline(next);
     AsyncStorage.setItem(AVAILABILITY_KEY, String(next)).catch((error) =>
-      console.error("Error guardando la disponibilidad:", error),
+      console.error("Error saving the availability:", error),
     );
   };
 
@@ -127,7 +132,7 @@ export default function HomeScreen() {
         {isActive && <CarMarker position={location} />}
       </MapView>
 
-      {/* Barra superior: menú y estado */}
+      {/* Top bar: menu and status */}
       <View style={[styles.topBar, { top: insets.top + spacing.md }]}>
         <TouchableOpacity
           style={styles.menuButton}
@@ -149,7 +154,7 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* Mismo ancho que el botón del menú, para centrar el estado */}
+        {/* Same width as the menu button, to center the status */}
         <View style={styles.menuSpacer} />
       </View>
 
@@ -163,7 +168,7 @@ export default function HomeScreen() {
         <Text style={styles.earningsAmount}>{formatCop(todayEarnings)}</Text>
       </View>
 
-      {/* Avisos: cuenta sin aprobar, ubicación y solicitudes */}
+      {/* Notices: account not approved, location and requests */}
       <View
         style={[
           styles.notices,
@@ -183,16 +188,33 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* Panel inferior con el interruptor Disponible / No disponible */}
+      {/* AI-assisted: see docs/AI_LOG.md #60 */}
+      {/* Uber's round GO button, above the sheet. It does the same as the
+          switch; it hides while a request card is on screen. */}
+      {!request && sheetHeight > 0 && (
+        <View
+          style={[styles.goButton, { bottom: sheetHeight + spacing.lg }]}
+          pointerEvents="box-none"
+        >
+          <GoButton
+            isOnline={isActive}
+            disabled={!canGoOnline}
+            onPress={toggleOnline}
+          />
+        </View>
+      )}
+
+      {/* Bottom sheet with the Available / Unavailable switch */}
       <View
         style={[
           styles.sheet,
           { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.sm },
         ]}
+        onLayout={(event) => setSheetHeight(event.nativeEvent.layout.height)}
       >
         <View style={styles.handle} />
 
-        {/* Si el conductor volvió al inicio con un viaje en curso */}
+        {/* If the driver came back home with a current trip */}
         {activeTripId && (
           <TouchableOpacity
             style={styles.backToTrip}
@@ -224,9 +246,15 @@ export default function HomeScreen() {
             <View style={[styles.thumb, isActive && styles.thumbOn]} />
           </View>
         </TouchableOpacity>
+
+        {/* AI-assisted: see docs/AI_LOG.md #60 */}
+        {/* Online and waiting: the animated "Finding trips…" bar */}
+        {isActive && !request && !activeTripId && (
+          <SearchingBar label={t("home.searching")} />
+        )}
       </View>
 
-      {/* La solicitud más antigua, sobre el mapa. key la reinicia con cada solicitud */}
+      {/* The oldest request, over the map. key restarts it with each request */}
       {request && (
         <IncomingRequestCard
           key={request.id}
@@ -338,6 +366,7 @@ const styles = StyleSheet.create({
   noticeInfo: { borderLeftColor: colors.black },
   noticeError: { borderLeftColor: colors.error, color: colors.error },
 
+  goButton: { position: "absolute", alignSelf: "center" },
   sheet: {
     position: "absolute",
     left: 0,

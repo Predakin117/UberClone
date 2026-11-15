@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #53, #54
+// AI-assisted: see docs/AI_LOG.md #53, #54, #58
 import { useState } from "react";
 import {
   StyleSheet,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { colors, spacing } from "../config/theme";
 import { useLanguage } from "../contexts/LanguageContext";
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
 import FieldMessage from "./FieldMessage";
@@ -25,11 +26,19 @@ export default function PasswordField({
 }) {
   const { t } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   return (
     <View style={formStyles.field}>
       <Text style={formStyles.label}>{label}</Text>
-      <View style={[formStyles.input, styles.box, error && formStyles.inputError]}>
+      <View
+        style={[
+          formStyles.input,
+          styles.box,
+          isFocused && formStyles.inputFocused,
+          error && formStyles.inputError,
+        ]}
+      >
         <TextInput
           style={styles.input}
           value={value}
@@ -43,6 +52,8 @@ export default function PasswordField({
           textContentType={isNewPassword ? "newPassword" : "password"}
           autoComplete={isNewPassword ? "new-password" : "current-password"}
           onSubmitEditing={onSubmitEditing}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           accessibilityLabel={label}
         />
         <TouchableOpacity
@@ -67,6 +78,16 @@ export default function PasswordField({
 
 const styles = StyleSheet.create({
   box: { flexDirection: "row", alignItems: "center", paddingVertical: 0 },
-  input: { flex: 1, fontSize: 16, paddingVertical: 12 },
-  toggle: { fontWeight: "bold", marginLeft: 10 },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.textPrimary,
+    paddingVertical: spacing.md,
+  },
+  toggle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.textPrimary,
+    marginLeft: spacing.md,
+  },
 });

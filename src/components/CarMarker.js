@@ -1,9 +1,20 @@
-// AI-assisted: see docs/AI_LOG.md #31
+// AI-assisted: see docs/AI_LOG.md #31, #59
 // The driver on the map: a car seen from above, drawn with Views (no images),
 // that turns with the GPS heading. It replaces the blue location dot.
 import { StyleSheet, View } from "react-native";
 import { Marker } from "react-native-maps";
 import { colors } from "../config/theme";
+
+// The car alone, pointing up. The welcome screen also draws it.
+export function CarShape() {
+  return (
+    <View style={styles.car}>
+      <View style={styles.windshield} />
+      <View style={styles.roof} />
+      <View style={styles.rearWindow} />
+    </View>
+  );
+}
 
 export default function CarMarker({ position }) {
   if (!position) return null;
@@ -19,11 +30,7 @@ export default function CarMarker({ position }) {
       anchor={{ x: 0.5, y: 0.5 }}
       zIndex={10}
     >
-      <View style={styles.car}>
-        <View style={styles.windshield} />
-        <View style={styles.roof} />
-        <View style={styles.rearWindow} />
-      </View>
+      <CarShape />
     </Marker>
   );
 }

@@ -1,5 +1,7 @@
-// AI-assisted: see docs/AI_LOG.md #53
+// AI-assisted: see docs/AI_LOG.md #53, #58
+import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
+import { colors, spacing } from "../config/theme";
 import { useLanguage } from "../contexts/LanguageContext";
 import { findCountry } from "../validation/phone";
 import CountryPicker from "./CountryPicker";
@@ -16,6 +18,7 @@ export default function PhoneField({
   autoFocus,
 }) {
   const { t } = useLanguage();
+  const [isFocused, setIsFocused] = useState(false);
   const country = findCountry(countryCode);
 
   const digitsHint =
@@ -35,10 +38,18 @@ export default function PhoneField({
           hasError={Boolean(countryError)}
         />
         <TextInput
-          style={[formStyles.input, styles.input, error && formStyles.inputError]}
+          style={[
+            formStyles.input,
+            styles.input,
+            isFocused && formStyles.inputFocused,
+            error && formStyles.inputError,
+          ]}
           value={phone}
           onChangeText={onPhoneChange}
           placeholder={t("login.phonePlaceholder")}
+          placeholderTextColor={colors.placeholder}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           keyboardType="phone-pad"
           textContentType="telephoneNumber"
           autoComplete="tel"
@@ -51,14 +62,13 @@ export default function PhoneField({
       {error || countryError ? (
         <Text style={formStyles.errorText}>{error || countryError}</Text>
       ) : (
-        <Text style={styles.hint}>{digitsHint}</Text>
+        <Text style={formStyles.hintText}>{digitsHint}</Text>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center" },
-  input: { flex: 1, fontSize: 16 },
-  hint: { color: "#888", fontSize: 12, marginTop: 5 },
+  row: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  input: { flex: 1 },
 });

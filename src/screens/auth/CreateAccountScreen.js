@@ -1,17 +1,12 @@
-// AI-assisted: see docs/AI_LOG.md #53, #54
+// AI-assisted: see docs/AI_LOG.md #53, #54, #58
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useMemo, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-} from "react-native";
+import { StyleSheet } from "react-native";
 import FormField from "../../components/FormField";
+import NextButton from "../../components/NextButton";
 import PasswordField from "../../components/PasswordField";
 import PhoneField from "../../components/PhoneField";
-import NextButton from "../../components/NextButton";
+import StepLayout from "../../components/StepLayout";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { createAccount } from "../../services/accountService";
 import { authErrorKey, validateNewAccount } from "../../validation/account";
@@ -66,79 +61,69 @@ export default function CreateAccountScreen() {
     }
   };
 
+  // AI-assisted: see docs/AI_LOG.md #58
+  // Only the look changes: StepLayout keeps the button fixed at the bottom
+  // and the save error shows under it
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.title}>{t("signup.title")}</Text>
-        <Text style={styles.subtitle}>{t("signup.subtitle")}</Text>
-
-        <FormField
-          label={t("login.email")}
-          value={form.email}
-          onChangeText={setField("email")}
-          error={fieldError("email")}
-          placeholder={t("login.emailPlaceholder")}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          textContentType="emailAddress"
-          autoComplete="email"
-          maxLength={MAX_EMAIL_LENGTH}
-          showLimit
-        />
-
-        <PhoneField
-          countryCode={form.countryCode}
-          onCountryChange={setField("countryCode")}
-          phone={form.phone}
-          onPhoneChange={setField("phone")}
-          error={fieldError("phone")}
-          countryError={fieldError("countryCode")}
-        />
-
-        <PasswordField
-          label={t("password.label")}
-          value={form.password}
-          onChangeText={setField("password")}
-          error={fieldError("password")}
-          hint={t("signup.passwordHint")}
-          isNewPassword
-        />
-
-        <PasswordField
-          label={t("signup.confirmPassword")}
-          value={form.confirmPassword}
-          onChangeText={setField("confirmPassword")}
-          error={fieldError("confirmPassword")}
-          isNewPassword
-          onSubmitEditing={handleCreate}
-        />
-
-        {submitError && <Text style={styles.errorText}>{t(submitError)}</Text>}
-
+    <StepLayout
+      title={t("signup.title")}
+      subtitle={t("signup.subtitle")}
+      footer={
         <NextButton
           label={t("signup.submit")}
           onPress={handleCreate}
           isSaving={isCreating}
           loadingLabel={t("signup.creating")}
+          error={t(submitError)}
           style={styles.button}
         />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      }
+    >
+      <FormField
+        label={t("login.email")}
+        value={form.email}
+        onChangeText={setField("email")}
+        error={fieldError("email")}
+        placeholder={t("login.emailPlaceholder")}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        textContentType="emailAddress"
+        autoComplete="email"
+        maxLength={MAX_EMAIL_LENGTH}
+        showLimit
+      />
+
+      <PhoneField
+        countryCode={form.countryCode}
+        onCountryChange={setField("countryCode")}
+        phone={form.phone}
+        onPhoneChange={setField("phone")}
+        error={fieldError("phone")}
+        countryError={fieldError("countryCode")}
+      />
+
+      <PasswordField
+        label={t("password.label")}
+        value={form.password}
+        onChangeText={setField("password")}
+        error={fieldError("password")}
+        hint={t("signup.passwordHint")}
+        isNewPassword
+      />
+
+      <PasswordField
+        label={t("signup.confirmPassword")}
+        value={form.confirmPassword}
+        onChangeText={setField("confirmPassword")}
+        error={fieldError("confirmPassword")}
+        isNewPassword
+        onSubmitEditing={handleCreate}
+      />
+    </StepLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: "#fff" },
-  container: { padding: 20 },
-  title: { fontSize: 28, fontWeight: "bold", marginBottom: 8 },
-  subtitle: { fontSize: 16, color: "#555", marginBottom: 24 },
-  errorText: { color: "red", fontSize: 14, marginBottom: 10 },
-  button: { marginTop: 10, marginBottom: 20 },
+  button: { marginTop: 0 },
 });

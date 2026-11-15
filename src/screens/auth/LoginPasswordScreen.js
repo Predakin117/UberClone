@@ -1,17 +1,11 @@
-// AI-assisted: see docs/AI_LOG.md #53, #54, #55
+// AI-assisted: see docs/AI_LOG.md #53, #54, #55, #58
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import PasswordField from "../../components/PasswordField";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import NextButton from "../../components/NextButton";
+import PasswordField from "../../components/PasswordField";
+import StepLayout from "../../components/StepLayout";
+import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { resetPassword, signIn } from "../../services/accountService";
 import { authErrorKey, validatePassword } from "../../validation/account";
@@ -71,36 +65,13 @@ export default function LoginPasswordScreen() {
     }
   };
 
+  // AI-assisted: see docs/AI_LOG.md #58
+  // Only the look changes: the account as a chip that goes back to change it,
+  // and the button fixed at the bottom (StepLayout)
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View>
-          <Text style={styles.title}>{t("password.title")}</Text>
-          <Text style={styles.identifier}>{params.identifier}</Text>
-
-          <PasswordField
-            label={t("password.label")}
-            value={password}
-            onChangeText={handleChange}
-            error={t(error)}
-            autoFocus
-            onSubmitEditing={handleSignIn}
-          />
-
-          <TouchableOpacity onPress={handleForgotPassword} disabled={isResetting}>
-            <Text style={styles.link}>{t("password.forgot")}</Text>
-          </TouchableOpacity>
-          {resetSent && (
-            <Text style={styles.notice}>{t("password.resetSent")}</Text>
-          )}
-        </View>
-
+    <StepLayout
+      title={t("password.title")}
+      footer={
         <NextButton
           label={t("password.signIn")}
           onPress={handleSignIn}
@@ -108,22 +79,74 @@ export default function LoginPasswordScreen() {
           loadingLabel={t("password.signingIn")}
           style={styles.button}
         />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      }
+    >
+      <View style={styles.account}>
+        <Text style={styles.identifier} numberOfLines={1}>
+          {params.identifier}
+        </Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+        >
+          <Text style={styles.link}>{t("password.change")}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <PasswordField
+        label={t("password.label")}
+        value={password}
+        onChangeText={handleChange}
+        error={t(error)}
+        autoFocus
+        onSubmitEditing={handleSignIn}
+      />
+
+      <TouchableOpacity
+        onPress={handleForgotPassword}
+        disabled={isResetting}
+        accessibilityRole="button"
+      >
+        <Text style={[styles.link, isResetting && styles.linkDisabled]}>
+          {t("password.forgot")}
+        </Text>
+      </TouchableOpacity>
+      {resetSent && (
+        <Text style={styles.notice}>{t("password.resetSent")}</Text>
+      )}
+    </StepLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: "#fff" },
-  container: { flexGrow: 1, padding: 20, justifyContent: "space-between" },
-  title: { fontSize: 28, fontWeight: "bold", marginBottom: 8 },
-  identifier: { fontSize: 16, color: "#555", marginBottom: 24 },
-  link: { fontWeight: "bold", textDecorationLine: "underline" },
-  notice: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    padding: 15,
-    marginTop: 15,
+  account: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md - 2,
+    marginBottom: spacing.xl,
   },
-  button: { marginBottom: 10 },
+  identifier: { ...typography.body, flex: 1, fontWeight: "600" },
+  link: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.textPrimary,
+    textDecorationLine: "underline",
+  },
+  linkDisabled: { color: colors.disabledText },
+  notice: {
+    ...typography.body,
+    lineHeight: 22,
+    backgroundColor: colors.surface,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.success,
+    borderRadius: radius.sm,
+    padding: spacing.lg,
+    marginTop: spacing.lg,
+    overflow: "hidden",
+  },
+  button: { marginTop: 0 },
 });

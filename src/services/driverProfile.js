@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #30
+// AI-assisted: see docs/AI_LOG.md #30, #61
 // Pure functions for the profile screen: average rating, document expiry
 // warnings and the Firestore update of the editable fields.
 import { addDays, parseISODate } from "../validation/dates";
@@ -68,4 +68,19 @@ export const profileUpdate = (driver, values) => {
     update["documents.mercadoPagoEmail"] = mercadoPagoEmail;
   }
   return update;
+};
+
+// AI-assisted: see docs/AI_LOG.md #61
+/**
+ * When the driver sent the registration (submittedAt of drivers/{uid}), in
+ * milliseconds, for "Driver since" on the profile. Accepts a Firestore
+ * Timestamp, a Date or milliseconds; null if it is missing.
+ */
+export const submittedAtMillis = (driver) => {
+  const value = driver?.submittedAt;
+  if (value == null) return null;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "number") return value;
+  return null;
 };
