@@ -178,6 +178,37 @@ qué paso se crea.
   - Sin `MP_ACCESS_TOKEN` o sin `serviceAccountKey.json`, las rutas responden 503
     (`pagos_no_configurados`).
   - Solo credenciales de prueba durante todo el proyecto.
+- **Pago dividido (reto opcional de bonificación de la sección 4):**
+  - **Idea:** si el conductor vinculó su propia cuenta de Mercado Pago, el dinero
+    del viaje ya no entra entero a la plataforma. Mercado Pago lo reparte: la
+    parte del conductor (tarifa + propina − comisión) va a la cuenta del
+    conductor y la comisión a la plataforma.
+  - **Vinculación (OAuth):** en el perfil, "Vincular Mercado Pago" abre la página
+    de autorización de Mercado Pago (`backend/src/mercadoPagoOAuth.js`). Mercado
+    Pago vuelve a `GET /pagos/mercadopago/oauth` con un código, y el backend lo
+    cambia por el token del conductor. Rutas con el token del conductor:
+    `POST /pagos/mercadopago/vinculo` (¿está vinculada?), `/vincular` y
+    `/desvincular`.
+  - **Cobro:** el backend crea la preferencia **con el token del conductor** y
+    `marketplace_fee` = la comisión del viaje. Si el conductor no vinculó su
+    cuenta, la plataforma cobra el viaje completo, como antes.
+  - **Tokens:** se guardan con `firebase-admin` en `mercadoPagoAccounts/{uid}`
+    (`backend/src/sellerAccounts.js`). `firestore.rules` no tiene reglas para esa
+    colección, así que la app no puede leerla ni escribirla. El token dura 180
+    días y el backend lo renueva antes de que venza.
+  - **En el viaje:** un pago aprobado con el token del conductor deja
+    `paymentSplit: true`, un campo extra de `trips` que solo escribe el backend.
+    El saldo de Ganancias no cuenta esos viajes, porque nadie le debe nada a
+    nadie.
+  - **Variables:** `MP_CLIENT_ID` y `MP_CLIENT_SECRET` de la aplicación de la
+    plataforma, en `backend/.env`. Además necesita `PUBLIC_BACKEND_URL`, y en la
+    aplicación de Mercado Pago hay que registrar exacta la URL de
+    redireccionamiento `<PUBLIC_BACKEND_URL>/api/v1/pagos/mercadopago/oauth`.
+    Como la URL del túnel rápido cambia, hay que actualizarla en el panel cada
+    vez. Sin estas variables, el pago dividido no aparece en la app.
+  - **Comisiones de Mercado Pago:** Mercado Pago descuenta su propia comisión de
+    la parte del conductor. La app muestra la ganancia calculada con
+    `calculateFare`, sin esa comisión.
 
 ## Pendientes
 
