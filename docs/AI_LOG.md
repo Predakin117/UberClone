@@ -6,8 +6,8 @@ Herramienta: Gemini
 Objetivo: Configurar la estructura base de carpetas, inicializar el proyecto en Expo e instalar las dependencias principales para navegación, geolocalización y mapas.
 Prompt: "configuracion de espo y estructura de carpetas"
 Resumen de la respuesta: Se proporcionaron los comandos de consola para crear el proyecto de Expo e instalar dependencias clave. Se definió una estructura de carpetas modular dentro de `src/` (incluyendo hooks, contexts y config) y se creó un archivo `.env.example` para proteger datos sensibles.
-Qué se usó / modificó / descartó: [Explica qué código copiaste tal cual, qué ajustaste para tu proyecto y qué decidiste no usar]
-Archivos y commit: [Rutas afectadas, ej: package.json, src/, .env.example] / [Hash del commit, ej: a1b2c3d]
+Qué se usó / modificó / descartó: según el commit b393b72, se usaron las dependencias de navegación (`@react-navigation/native`, `native-stack`, `bottom-tabs` y `drawer`), `expo-location`, `react-native-maps`, AsyncStorage y Jest con `jest-expo`, y un `.gitignore` que deja fuera los `.env`, las llaves de Firebase y las carpetas nativas. Se modificó `app.json` para agregar el plugin `expo-status-bar`. El `.env.example` no entró en este commit: se agregó en a2a6c86 (entrada #4). `dotenv` se instaló aquí y se quitó en a2a6c86 porque no se usaba.
+Archivos y commit: `.gitignore`, `app.json`, `package.json`, `package-lock.json`, `docs/AI_LOG.md` — b393b72 (sobre el proyecto creado con create-expo en f75ca64)
 Verificación: [Cómo comprobaste que funcionaba. Ej: Ejecución de `npx expo start` y verificación de creación de carpetas]
 Aprendizaje: [Qué entendiste de la solución dada y qué harías distinto]
 
@@ -19,8 +19,8 @@ Herramienta: Gemini
 Objetivo: Configurar la estructura base de navegación combinada (Tabs, Drawer, Stack) respetando las restricciones de arquitectura de la aplicación.
 Prompt: "listo ya cree un repo y puse el gitignore"
 Resumen de la respuesta: Se generaron 4 archivos de navegación modularizados: `AuthTabs.js` (para el registro de 3 pasos), `TripStack.js` (para el flujo del viaje), `MainDrawer.js` (para el menú principal) y `AppNavigator.js` (como orquestador raíz basado en el estado de autenticación).
-Qué se usó / modificó / descartó: [Explica qué código copiaste tal cual, qué ajustaste para tu proyecto y qué decidiste no usar]
-Archivos y commit: [Rutas afectadas, ej: src/navigation/*.js] / [Hash del commit, ej: a1b2c3d]
+Qué se usó / modificó / descartó: según el commit b94ae4d, se usaron los cuatro navegadores (`AppNavigator`, `AuthTabs`, `MainDrawer` y `TripStack`) y `App.js`. En el mismo commit se agregó `src/contexts/AuthContext.js`, del que `AppNavigator` lee `isAuthenticated` e `isLoading`. Las pantallas simuladas de `TripStack` y `MainDrawer` se reemplazaron después por las reales en a2a6c86 (entrada #4).
+Archivos y commit: `App.js`, `src/navigation/AppNavigator.js`, `src/navigation/AuthTabs.js`, `src/navigation/MainDrawer.js`, `src/navigation/TripStack.js`, `src/contexts/AuthContext.js` — b94ae4d
 Verificación: [Cómo comprobaste que funcionaba. Ej: Ejecución en emulador, cambio del estado `isAuthenticated` manualmente para verificar renderizado condicional]
 Aprendizaje: [Qué entendiste de la solución dada y qué harías distinto]
 
@@ -32,8 +32,8 @@ Herramienta: Gemini
 Objetivo: Implementar el formulario de registro de 3 pestañas aplicando las reglas de negocio (errores inline, habilitación global del botón final y uso de estados).
 Prompt: "me parece tu idea correcta"
 Resumen de la respuesta: Se creó un `RegistrationContext` para compartir el estado del formulario (formData, errors) entre los Tabs usando `useState` y `useMemo`. Se implementaron las pantallas `PersonalInfoScreen` (con validación onBlur y errores debajo de los inputs) y `DocumentsScreen` (con el botón bloqueado hasta que `canSubmit` sea verdadero).
-Qué se usó / modificó / descartó: [Explica qué código copiaste tal cual, qué ajustaste para tu proyecto (como crear el VehicleScreen por tu cuenta) y qué decidiste no usar]
-Archivos y commit: [Rutas afectadas: src/contexts/RegistrationContext.js, src/navigation/AuthTabs.js, src/screens/auth/*.js] / [Hash del commit]
+Qué se usó / modificó / descartó: según el commit b94ae4d, se usaron `RegistrationContext` (`useState` para `formData` y `errors`, `useMemo` para `canSubmit`), `PersonalInfoScreen` (validación al salir del campo, con el error debajo) y `DocumentsScreen` (botón deshabilitado hasta que `canSubmit` sea verdadero). `VehicleScreen.js` no estaba en ese commit: se creó en 029f6f5 (entrada #6). Las validaciones pasaron después a `src/validation/` en db54e73 (entrada #7).
+Archivos y commit: `src/contexts/RegistrationContext.js`, `src/navigation/AuthTabs.js`, `src/screens/auth/PersonalInfoScreen.js`, `src/screens/auth/DocumentsScreen.js` — b94ae4d
 Verificación: [Cómo comprobaste que funcionaba. Ej: Probé navegando entre pestañas, dejando campos vacíos para ver los mensajes rojos, y llenando todo para habilitar el botón y entrar a la app]
 Aprendizaje: [Qué entendiste de la solución dada y qué harías distinto]
 
@@ -45,8 +45,8 @@ Herramienta: Claude Code
 Objetivo: Revisar el proyecto completo y corregir los bugs y problemas de configuración encontrados.
 Prompt: "analiza el proyecto uberclone-driver y no modifiques nada" / "aplica esos cambios"
 Resumen de la respuesta: Se conectaron las pantallas reales en `TripStack` y `MainDrawer` (antes eran mocks). Se corrigió la llamada a `calculateFare` en `TripSummaryScreen` (recibía argumentos posicionales y leía `totalFare`, que no existe). `IncomingRequestScreen` ahora llama `acceptTrip` del `TripContext`. Se quitó un texto suelto `" "` dentro de un `<View>` en `DocumentsScreen` y se agregó la validación inline de la licencia. Se sacó el efecto secundario del updater de `setState` en `useTripRequests` y se corrigió la fuga de la suscripción en `useDriverLocation`, que ahora se usa en `HomeScreen`. La disponibilidad se guarda en AsyncStorage. Se eliminaron la plantilla de Expo Router y dependencias sin uso (`expo-router`, `dotenv`, `@expo/ui`, `expo-glass-effect`, `expo-symbols`). Se agregaron `app.config.js` (API key de Google Maps), `.env.example`, `src/config/env.js` con variables `EXPO_PUBLIC_*`, un botón de cerrar sesión, la validación de correo con regex y tests de `calculateFare`.
-Qué se usó / modificó / descartó: [Completar]
-Archivos y commit: `src/navigation/*.js`, `src/screens/**/*.js`, `src/hooks/*.js`, `src/contexts/*.js`, `src/config/*.js`, `app.json`, `app.config.js`, `package.json`, `tsconfig.json`, `AGENTS.md`, `.env.example` / [Hash del commit]
+Qué se usó / modificó / descartó: según el commit a2a6c86, se aplicaron todos los cambios del resumen en un solo commit. Se descartaron la plantilla de Expo Router (`src/app`, sus componentes, sus hooks, su tema y `scripts/reset-project.js`) y las dependencias `expo-router`, `dotenv`, `@expo/ui`, `expo-glass-effect` y `expo-symbols`. `AGENTS.md` se actualizó para decir que el proyecto usa React Navigation.
+Archivos y commit: `src/navigation/*.js`, `src/screens/**/*.js`, `src/hooks/*.js`, `src/contexts/*.js`, `src/config/*.js`, `app.json`, `app.config.js`, `package.json`, `tsconfig.json`, `AGENTS.md`, `.env.example` / a2a6c86
 Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar con la prueba en el emulador/dispositivo]
 
 ### Entrada #5
@@ -57,7 +57,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Objetivo: Analizar el enunciado, compararlo con el código, planear las entregas y repartir el avance con Ximena.
 - Prompt: "analiza el documento" / PDF del enunciado adjunto / "esto es lo que tengo pendiente y fecha de entrega 5 de noviembre, primera entrega El avance, pestaña 1 y pestaña 2 del conductor. 12 noviembre proyecto final 19 parcial final, 10 preguntas finales" / "centremonos en el avance, necesito que compares el codigo que tengo con lo que me pide el avance" / "bueno sabiendo eso puede hacer un plan de divicion de trabajo para mi y para mi compañera para ir avanzando, a parte crear un pront para esta misma herramienta para que ella pueda trabajar (debe tener todo el contexto posible para no comfundirte)" / "puedes crear las ramas de cada uno?" / "puedes modificar el nombre de las ramas con el nombre de la persona, compañera ximena"
 - Resumen de la respuesta: Se comparó el código con el enunciado: de los 15 campos de las pestañas 1 y 2, 1 estaba completo, 3 a medias y 11 faltaban. Se creó un plan de reparto y un prompt para Ximena (https://claude.ai/artifact/TexYBBL9F15s31HazHvtQs), y se crearon las ramas `tamiro/registro-base`, `tamiro/pestana-1`, `ximena/pestana-2` y `ximena/readme`.
-- Qué se usó / modificó / descartó: [Completar]
+- Qué se usó / modificó / descartó: se usaron el plan de reparto, el prompt para Ximena y las ramas `tamiro/registro-base`, `tamiro/pestana-1`, `ximena/pestana-2` y `ximena/readme`, que siguen en el repositorio. Se modificó el nombre de las ramas para que lleven el nombre de cada integrante (último prompt). No hubo código.
 - Archivos y commit: Sin cambios de código; solo se crearon ramas desde a2a6c86.
 - Verificación: `npm test` (5 tests) y `npx tsc --noEmit` sin errores. Paquetes confirmados en la documentación de Expo 58.
 - Aprendizaje: [Completar]
@@ -66,11 +66,11 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 
 - Fecha: 2026-10-23
 - Integrante: Tamiro José Solano Muriel
-- Herramienta: [Completar]
+- Herramienta: no consta en el historial de Git (el commit no tiene coautor).
 - Objetivo: Crear el MVP del flujo de viaje: `TripContext`, `pricing.js`, hooks de ubicación y solicitudes, y pantallas de viaje y ganancias.
-- Prompt: [Completar: registro retroactivo del commit, que no tenía entrada]
-- Resumen de la respuesta: [Completar]
-- Qué se usó / modificó / descartó: [Completar]
+- Prompt: [prompt original no conservado]
+- Resumen de la respuesta: según el mensaje del commit 029f6f5, se creó `TripContext` con los estados del viaje (idle, driver_arriving, in_progress, completed) y `TripProvider` envolvió la navegación en `App.js`. Se crearon `pricing.js`, `useDriverLocation`, `useTripRequests`, `HomeScreen` (botón conectado / desconectado y una solicitud simulada de 15 segundos que llama a `acceptTrip()`), `IncomingRequestScreen`, `ActiveTripScreen`, `TripSummaryScreen` y `EarningsScreen`. También se creó `VehicleScreen.js`, que faltaba en las pestañas del registro, se dieron medidas explícitas al `MapView`, se quitaron textos sueltos fuera de `<Text>` y se borró la carpeta `src/app` de la plantilla.
+- Qué se usó / modificó / descartó: se usó lo que describe el commit, con una excepción: el mensaje menciona un `babel.config.js` con el plugin de Reanimated, pero ese archivo no está en el commit ni en ningún otro del repositorio. Se modificó después: en a2a6c86 (entrada #4) se corrigieron la llamada a `calculateFare` de `TripSummaryScreen` y la suscripción de `useDriverLocation`, y en 9511707 (entrada #21) `TripContext` pasó a leer el viaje de Firestore. Se descartó después: `IncomingRequestScreen`, que en 9511707 se reemplazó por `IncomingRequestCard` sobre el mapa.
 - Archivos y commit: `src/config/pricing.js`, `src/contexts/TripContext.js`, `src/hooks/*.js`, `src/screens/auth/VehicleScreen.js`, `src/screens/main/EarningsScreen.js`, `src/screens/trip/*.js` — 029f6f5
 - Verificación: [Completar]
 - Aprendizaje: [Completar]
@@ -83,7 +83,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Objetivo: Crear la base común del registro para que las pestañas 1 y 2 se puedan desarrollar por separado.
 - Prompt: "comencemos mi parte, ya que este chat sera compartido con ximena"
 - Resumen de la respuesta: Se instalaron `expo-image-picker`, `@react-native-community/datetimepicker` y ESLint. Se crearon `FormField`, `SelectField`, `PhotoField` y los validadores de `src/validation/`. `RegistrationContext` ahora calcula los errores a partir de los datos, y las pantallas del registro se adaptaron a ese contexto.
-- Qué se usó / modificó / descartó: [Completar]
+- Qué se usó / modificó / descartó: según el commit db54e73, se usaron `FormField`, `SelectField`, `PhotoField`, `formStyles` y los validadores de `src/validation/` (`personalInfo`, `vehicle` y `documents`), con su primera prueba. Se modificó `RegistrationContext` para que calcule los errores a partir de los datos en vez de guardarlos. `vehicle.js` y `VehicleScreen.js` quedaron como versión temporal para que Ximena los completara en `ximena/pestana-2`, y ella los reemplazó en 7af215d.
 - Archivos y commit: `app.json`, `eslint.config.js`, `package.json`, `package-lock.json`, `src/components/*`, `src/contexts/RegistrationContext.js`, `src/validation/*`, `src/screens/auth/*.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js`, `docs/AI_LOG.md` — db54e73
 - Verificación: `npm test` pasa 8 tests y `npx tsc --noEmit` no da errores. `npx expo export --platform android` genera el bundle. ESLint solo reporta los problemas previos de `App.js`, `AuthContext.js` y `useTripRequests.js`. Tamiro probó la app y corre correctamente. `SelectField` y `PhotoField` aún no se usan en ninguna pantalla, así que no se han probado.
 - Aprendizaje: [Completar]
@@ -96,8 +96,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Objetivo: Subir la base a GitHub, informar a Ximena del trabajo hecho y restaurar las entradas de esta bitácora que se perdieron.
 - Prompt: "no documentar, hagamos este commit y dame un informe para ximena para que sepa lo que hice" / "corrigela que se elimino de la nada, y la documentacion para ximena"
 - Resumen de la respuesta: Se hizo el commit de la base y se escribió un informe para Ximena, publicado en el plan del equipo. Se restauraron las entradas #5, #6 y #7 con su numeración original, se repararon las rutas alteradas en la entrada #4 y se devolvieron las marcas `AI-assisted` a esos números.
-- Qué se usó / modificó / descartó: [Completar]
-- Archivos y commit: `docs/AI_LOG.md`, marcas `AI-assisted` en `src/components/*`, `src/contexts/RegistrationContext.js`, `src/validation/*`, `src/screens/auth/*.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js` — db54e73 y el commit siguiente de esta rama.
+- Qué se usó / modificó / descartó: según el commit b8fcebf, se recuperaron las entradas #5 a #7, se agregó la #8, se repararon las rutas alteradas de la #4 y las marcas `AI-assisted` de 13 archivos volvieron a apuntar a esos números. El informe para Ximena no está en el repositorio: se publicó en el plan del equipo.
+- Archivos y commit: `docs/AI_LOG.md`, marcas `AI-assisted` en `src/components/*`, `src/contexts/RegistrationContext.js`, `src/validation/*`, `src/screens/auth/*.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js` — db54e73 y b8fcebf
 - Verificación: Se comparó la entrada #4 con la versión de `main` y se revisó que cada marca del código apunte a una entrada existente.
 - Aprendizaje: [Completar]
 
@@ -129,9 +129,12 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Integrante: Tamiro José Solano Muriel
 - Herramienta: Claude Code
 - Objetivo: Guardar las pestañas 1 y 2 del registro en Firestore y subir las fotos a Cloudinary.
-- Prompt: [Completar: prompts de la sesión, copiados tal como se escribieron]
+- Prompt: [prompt original no conservado]
 - Resumen de la respuesta: Se conectó la app a Firebase con el SDK web, con sesión anónima guardada en AsyncStorage. Cada pestaña se guarda en el documento `drivers/{uid}` al tocar Siguiente, las fotos se suben a Cloudinary con un upload preset sin firma y "Enviar registro" deja el estado en `pending`. Las reglas de `firestore.rules` solo dejan a cada conductor leer y escribir su documento, sin poder aprobarse solo.
-- Qué se usó / modificó / descartó: [Completar]
+- Qué se usó / modificó / descartó:
+  - Se usó: según el commit f03905c, la sesión anónima de Firebase Auth, el borrador de cada pestaña en `drivers/{uid}` al tocar Siguiente, el estado `pending` al enviar el registro y las reglas de `firestore.rules`.
+  - Se modificó: las fotos se suben a Cloudinary con un `File` de `expo-file-system`, porque el `fetch` de Expo no acepta la forma `{ uri }` de React Native en un `FormData`.
+  - Se descartó: f03905c reemplazó por error el `.env.example` con una plantilla de otro proyecto (variables de Next.js y Supabase). En ac07030 se restauró con las 11 variables que lee la app, sin valores.
 - Archivos y commit: `src/config/firebase.js`, `src/config/env.js`, `src/services/driverRepository.js`, `src/services/driverDocs.js`, `src/services/driverDocs.test.js`, `src/services/cloudinary.js`, `src/components/NextButton.js`, `src/contexts/RegistrationContext.js`, `src/screens/auth/*.js`, `src/i18n/strings.js`, `firestore.rules`, `.env.example`, `package.json`, `package-lock.json` — f03905c y ac07030 (Pull Request #6)
 - Verificación: [Completar]
 - Aprendizaje: [Completar]
@@ -142,7 +145,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Integrante: Tamiro José Solano Muriel
 - Herramienta: Claude (Cowork)
 - Objetivo: Crear el backend que envía un código de 6 dígitos al correo del conductor y el servicio de la app que lo pide y lo verifica.
-- Prompt: [Completar: prompts de la sesión de Cowork, copiados tal como se escribieron]
+- Prompt: [prompt original no conservado]
 - Resumen de la respuesta: Se creó `backend/` con Node puro (http y crypto) y Nodemailer con Gmail. Las rutas `POST /api/v1/auth/enviar-codigo` y `POST /api/v1/auth/verificar-codigo` guardan el código cifrado con sal, vencen a los 10 minutos, permiten 5 intentos y 60 segundos entre envíos, y nunca devuelven el código en la respuesta. En la app, `src/services/emailVerification.js` llama al backend sin lanzar errores.
 - Qué se usó / modificó / descartó:
   - Se usó: el backend y el servicio tal como se generaron.
