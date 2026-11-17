@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #11, #21, #26, #62
+// AI-assisted: see docs/AI_LOG.md #11, #21, #26, #62, #63
 // Servidor HTTP con el módulo nativo de Node (sin Express).
 // Rutas (bajo /api/v1):
 //   GET  /health
@@ -10,6 +10,11 @@
 //   POST /pagos/mercadopago/verificar  { tripId }          with the driver's token
 //   POST /pagos/mercadopago/webhook    notification from Mercado Pago (no token)
 //   GET  /pagos/mercadopago/retorno    page after the checkout (no token)
+// Split payments (driver's own Mercado Pago account):
+//   POST /pagos/mercadopago/vinculo      {}  with the driver's token
+//   POST /pagos/mercadopago/vincular     {}  with the driver's token
+//   POST /pagos/mercadopago/desvincular  {}  with the driver's token
+//   GET  /pagos/mercadopago/oauth        Mercado Pago comes back after linking
 const http = require("node:http");
 const { renderCorreo } = require("./mailer");
 const { calcularRuta: calcularRutaOrs } = require("./rutas");
@@ -186,11 +191,29 @@ function createApp({
   const mercadoPagoWebhook = withMercadoPago((req, body, query) =>
     mercadoPago.webhook(query, body),
   );
+  // AI-assisted: see docs/AI_LOG.md #63
+  // Split payments: the driver links their own Mercado Pago account
+  const linkStatus = withMercadoPago((req) =>
+    mercadoPago.linkStatus(req.headers.authorization),
+  );
+  const startLink = withMercadoPago((req) =>
+    mercadoPago.startLink(req.headers.authorization),
+  );
+  const unlink = withMercadoPago((req) =>
+    mercadoPago.unlink(req.headers.authorization),
+  );
 
-  // The return page is HTML: the passenger sees it in the browser
-  async function mercadoPagoReturn(req, res, query) {
+  // The pages after the checkout and after linking are HTML: they are seen
+  // in the browser
+  const htmlPages = {
+    [`${basePath}/pagos/mercadopago/retorno`]: (query) =>
+      mercadoPago.returnPage(query),
+    [`${basePath}/pagos/mercadopago/oauth`]: (query) =>
+      mercadoPago.oauthReturn(query),
+  };
+  async function sendHtmlPage(res, page, query) {
     const { status, html } = mercadoPago
-      ? await mercadoPago.returnPage(query)
+      ? await page(query)
       : { status: 503, html: "<p>Mercado Pago no está configurado.</p>" };
     res.writeHead(status, { "Content-Type": "text/html; charset=utf-8" });
     res.end(html);
@@ -205,9 +228,9 @@ function createApp({
     if (req.method === "GET" && ruta === `${basePath}/health`) {
       return responder(res, 200, { ok: true });
     }
-    if (req.method === "GET" && ruta === `${basePath}/pagos/mercadopago/retorno`) {
+    if (req.method === "GET" && htmlPages[ruta]) {
       try {
-        return await mercadoPagoReturn(req, res, query);
+        return await sendHtmlPage(res, htmlPages[ruta], query);
       } catch (error) {
         logger.error(error);
         return responder(res, 500, { ok: false, error: "Error interno del servidor" });
@@ -222,6 +245,9 @@ function createApp({
       [`${basePath}/pagos/mercadopago`]: startMercadoPago,
       [`${basePath}/pagos/mercadopago/verificar`]: checkMercadoPago,
       [`${basePath}/pagos/mercadopago/webhook`]: mercadoPagoWebhook,
+      [`${basePath}/pagos/mercadopago/vinculo`]: linkStatus,
+      [`${basePath}/pagos/mercadopago/vincular`]: startLink,
+      [`${basePath}/pagos/mercadopago/desvincular`]: unlink,
     };
     const manejador = rutas[ruta];
     if (!manejador) return responder(res, 404, { ok: false, error: "Ruta no encontrada" });

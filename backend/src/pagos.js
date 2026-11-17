@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #26, #62
+// AI-assisted: see docs/AI_LOG.md #26, #62, #63
 // Pagos del viaje (sección 4 del enunciado). El backend es el único que escribe
 // paymentStatus y el estado "paid": las reglas de Firestore no se lo permiten a
 // la app. auth y db son los de firebase-admin; las pruebas pasan unos simulados.
@@ -99,8 +99,13 @@ const tripAmount = (trip) =>
  * "mercadopago" trip that is "completed" changes. An approved payment must be
  * in COP and for the trip's amount; then the trip becomes "paid" (section 4:
  * paymentStatus, paymentId and status: paid).
+ *
+ * AI-assisted: see docs/AI_LOG.md #63
+ * split is true when the payment was read with the driver's own token (split
+ * payment): the approved trip also gets paymentSplit: true, so the earnings
+ * know the driver already received their part and the platform owes nothing.
  */
-function paymentChanges(trip, payment) {
+function paymentChanges(trip, payment, { split = false } = {}) {
   if (trip.paymentMethod !== "mercadopago" || trip.status !== "completed") {
     return null;
   }
@@ -114,7 +119,10 @@ function paymentChanges(trip, payment) {
     return null;
   }
   const changes = { paymentStatus, paymentId: String(payment.id) };
-  if (paymentStatus === "approved") changes.status = "paid";
+  if (paymentStatus === "approved") {
+    changes.status = "paid";
+    if (split) changes.paymentSplit = true;
+  }
   if (
     trip.paymentStatus === changes.paymentStatus &&
     trip.paymentId === changes.paymentId
@@ -128,29 +136,60 @@ function paymentChanges(trip, payment) {
 const isTripId = (tripId) =>
   typeof tripId === "string" && tripId.trim() !== "" && !tripId.includes("/");
 
+// Newest payment first (date_created is an ISO date)
+const byNewest = (a, b) =>
+  String(b.payment.date_created ?? "").localeCompare(
+    String(a.payment.date_created ?? ""),
+  );
+
 /**
  * Mercado Pago Checkout Pro (section 4). auth and db are the firebase-admin
- * ones; mercadoPago is createMercadoPago(...) of ./mercadoPago, or null when
- * MP_ACCESS_TOKEN is missing. Each function returns { status, cuerpo } (or
- * { status, html } for the return page) to answer over HTTP.
+ * ones; mercadoPago is createMercadoPago(...) of ./mercadoPago with the
+ * platform's token, or null when MP_ACCESS_TOKEN is missing. Each function
+ * returns { status, cuerpo } (or { status, html } for the pages shown in the
+ * browser) to answer over HTTP.
+ *
+ * AI-assisted: see docs/AI_LOG.md #63
+ * Split payments (optional bonus): sellers is createSellerAccounts(...) of
+ * ./sellerAccounts and clientFor(token) creates a Mercado Pago client with a
+ * driver's token. Both are null without MP_CLIENT_ID and MP_CLIENT_SECRET;
+ * then every trip is charged by the platform, as before.
  */
-function createMercadoPagoPayments({ auth, db, mercadoPago, logger = console }) {
+function createMercadoPagoPayments({
+  auth,
+  db,
+  mercadoPago,
+  sellers = null,
+  clientFor = null,
+  logger = console,
+}) {
   const { verificarConductor } = crearPagos({ auth, db });
   const tripRef = (tripId) => db.collection("trips").doc(tripId);
+
+  const readTrip = (tripId) =>
+    db.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(tripRef(tripId));
+      return snapshot.exists ? snapshot.data() : null;
+    });
+
+  // Mercado Pago client with the driver's linked account, or null
+  async function sellerClient(uid) {
+    if (!sellers || !clientFor || !uid) return null;
+    const token = await sellers.accessTokenFor(uid);
+    return token ? clientFor(token) : null;
+  }
+
+  const unauthorized = () =>
+    error(401, "no_autorizado", "Missing or invalid driver token");
 
   // The driver's Mercado Pago trip, or the error to answer
   async function readDriverTrip(header, tripId) {
     const uid = await verificarConductor(header);
-    if (!uid) {
-      return { fail: error(401, "no_autorizado", "Missing or invalid driver token") };
-    }
+    if (!uid) return { fail: unauthorized() };
     if (!isTripId(tripId)) {
       return { fail: error(400, "datos_invalidos", "tripId must be a trip id") };
     }
-    const trip = await db.runTransaction(async (transaction) => {
-      const snapshot = await transaction.get(tripRef(tripId));
-      return snapshot.exists ? snapshot.data() : null;
-    });
+    const trip = await readTrip(tripId);
     if (!trip) return { fail: error(404, "no_encontrado", "The trip does not exist") };
     if (trip.driverId !== uid) {
       return { fail: error(403, "no_es_tu_viaje", "The trip belongs to another driver") };
@@ -163,20 +202,42 @@ function createMercadoPagoPayments({ auth, db, mercadoPago, logger = console }) 
 
   /**
    * Saves a payment read from Mercado Pago on its trip (external_reference),
-   * in a transaction. Returns the trip's paymentStatus afterwards, or null if
-   * the trip does not exist.
+   * in a transaction. driverUid is set when the payment was read with that
+   * driver's token (split payment): it only counts for that driver's trip.
+   * Returns the trip's paymentStatus afterwards, or null if the trip does
+   * not exist.
    */
-  async function applyPayment(payment) {
+  async function applyPayment(payment, driverUid = null) {
     const tripId = payment?.external_reference;
     if (!isTripId(tripId)) return null;
     return db.runTransaction(async (transaction) => {
       const snapshot = await transaction.get(tripRef(tripId));
       if (!snapshot.exists) return null;
       const trip = snapshot.data();
-      const changes = paymentChanges(trip, payment);
+      if (driverUid && trip.driverId !== driverUid) {
+        return trip.paymentStatus ?? "pending";
+      }
+      const changes = paymentChanges(trip, payment, { split: Boolean(driverUid) });
       if (changes) transaction.update(tripRef(tripId), changes);
       return changes?.paymentStatus ?? trip.paymentStatus ?? "pending";
     });
+  }
+
+  /**
+   * Reads one payment: first with the driver's token (split payments are in
+   * the driver's account), then with the platform's. Returns
+   * { payment, driverUid }; driverUid is null when the platform read it.
+   */
+  async function readPayment(paymentId, driverUid) {
+    const seller = await sellerClient(driverUid);
+    if (seller) {
+      try {
+        return { payment: await seller.getPayment(paymentId), driverUid };
+      } catch {
+        // Not in the driver's account: it was charged by the platform
+      }
+    }
+    return { payment: await mercadoPago.getPayment(paymentId), driverUid: null };
   }
 
   const notConfigured = () =>
@@ -185,7 +246,10 @@ function createMercadoPagoPayments({ auth, db, mercadoPago, logger = console }) 
   /**
    * POST /pagos/mercadopago { tripId, amount }: the app sends the trip and the
    * amount it calculated (fare + tip); the backend checks it against the trip
-   * and creates the preference with the secret token. Answers { ok, url }.
+   * and creates the preference. If the driver linked their Mercado Pago
+   * account, the preference is created with the driver's token and the
+   * platform's commission as marketplace_fee (split payment); if not, with
+   * the platform's token. Answers { ok, url, split }.
    */
   async function startPayment(header, body) {
     if (!mercadoPago) return notConfigured();
@@ -202,12 +266,18 @@ function createMercadoPagoPayments({ auth, db, mercadoPago, logger = console }) 
       return error(409, "monto_invalido", "The amount does not match the trip");
     }
     try {
-      const { url } = await mercadoPago.createPreference({
-        tripId: body.tripId,
-        amount,
-        title: "Viaje UberClone",
-      });
-      return { status: 200, cuerpo: { ok: true, url } };
+      const preference = { tripId: body.tripId, amount, title: "Viaje UberClone" };
+      const seller = await sellerClient(trip.driverId);
+      const commission = Math.round(Number(trip.commission) || 0);
+      const split = Boolean(seller) && commission > 0 && commission < amount;
+      const { url } = split
+        ? await seller.createPreference({
+            ...preference,
+            marketplaceFee: commission,
+            notificationParams: { driver: trip.driverId },
+          })
+        : await mercadoPago.createPreference(preference);
+      return { status: 200, cuerpo: { ok: true, url, split } };
     } catch (mpError) {
       logger.error("Mercado Pago did not create the preference:", mpError.message);
       return error(502, "pasarela_no_disponible", "Mercado Pago did not answer");
@@ -217,7 +287,8 @@ function createMercadoPagoPayments({ auth, db, mercadoPago, logger = console }) 
   /**
    * POST /pagos/mercadopago/verificar { tripId }: when the checkout closes,
    * the app asks for the trip's payments in Mercado Pago (in case the webhook
-   * did not arrive) and the newest one is saved, or an approved one if any.
+   * did not arrive), in the driver's account and in the platform's. An
+   * approved one is saved if there is one; if not, the newest.
    * Answers { ok, paymentStatus }.
    */
   async function checkPayment(header, body) {
@@ -225,11 +296,24 @@ function createMercadoPagoPayments({ auth, db, mercadoPago, logger = console }) 
     const { trip, fail } = await readDriverTrip(header, body?.tripId);
     if (fail) return fail;
     try {
-      const payments = await mercadoPago.findTripPayments(body.tripId);
-      const payment =
-        payments.find((item) => item.status === "approved") ?? payments[0];
-      const paymentStatus = payment
-        ? await applyPayment(payment)
+      const found = [];
+      const seller = await sellerClient(trip.driverId);
+      if (seller) {
+        for (const payment of await seller.findTripPayments(body.tripId)) {
+          found.push({ payment, driverUid: trip.driverId });
+        }
+      }
+      const sellerIds = new Set(found.map((item) => String(item.payment.id)));
+      for (const payment of await mercadoPago.findTripPayments(body.tripId)) {
+        if (!sellerIds.has(String(payment.id))) {
+          found.push({ payment, driverUid: null });
+        }
+      }
+      found.sort(byNewest);
+      const chosen =
+        found.find((item) => item.payment.status === "approved") ?? found[0];
+      const paymentStatus = chosen
+        ? await applyPayment(chosen.payment, chosen.driverUid)
         : (trip.paymentStatus ?? "pending");
       return { status: 200, cuerpo: { ok: true, paymentStatus } };
     } catch (mpError) {
@@ -242,8 +326,10 @@ function createMercadoPagoPayments({ auth, db, mercadoPago, logger = console }) 
    * POST /pagos/mercadopago/webhook: Mercado Pago tells that a payment
    * changed (type "payment" and data.id, in the body or the query). The
    * notification is only a hint: the payment is read again from Mercado Pago
-   * with the token, so a fake notification cannot mark a trip as paid. An
-   * error answers 500 so Mercado Pago tries again later.
+   * with the token, so a fake notification cannot mark a trip as paid. A
+   * split payment brings ?driver=<uid> (set in the preference) to read it
+   * with that driver's token. An error answers 500 so Mercado Pago tries
+   * again later.
    */
   async function webhook(query, body) {
     if (!mercadoPago) return notConfigured();
@@ -253,7 +339,8 @@ function createMercadoPagoPayments({ auth, db, mercadoPago, logger = console }) 
       return { status: 200, cuerpo: { ok: true } };
     }
     try {
-      await applyPayment(await mercadoPago.getPayment(paymentId));
+      const { payment, driverUid } = await readPayment(paymentId, query.driver);
+      await applyPayment(payment, driverUid);
       return { status: 200, cuerpo: { ok: true } };
     } catch (mpError) {
       logger.error("Error with the Mercado Pago notification:", mpError.message);
@@ -262,39 +349,125 @@ function createMercadoPagoPayments({ auth, db, mercadoPago, logger = console }) 
   }
 
   /**
-   * GET /pagos/mercadopago/retorno?payment_id=…: page where Mercado Pago
-   * leaves the passenger after paying. It saves the payment too and asks to
-   * go back to the app, where the summary already shows the result.
+   * GET /pagos/mercadopago/retorno?payment_id=…&external_reference=…: page
+   * where Mercado Pago leaves the passenger after paying. It saves the
+   * payment too and asks to go back to the app, where the summary already
+   * shows the result.
    */
   async function returnPage(query) {
     let paymentStatus = null;
     if (mercadoPago && query.payment_id && query.payment_id !== "null") {
       try {
-        paymentStatus = await applyPayment(
-          await mercadoPago.getPayment(query.payment_id),
+        const trip = isTripId(query.external_reference)
+          ? await readTrip(query.external_reference)
+          : null;
+        const { payment, driverUid } = await readPayment(
+          query.payment_id,
+          trip?.driverId,
         );
+        paymentStatus = await applyPayment(payment, driverUid);
       } catch (mpError) {
         logger.error("Error reading the returned payment:", mpError.message);
       }
     }
-    return { status: 200, html: returnHtml(paymentStatus) };
+    const [title, text] = RETURN_TEXT[paymentStatus] ?? RETURN_DEFAULT;
+    return { status: 200, html: pageHtml(title, text) };
   }
 
-  return { startPayment, checkPayment, webhook, returnPage };
+  /**
+   * POST /pagos/mercadopago/vinculo, with the driver's token: whether split
+   * payments are available on this backend and whether the driver linked an
+   * account. Answers { ok, available, linked }.
+   */
+  async function linkStatus(header) {
+    const uid = await verificarConductor(header);
+    if (!uid) return unauthorized();
+    if (!sellers) {
+      return { status: 200, cuerpo: { ok: true, available: false, linked: false } };
+    }
+    const { linked } = await sellers.status(uid);
+    return { status: 200, cuerpo: { ok: true, available: true, linked } };
+  }
+
+  /**
+   * POST /pagos/mercadopago/vincular, with the driver's token: the Mercado
+   * Pago page where the driver authorizes the platform. Answers { ok, url }.
+   */
+  async function startLink(header) {
+    const uid = await verificarConductor(header);
+    if (!uid) return unauthorized();
+    if (!sellers) {
+      return error(503, "vinculo_no_configurado", "Missing MP_CLIENT_ID or MP_CLIENT_SECRET");
+    }
+    return { status: 200, cuerpo: { ok: true, url: sellers.startLink(uid) } };
+  }
+
+  /** POST /pagos/mercadopago/desvincular, with the driver's token. */
+  async function unlink(header) {
+    const uid = await verificarConductor(header);
+    if (!uid) return unauthorized();
+    if (sellers) await sellers.unlink(uid);
+    return { status: 200, cuerpo: { ok: true } };
+  }
+
+  /**
+   * GET /pagos/mercadopago/oauth?code=…&state=…: Mercado Pago comes back here
+   * after the driver authorizes (or refuses). The code is changed for the
+   * driver's tokens and the page asks to go back to the app.
+   */
+  async function oauthReturn(query) {
+    if (!sellers || query.error || !query.code) {
+      return { status: 200, html: pageHtml(...LINK_TEXT.failed) };
+    }
+    try {
+      const uid = await sellers.finishLink(query.state, query.code);
+      return {
+        status: 200,
+        html: pageHtml(...(uid ? LINK_TEXT.linked : LINK_TEXT.expired)),
+      };
+    } catch (oauthError) {
+      logger.error("Mercado Pago did not link the account:", oauthError.message);
+      return { status: 200, html: pageHtml(...LINK_TEXT.failed) };
+    }
+  }
+
+  return {
+    startPayment,
+    checkPayment,
+    webhook,
+    returnPage,
+    linkStatus,
+    startLink,
+    unlink,
+    oauthReturn,
+  };
 }
 
-// Page shown in the browser after the checkout (the passenger reads it)
+// Pages shown in the browser (the passenger after paying, the driver after
+// linking the account)
 const RETURN_TEXT = {
   approved: ["Pago aprobado", "El conductor ya ve el pago en su app."],
   rejected: ["Pago rechazado", "Vuelve a la app para intentarlo de nuevo."],
   pending: ["Pago pendiente", "Mercado Pago todavía está procesando el pago."],
 };
+const RETURN_DEFAULT = ["Pago terminado", "Vuelve a la app para ver el resultado."];
 
-function returnHtml(paymentStatus) {
-  const [title, text] = RETURN_TEXT[paymentStatus] ?? [
-    "Pago terminado",
-    "Vuelve a la app para ver el resultado.",
-  ];
+const LINK_TEXT = {
+  linked: [
+    "Cuenta vinculada",
+    "Tu parte de los viajes con Mercado Pago llegará directo a tu cuenta.",
+  ],
+  expired: [
+    "El enlace venció",
+    "Vuelve a la app y toca otra vez Vincular Mercado Pago.",
+  ],
+  failed: [
+    "No se vinculó la cuenta",
+    "Vuelve a la app para intentarlo de nuevo.",
+  ],
+};
+
+function pageHtml(title, text) {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title></head>

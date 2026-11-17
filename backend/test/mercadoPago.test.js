@@ -114,7 +114,7 @@ test("creates the checkout of a finished trip with the amount it charges", async
   const r = await post("", { tripId: "card", amount: 21200 }, "token-ana");
   assert.deepEqual(r, {
     status: 200,
-    body: { ok: true, url: "https://mp.test/checkout/pref-1" },
+    body: { ok: true, url: "https://mp.test/checkout/pref-1", split: false },
   });
   assert.deepEqual(mp.preferences, [
     { tripId: "card", amount: 21200, title: "Viaje UberClone" },

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #62
+// AI-assisted: see docs/AI_LOG.md #62, #63
 // Mercado Pago Checkout Pro client (section 4 of the assignment). It is the
 // only file that talks to the Mercado Pago API (docs/APIS.md), with the
 // built-in fetch of Node: no SDK is installed. The access token
@@ -47,8 +47,20 @@ function createMercadoPago({ accessToken, publicUrl = "", fetchFn = fetch }) {
    * Creates the Checkout Pro preference of a trip: one item with the amount
    * the passenger pays (fare + tip, integer COP), external_reference = tripId.
    * Returns { preferenceId, url }: url is the checkout the app opens.
+   *
+   * AI-assisted: see docs/AI_LOG.md #63
+   * Split payment: this client is created with the driver's token (OAuth)
+   * and marketplaceFee is the platform's commission. Mercado Pago pays the
+   * rest to the driver's account. notificationParams go in the webhook URL
+   * (the driver's uid, to read the payment with the driver's token).
    */
-  async function createPreference({ tripId, amount, title }) {
+  async function createPreference({
+    tripId,
+    amount,
+    title,
+    marketplaceFee,
+    notificationParams,
+  }) {
     const preference = {
       items: [
         {
@@ -63,9 +75,13 @@ function createMercadoPago({ accessToken, publicUrl = "", fetchFn = fetch }) {
       // Only cards and the like: the cash option of the trip is a different flow
       payment_methods: { excluded_payment_types: [{ id: "ticket" }] },
     };
+    if (marketplaceFee !== undefined) preference.marketplace_fee = marketplaceFee;
     if (base.startsWith("https://")) {
       const returnUrl = `${base}/api/v1/pagos/mercadopago/retorno`;
-      preference.notification_url = `${base}/api/v1/pagos/mercadopago/webhook`;
+      const query = notificationParams
+        ? `?${new URLSearchParams(notificationParams)}`
+        : "";
+      preference.notification_url = `${base}/api/v1/pagos/mercadopago/webhook${query}`;
       preference.back_urls = {
         success: returnUrl,
         failure: returnUrl,

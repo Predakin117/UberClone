@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #11, #26, #62
+// AI-assisted: see docs/AI_LOG.md #11, #26, #62, #63
 // Punto de entrada: npm start  (lee backend/.env con --env-file)
 const fs = require("node:fs");
 const os = require("node:os");
@@ -8,6 +8,8 @@ const { createVerificationStore } = require("./verification");
 const { createGmailSender } = require("./mailer");
 const { crearPagos, createMercadoPagoPayments } = require("./pagos");
 const { createMercadoPago } = require("./mercadoPago");
+const { createMercadoPagoOAuth } = require("./mercadoPagoOAuth");
+const { createSellerAccounts } = require("./sellerAccounts");
 
 const user = process.env.MAIL_USER;
 // Google muestra la contraseña de aplicación con espacios; se quitan por si quedaron
@@ -54,7 +56,35 @@ function iniciarMercadoPago(firebase) {
   return createMercadoPagoPayments({
     ...firebase,
     mercadoPago: createMercadoPago({ accessToken, publicUrl }),
+    ...iniciarPagoDividido(firebase, publicUrl),
   });
+}
+
+// AI-assisted: see docs/AI_LOG.md #63
+// Split payments (optional bonus): each driver links their Mercado Pago
+// account with OAuth. Needs MP_CLIENT_ID and MP_CLIENT_SECRET of the
+// platform's application and PUBLIC_BACKEND_URL (https), because Mercado Pago
+// comes back to <PUBLIC_BACKEND_URL>/api/v1/pagos/mercadopago/oauth, which
+// must be registered in the application. Without them, every trip is charged
+// by the platform.
+function iniciarPagoDividido(firebase, publicUrl) {
+  const clientId = (process.env.MP_CLIENT_ID || "").trim();
+  const clientSecret = (process.env.MP_CLIENT_SECRET || "").trim();
+  if (!clientId || !clientSecret || !publicUrl.startsWith("https://")) {
+    console.warn(
+      "Sin MP_CLIENT_ID, MP_CLIENT_SECRET o PUBLIC_BACKEND_URL (https): el pago dividido queda desactivado",
+    );
+    return {};
+  }
+  const redirectUri = `${publicUrl.replace(/\/+$/, "")}/api/v1/pagos/mercadopago/oauth`;
+  console.log(`Pago dividido activo. URL de redireccionamiento: ${redirectUri}`);
+  return {
+    sellers: createSellerAccounts({
+      db: firebase.db,
+      oauth: createMercadoPagoOAuth({ clientId, clientSecret, redirectUri }),
+    }),
+    clientFor: (token) => createMercadoPago({ accessToken: token, publicUrl }),
+  };
 }
 
 const firebase = iniciarPagos();
