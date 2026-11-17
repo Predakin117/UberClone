@@ -36,7 +36,7 @@ import MercadoPagoWebView from "./MercadoPagoWebView";
 // The backend's page after paying (back_urls of the preference)
 const RETURN_PATH = "/pagos/mercadopago/retorno";
 
-export default function MercadoPagoCharge({ trip }) {
+export default function MercadoPagoCharge({ trip, onResult }) {
   const { t } = useLanguage();
   // null, "opening" (creating the checkout) or "checking" (asking the backend)
   const [step, setStep] = useState(null);
@@ -51,7 +51,9 @@ export default function MercadoPagoCharge({ trip }) {
     const result = await checkMercadoPagoPayment(trip.id);
     setStep(null);
     if (!result.ok) setError(`payment.error.${result.codigoError}`);
-  }, [trip.id]);
+    // The summary shows a notice with the result (approved or rejected)
+    else onResult?.(result.paymentStatus);
+  }, [trip.id, onResult]);
 
   const charge = async () => {
     setError(null);

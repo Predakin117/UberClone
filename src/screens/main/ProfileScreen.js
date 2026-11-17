@@ -10,7 +10,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { CameraType } from "expo-image-picker";
 import { Image } from "expo-image";
-import { useContext, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -25,6 +25,7 @@ import FormField from "../../components/FormField";
 import MercadoPagoLink from "../../components/MercadoPagoLink";
 import NextButton from "../../components/NextButton";
 import Skeleton, { SkeletonBox } from "../../components/Skeleton";
+import Toast from "../../components/Toast";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -166,6 +167,7 @@ export default function ProfileScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [saved, setSaved] = useState(false);
+  const hideSaved = useCallback(() => setSaved(false), []);
   // A new selfie (front camera) or a photo from the gallery, like the
   // registration; it is saved with "Save changes"
   const { pick, errorKey: photoError } = usePhotoPicker((uri) => {
@@ -428,12 +430,9 @@ export default function ProfileScreen() {
           disabled={!hasChanges}
           error={saveError ? t(saveError) : null}
         />
-        {saved && !hasChanges && (
-          <Text style={styles.saved} accessibilityLiveRegion="polite">
-            {t("profile.saved")}
-          </Text>
-        )}
       </ScrollView>
+      {/* "Changes saved" as a floating notice, like Uber */}
+      {saved && <Toast message={t("profile.saved")} onHide={hideSaved} />}
     </KeyboardAvoidingView>
   );
 }
@@ -581,5 +580,4 @@ const styles = StyleSheet.create({
     color: colors.black,
   },
   note: { ...typography.caption, marginTop: spacing.xs },
-  saved: { ...typography.label, textAlign: "center" },
 });

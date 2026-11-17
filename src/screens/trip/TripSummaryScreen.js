@@ -10,9 +10,8 @@
 // numbers, the route, duration, distance and payment, and the breakdown.
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,11 +20,12 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FareBreakdown from "../../components/FareBreakdown";
-import FieldMessage from "../../components/FieldMessage";
+import CashCharge from "../../components/CashCharge";
 import MercadoPagoCharge from "../../components/MercadoPagoCharge";
 import PassengerRating from "../../components/PassengerRating";
 import PaymentStatusChip from "../../components/PaymentStatusChip";
 import RouteStops from "../../components/RouteStops";
+import Toast from "../../components/Toast";
 import TripStats from "../../components/TripStats";
 import {
   CONTROL_HEIGHT,
@@ -38,7 +38,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../hooks/useTrip";
 import { formatCop, formatDateTime } from "../../i18n/format";
 import { completedAtMillis } from "../../services/earnings";
-import { markCashReceived } from "../../services/payments";
+import { tripChargeAmount } from "../../services/payments";
 import { TRIP_STATUS } from "../../services/trips";
 
 const CHECK_SIZE = 64;
@@ -53,8 +53,19 @@ export default function TripSummaryScreen() {
   const { trip: liveTrip } = useTrip(paramTrip?.id);
   const trip = liveTrip ?? paramTrip;
 
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [cashError, setCashError] = useState(null);
+  // Floating notice after charging: { message, tone } or null
+  const [toast, setToast] = useState(null);
+  const hideToast = useCallback(() => setToast(null), []);
+  const showPaymentResult = useCallback(
+    (paymentStatus) => {
+      if (paymentStatus === "approved") {
+        setToast({ message: t("summary.toastApproved"), tone: "success" });
+      } else if (paymentStatus === "rejected") {
+        setToast({ message: t("summary.toastRejected"), tone: "error" });
+      }
+    },
+    [t],
+  );
 
   if (!trip) {
     return (
@@ -77,15 +88,6 @@ export default function TripSummaryScreen() {
     trip.paymentMethod === "cash" && trip.status !== TRIP_STATUS.PAID;
   const canChargeMercadoPago =
     trip.paymentMethod === "mercadopago" && trip.status !== TRIP_STATUS.PAID;
-
-  const confirmCash = async () => {
-    setCashError(null);
-    setIsConfirming(true);
-    const result = await markCashReceived(trip.id);
-    setIsConfirming(false);
-    // On success the snapshot brings status "paid" and the button goes away
-    if (!result.ok) setCashError(`payment.error.${result.codigoError}`);
-  };
 
   return (
     <View style={styles.screen}>
@@ -120,43 +122,29 @@ export default function TripSummaryScreen() {
           )}
         </View>
 
-        {canConfirmCash && (
-          <View>
-            <TouchableOpacity
-              style={[styles.cashButton, isConfirming && styles.cashButtonBusy]}
-              onPress={confirmCash}
-              disabled={isConfirming}
-              accessibilityRole="button"
-              accessibilityState={{
-                disabled: isConfirming,
-                busy: isConfirming,
-              }}
-            >
-              {isConfirming ? (
-                <View style={styles.busyRow}>
-                  <ActivityIndicator color={colors.black} />
-                  <Text style={styles.cashButtonText}>
-                    {t("summary.confirmingCash")}
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.busyRow}>
-                  <Ionicons
-                    name="cash-outline"
-                    size={22}
-                    color={colors.black}
-                  />
-                  <Text style={styles.cashButtonText}>
-                    {t("summary.cashReceived")}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <FieldMessage error={cashError ? t(cashError) : null} />
+        {/* One "Collect" block with the button of the trip's method (the
+            passenger chose it): cash or Mercado Pago (section 4) */}
+        {(canConfirmCash || canChargeMercadoPago) && (
+          <View style={styles.chargeCard}>
+            <View style={styles.chargeHeader}>
+              <Text style={styles.chargeTitle}>{t("summary.chargeTitle")}</Text>
+              <Text style={styles.chargeAmount}>
+                {formatCop(tripChargeAmount(trip))}
+              </Text>
+            </View>
+            {canConfirmCash && (
+              <CashCharge
+                trip={trip}
+                onPaid={() =>
+                  setToast({ message: t("summary.toastCash"), tone: "success" })
+                }
+              />
+            )}
+            {canChargeMercadoPago && (
+              <MercadoPagoCharge trip={trip} onResult={showPaymentResult} />
+            )}
           </View>
         )}
-
-        {canChargeMercadoPago && <MercadoPagoCharge trip={trip} />}
 
         <View style={styles.receipt}>
           <RouteStops
@@ -177,6 +165,16 @@ export default function TripSummaryScreen() {
           <PassengerRating trip={trip} style={styles.rating} />
         </View>
       </ScrollView>
+
+      {toast && (
+        <Toast
+          key={toast.message}
+          message={toast.message}
+          tone={toast.tone}
+          top={insets.top}
+          onHide={hideToast}
+        />
+      )}
 
       {/* The main button stays at the bottom, like Uber */}
       <View
@@ -261,18 +259,21 @@ const styles = StyleSheet.create({
     color: colors.error,
     textAlign: "center",
   },
-  cashButton: {
-    minHeight: CONTROL_HEIGHT,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    borderColor: colors.black,
-    backgroundColor: colors.white,
-    alignItems: "center",
-    justifyContent: "center",
+  chargeCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
-  cashButtonBusy: { borderColor: colors.border },
-  busyRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  cashButtonText: { color: colors.black, fontSize: 18, fontWeight: "700" },
+  chargeHeader: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  chargeTitle: { ...typography.section, fontSize: 18 },
+  chargeAmount: { ...typography.label, fontSize: 18 },
   footer: {
     paddingHorizontal: spacing.xl - 4,
     paddingTop: spacing.md,
