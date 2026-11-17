@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Linking,
   StyleSheet,
   Text,
@@ -157,6 +158,7 @@ export default function ActiveTripScreen() {
   if (!trip) {
     return (
       <View style={styles.loading}>
+        <ActivityIndicator color={colors.black} />
         <Text style={styles.loadingText}>{t("activeTrip.loading")}</Text>
       </View>
     );
@@ -297,6 +299,8 @@ export default function ActiveTripScreen() {
           )}
         </View>
 
+        {/* Time and distance, and cancelling as a small pill on the right
+            (only before the passenger gets in), away from the swipe button */}
         <View style={styles.tripStats}>
           <View style={styles.tripStat}>
             <Ionicons name="time-outline" size={18} color={colors.black} />
@@ -310,6 +314,17 @@ export default function ActiveTripScreen() {
               {t("request.km").replace("{km}", trip.distanceKm)}
             </Text>
           </View>
+          {!isInProgress && (
+            <TouchableOpacity
+              style={[styles.cancelChip, isSending && styles.disabled]}
+              onPress={handleCancel}
+              disabled={isSending}
+              accessibilityRole="button"
+            >
+              <Ionicons name="close" size={16} color={colors.error} />
+              <Text style={styles.cancelText}>{t("activeTrip.cancel")}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {!route && (
@@ -323,6 +338,8 @@ export default function ActiveTripScreen() {
         )}
         {error && <Text style={styles.errorText}>{t(error)}</Text>}
 
+        {/* The swipe button is the last thing in the sheet, as wide as it and
+            within reach of the thumb, like Uber; nothing to tap under it */}
         <SwipeButton
           label={
             isInProgress
@@ -335,16 +352,6 @@ export default function ActiveTripScreen() {
           disabled={!canAdvance}
           isLoading={isSending}
         />
-
-        {!isInProgress && (
-          <TouchableOpacity
-            onPress={handleCancel}
-            disabled={isSending}
-            accessibilityRole="button"
-          >
-            <Text style={styles.cancelText}>{t("activeTrip.cancel")}</Text>
-          </TouchableOpacity>
-        )}
       </View>
     </View>
   );
@@ -367,6 +374,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     justifyContent: "center",
     alignItems: "center",
+    gap: spacing.md,
   },
   loadingText: { ...typography.subtitle },
   banner: {
@@ -443,7 +451,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  tripStats: { flexDirection: "row", gap: spacing.sm },
+  tripStats: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
   tripStat: {
     flexDirection: "row",
     alignItems: "center",
@@ -456,11 +469,19 @@ const styles = StyleSheet.create({
   tripStatText: { ...typography.label },
   hintText: { ...typography.caption, fontSize: 12 },
   errorText: { ...typography.caption, color: colors.error },
-  cancelText: {
-    color: colors.error,
-    textAlign: "center",
-    fontSize: 15,
-    fontWeight: "600",
-    paddingVertical: spacing.xs,
+  // Cancel: a red outline pill on the right of the stats
+  cancelChip: {
+    marginLeft: "auto",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.errorBackground,
+    backgroundColor: colors.errorBackground,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
   },
+  cancelText: { fontSize: 14, fontWeight: "700", color: colors.error },
+  disabled: { opacity: 0.5 },
 });
