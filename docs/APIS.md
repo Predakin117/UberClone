@@ -142,7 +142,10 @@ qué paso se crea.
     `createMercadoPagoPayments` de `backend/src/pagos.js`.
   - App: `src/services/payments.js` (`startMercadoPagoPayment` y
     `checkMercadoPagoPayment`) y el botón `src/components/MercadoPagoCharge.js`
-    del resumen del viaje, que abre el checkout con `expo-web-browser`.
+    del resumen del viaje. El checkout se abre **dentro de la app**, en
+    `src/components/MercadoPagoWebView.js`, con `react-native-webview` (la
+    opción que da el enunciado, aprobada por los dos; viene incluida en Expo
+    Go). El conductor nunca sale de la app.
 - **Variables:** `MP_ACCESS_TOKEN` en `backend/.env`: el Access Token de prueba
   de la cuenta de prueba del vendedor, que empieza por `APP_USR`.
   `PUBLIC_BACKEND_URL` (el túnel, sección 8) es opcional.
@@ -161,13 +164,14 @@ qué paso se crea.
      coincida, y crea la preferencia con `external_reference = tripId`.
   3. La app abre el checkout y el pasajero paga con una tarjeta de prueba.
   4. El backend se entera por el webhook, por la página de regreso o porque la
-     app pregunta al volver del navegador (`verificar`). En los tres casos
+     app pregunta al cerrar el checkout (`verificar`). En los tres casos
      consulta el pago a Mercado Pago y guarda `paymentStatus`, `paymentId` y, si
      está aprobado, `status: "paid"`.
-  5. El resumen escucha el viaje en tiempo real y muestra el estado. Con el
-     túnel, la página de regreso abre la app sola (con el enlace `returnUrl`
-     que manda la app) y el navegador se cierra sin que el conductor salga de
-     la app.
+  5. El resumen escucha el viaje en tiempo real y muestra el estado. Cuando
+     Mercado Pago llega a la página de regreso, la pantalla del checkout se
+     cierra sola. El botón "atrás" de Android retrocede dentro de Mercado Pago
+     o cierra esa pantalla, nunca la app. Los enlaces que abrirían otra app
+     (`exp://`, `intent://`, `mercadopago://`) no se siguen.
 - **Reglas:**
   - El pago siempre se confirma consultando a Mercado Pago: un aviso falso no
     puede marcar un viaje como pagado.
@@ -176,8 +180,8 @@ qué paso se crea.
   - La app nunca escribe `paymentStatus`, `paymentId` ni el estado `paid`; las
     reglas de Firestore lo impiden.
   - Sin `PUBLIC_BACKEND_URL` no hay webhook ni página de regreso, porque Mercado
-    Pago necesita una dirección https pública. El cobro funciona igual, porque la
-    app pregunta al volver del navegador.
+    Pago necesita una dirección https pública. El cobro funciona igual: al
+    cerrar el checkout con la X, la app pregunta por el pago.
   - Sin `MP_ACCESS_TOKEN` o sin `serviceAccountKey.json`, las rutas responden 503
     (`pagos_no_configurados`).
   - Solo credenciales de prueba durante todo el proyecto.
