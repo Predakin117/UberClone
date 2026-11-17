@@ -5,15 +5,18 @@
 // backend (webhook or check) and the summary sees it in real time; this
 // component never writes the payment.
 //
-// On Android openBrowserAsync answers as soon as the browser opens, so the
-// payment is checked when the app comes back to the front (AppState). On iOS
-// it answers when the browser closes.
+// The checkout opens in an auth session of the in-app browser with the app's
+// own link (exp://… in Expo Go, uberclonedriver://… in a build). After
+// paying, the backend's return page opens that link, so the browser closes
+// by itself and the driver is back in the summary without leaving the app.
+// When the session ends (back in the app, or the browser closed by hand),
+// the payment is checked.
 import { Ionicons } from "@expo/vector-icons";
+import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  AppState,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -39,8 +42,6 @@ export default function MercadoPagoCharge({ trip }) {
   const [step, setStep] = useState(null);
   const [error, setError] = useState(null);
   const [checkoutOpened, setCheckoutOpened] = useState(false);
-  // true while the checkout is open on Android, to check when the app is back
-  const waitingReturn = useRef(false);
 
   const check = useCallback(async () => {
     setError(null);
@@ -50,21 +51,12 @@ export default function MercadoPagoCharge({ trip }) {
     if (!result.ok) setError(`payment.error.${result.codigoError}`);
   }, [trip.id]);
 
-  // Cleanup: stop listening to the app state when the summary closes
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active" && waitingReturn.current) {
-        waitingReturn.current = false;
-        check();
-      }
-    });
-    return () => subscription.remove();
-  }, [check]);
-
   const charge = async () => {
     setError(null);
     setStep("opening");
-    const result = await startMercadoPagoPayment(trip);
+    // The app's link: Mercado Pago's return page comes back to it
+    const returnUrl = Linking.createURL("mercadopago");
+    const result = await startMercadoPagoPayment(trip, returnUrl);
     if (!result.ok) {
       setStep(null);
       setError(`payment.error.${result.codigoError}`);
@@ -72,17 +64,12 @@ export default function MercadoPagoCharge({ trip }) {
     }
     setCheckoutOpened(true);
     try {
-      waitingReturn.current = true;
-      const browser = await WebBrowser.openBrowserAsync(result.url);
-      setStep(null);
-      // iOS: the browser already closed, check now
-      if (browser.type !== "opened") {
-        waitingReturn.current = false;
-        await check();
-      }
+      // Ends when the return page opens the app, or when the driver closes
+      // the browser; either way the payment is checked right after
+      await WebBrowser.openAuthSessionAsync(result.url, returnUrl);
+      await check();
     } catch (browserError) {
       console.error("Error opening Mercado Pago:", browserError);
-      waitingReturn.current = false;
       setStep(null);
       setError("payment.error.fallo");
     }

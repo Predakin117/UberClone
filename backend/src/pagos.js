@@ -136,6 +136,14 @@ function paymentChanges(trip, payment, { split = false } = {}) {
 const isTripId = (tripId) =>
   typeof tripId === "string" && tripId.trim() !== "" && !tripId.includes("/");
 
+// A link that opens the driver app: exp:// in Expo Go, uberclonedriver:// in
+// a build (app.json "scheme"). Only those, so the return page can't be used
+// to send people to any website; no quotes or spaces, so it is safe in HTML.
+const isAppUrl = (url) =>
+  typeof url === "string" &&
+  url.length <= 300 &&
+  /^(exp|exps|uberclonedriver):\/\/[^\s"'<>\\]*$/.test(url);
+
 // Newest payment first (date_created is an ISO date)
 const byNewest = (a, b) =>
   String(b.payment.date_created ?? "").localeCompare(
@@ -266,7 +274,13 @@ function createMercadoPagoPayments({
       return error(409, "monto_invalido", "The amount does not match the trip");
     }
     try {
-      const preference = { tripId: body.tripId, amount, title: "Viaje UberClone" };
+      const preference = {
+        tripId: body.tripId,
+        amount,
+        title: "Viaje UberClone",
+        // After paying, the return page sends the passenger back to the app
+        ...(isAppUrl(body.returnUrl) ? { appReturnUrl: body.returnUrl } : {}),
+      };
       const seller = await sellerClient(trip.driverId);
       const commission = Math.round(Number(trip.commission) || 0);
       const split = Boolean(seller) && commission > 0 && commission < amount;
@@ -352,7 +366,9 @@ function createMercadoPagoPayments({
    * GET /pagos/mercadopago/retorno?payment_id=…&external_reference=…: page
    * where Mercado Pago leaves the passenger after paying. It saves the
    * payment too and asks to go back to the app, where the summary already
-   * shows the result.
+   * shows the result. With ?app=<app link> (set when the checkout was
+   * created), the page opens the app by itself, so the passenger doesn't
+   * have to close the browser.
    */
   async function returnPage(query) {
     let paymentStatus = null;
@@ -371,6 +387,11 @@ function createMercadoPagoPayments({
       }
     }
     const [title, text] = RETURN_TEXT[paymentStatus] ?? RETURN_DEFAULT;
+    if (isAppUrl(query.app)) {
+      const separator = query.app.includes("?") ? "&" : "?";
+      const appUrl = `${query.app}${separator}status=${encodeURIComponent(paymentStatus ?? "unknown")}`;
+      return { status: 200, html: pageHtml(title, text, appUrl) };
+    }
     return { status: 200, html: pageHtml(title, text) };
   }
 
@@ -467,13 +488,22 @@ const LINK_TEXT = {
   ],
 };
 
-function pageHtml(title, text) {
+// appUrl (already checked with isAppUrl): the page opens the app right away,
+// and shows a "Volver a la app" button in case the phone asks first
+function pageHtml(title, text, appUrl) {
+  const href = appUrl ? appUrl.replace(/&/g, "&amp;") : null;
+  const back = href
+    ? `<meta http-equiv="refresh" content="0;url=${href}">`
+    : "";
+  const action = href
+    ? `<p><a href="${href}" style="display:inline-block;padding:14px 28px;border-radius:999px;background:#000;color:#fff;text-decoration:none;font-weight:700">Volver a la app</a></p>`
+    : "<p><strong>Ya puedes cerrar esta ventana y volver a la app.</strong></p>";
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">${back}
 <title>${title}</title></head>
 <body style="font-family:sans-serif;text-align:center;padding:48px 24px">
 <h1>${title}</h1><p>${text}</p>
-<p><strong>Ya puedes cerrar esta ventana y volver a la app.</strong></p>
+${action}
 </body></html>`;
 }
 

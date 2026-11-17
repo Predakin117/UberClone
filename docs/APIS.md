@@ -164,7 +164,10 @@ qué paso se crea.
      app pregunta al volver del navegador (`verificar`). En los tres casos
      consulta el pago a Mercado Pago y guarda `paymentStatus`, `paymentId` y, si
      está aprobado, `status: "paid"`.
-  5. El resumen escucha el viaje en tiempo real y muestra el estado.
+  5. El resumen escucha el viaje en tiempo real y muestra el estado. Con el
+     túnel, la página de regreso abre la app sola (con el enlace `returnUrl`
+     que manda la app) y el navegador se cierra sin que el conductor salga de
+     la app.
 - **Reglas:**
   - El pago siempre se confirma consultando a Mercado Pago: un aviso falso no
     puede marcar un viaje como pagado.

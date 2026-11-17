@@ -53,6 +53,9 @@ function createMercadoPago({ accessToken, publicUrl = "", fetchFn = fetch }) {
    * and marketplaceFee is the platform's commission. Mercado Pago pays the
    * rest to the driver's account. notificationParams go in the webhook URL
    * (the driver's uid, to read the payment with the driver's token).
+   *
+   * appReturnUrl is the app's link (exp://… or uberclonedriver://…): the
+   * return page sends the passenger back to the app with it after paying.
    */
   async function createPreference({
     tripId,
@@ -60,6 +63,7 @@ function createMercadoPago({ accessToken, publicUrl = "", fetchFn = fetch }) {
     title,
     marketplaceFee,
     notificationParams,
+    appReturnUrl,
   }) {
     const preference = {
       items: [
@@ -77,7 +81,10 @@ function createMercadoPago({ accessToken, publicUrl = "", fetchFn = fetch }) {
     };
     if (marketplaceFee !== undefined) preference.marketplace_fee = marketplaceFee;
     if (base.startsWith("https://")) {
-      const returnUrl = `${base}/api/v1/pagos/mercadopago/retorno`;
+      const appQuery = appReturnUrl
+        ? `?${new URLSearchParams({ app: appReturnUrl })}`
+        : "";
+      const returnUrl = `${base}/api/v1/pagos/mercadopago/retorno${appQuery}`;
       const query = notificationParams
         ? `?${new URLSearchParams(notificationParams)}`
         : "";
