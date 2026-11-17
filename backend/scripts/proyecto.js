@@ -61,7 +61,9 @@ function comprobarProyecto() {
  */
 function iniciarFirebaseAdmin() {
   const { initializeApp, cert } = require("firebase-admin/app");
-  initializeApp({ credential: cert(CLAVE) });
+  // AI-assisted: see docs/AI_LOG.md #32
+  // Devuelve la app para reutilizarla (notificaciones) sin iniciar otra
+  return initializeApp({ credential: cert(CLAVE) });
 }
 
 module.exports = {
