@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #62
+// AI-assisted: see docs/AI_LOG.md #62, #64
 // Charge of a Mercado Pago trip on the trip summary (section 4): the backend
 // creates the Checkout Pro preference, the app opens it and the passenger
 // pays with a test card. The result reaches the trip from the backend

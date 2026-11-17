@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29, #31, #61, #62, #63
+// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29, #31, #61, #62, #63, #64
 // Payment and summary of the trip (section 3 of the assignment): final fare,
 // commission, net earnings and payment status. The amounts are the ones saved
 // when the trip was completed, calculated with calculateFare. The trip is

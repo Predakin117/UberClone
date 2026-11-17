@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #28, #60, #61
+// AI-assisted: see docs/AI_LOG.md #28, #60, #61, #64
 // Trip history of the driver (section 6): the finished trips (completed or
 // paid) in real time, newest first, 20 per load. Filters: today, this week,
 // this month or a date range, and the payment method. Trips are grouped by

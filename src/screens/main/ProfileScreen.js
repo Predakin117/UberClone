@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #30, #61, #63
+// AI-assisted: see docs/AI_LOG.md #30, #61, #63, #64
 // Driver profile (section 3): photo, name, account status and average rating,
 // then the personal details, the vehicle and the documents, read in real time
 // from drivers/{uid}. The name, the profile photo and the Mercado Pago email

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #31
+// AI-assisted: see docs/AI_LOG.md #31, #64
 import { DARK_MAP_STYLE, LIGHT_MAP_STYLE, isNightTime } from "./mapStyle";
 
 const at = (hour, minute = 0) => new Date(2026, 10, 12, hour, minute);

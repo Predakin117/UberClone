@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #64
 // Floating notice, like Uber's: a black pill that slides in from the top,
 // stays 2.5 seconds and leaves by itself ("Changes saved", "Payment
 // approved"). The screen shows it with a message and clears it in onHide.

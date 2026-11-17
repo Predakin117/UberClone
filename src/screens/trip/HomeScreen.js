@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21, #27, #57, #31
+// AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21, #27, #57, #31, #64
 // src/screens/trip/HomeScreen.js
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";

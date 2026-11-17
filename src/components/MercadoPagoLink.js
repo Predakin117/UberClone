@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #63
+// AI-assisted: see docs/AI_LOG.md #63, #64
 // Split payments on the profile (optional bonus of section 4): the driver
 // links their own Mercado Pago account. Then Mercado Pago pays the driver's
 // part of each trip straight to that account and the commission to the

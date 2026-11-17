@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #31
+// AI-assisted: see docs/AI_LOG.md #31, #64
 // Props for MapView that turn the map dark between 6 p.m. and 6 a.m., and use
 // a clean light style during the day. The hour
 // is checked every minute, so the map changes on its own at 6.

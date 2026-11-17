@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #15, #28, #31, #61
+// AI-assisted: see docs/AI_LOG.md #15, #28, #31, #61, #64
 // Earnings of the driver (section 5), like Uber: a week navigator with the
 // week's net earnings in big numbers and a bar chart where each day can be
 // tapped; then today, this week (since Monday) and this month side by side,

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #4, #21, #29, #31, #59
+// AI-assisted: see docs/AI_LOG.md #4, #21, #29, #31, #59, #64
 // New request card (section 3 of the project statement). HomeScreen shows it
 // on the map with the oldest request and the seconds left to answer; the
 // timer lives in useTripRequests. The countdown is a ring around the accept

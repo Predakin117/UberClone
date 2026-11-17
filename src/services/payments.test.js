@@ -68,6 +68,7 @@ describe("startMercadoPagoPayment", () => {
     });
   });
 
+  // AI-assisted: see docs/AI_LOG.md #64
   it("sends the app's link so the return page opens the app", async () => {
     global.fetch.mockReturnValue(
       respuesta(200, { ok: true, url: "https://mp.test/checkout" }),

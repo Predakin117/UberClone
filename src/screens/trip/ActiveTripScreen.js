@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #21, #29, #31
+// AI-assisted: see docs/AI_LOG.md #6, #4, #21, #29, #31, #64
 // Current trip (section 3 of the project statement). The trip comes from
 // Firestore through TripContext and its status decides what is shown: the
 // route to the pickup point (driver_arriving) or to the destination
