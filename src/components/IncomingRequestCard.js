@@ -230,23 +230,9 @@ export default function IncomingRequestCard({
 
         {error && <Text style={styles.errorText}>{t(error)}</Text>}
 
-        {/* Decline on the left, the round Accept in the middle with the time
-            left as a ring around it */}
+        {/* The round Accept in the middle with the time left as a ring
+            around it, and a wide Decline button right under it */}
         <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.sideAction, isSending && styles.disabled]}
-            onPress={handleReject}
-            disabled={isSending}
-            hitSlop={spacing.sm}
-            accessibilityRole="button"
-            accessibilityLabel={t("request.reject")}
-          >
-            <View style={styles.rejectCircle}>
-              <Ionicons name="close" size={26} color={colors.black} />
-            </View>
-            <Text style={styles.rejectText}>{t("request.reject")}</Text>
-          </TouchableOpacity>
-
           <View
             accessibilityRole="progressbar"
             accessibilityValue={{ min: 0, max: REQUEST_SECONDS, now: timeLeft }}
@@ -267,8 +253,16 @@ export default function IncomingRequestCard({
             </CountdownRing>
           </View>
 
-          {/* Same width as Decline, so Accept stays in the middle */}
-          <View style={styles.sideAction} />
+          <TouchableOpacity
+            style={[styles.rejectButton, isSending && styles.disabled]}
+            onPress={handleReject}
+            disabled={isSending}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+          >
+            <Ionicons name="close" size={22} color={colors.black} />
+            <Text style={styles.rejectText}>{t("request.reject")}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -277,8 +271,6 @@ export default function IncomingRequestCard({
 
 const RING_SIZE = 116;
 const ACCEPT_SIZE = RING_SIZE - 22;
-const SIDE_ACTION_WIDTH = 76;
-const REJECT_SIZE = 56;
 
 const styles = StyleSheet.create({
   container: {
@@ -371,25 +363,24 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   actions: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: spacing.md,
     marginTop: spacing.lg,
   },
-  sideAction: {
-    width: SIDE_ACTION_WIDTH,
-    alignItems: "center",
-    gap: spacing.xs,
-  },
-  rejectCircle: {
-    width: REJECT_SIZE,
-    height: REJECT_SIZE,
-    borderRadius: REJECT_SIZE / 2,
-    backgroundColor: colors.surface,
+  // Decline: a wide outlined button, easy to find but apart from Accept
+  rejectButton: {
+    alignSelf: "stretch",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: spacing.sm,
+    minHeight: 52,
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
   },
-  rejectText: { ...typography.label, fontSize: 13 },
+  rejectText: { ...typography.label, fontSize: 16 },
   acceptButton: {
     width: ACCEPT_SIZE,
     height: ACCEPT_SIZE,
