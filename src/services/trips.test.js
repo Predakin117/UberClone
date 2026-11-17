@@ -6,6 +6,8 @@ import {
   PAYMENT_METHODS,
   paymentStatusKey,
   sortOldestFirst,
+  isRecentRequest,
+  REQUEST_MAX_AGE_MS,
   TRIP_ERROR_CODES,
   validateDriverUpdate,
   validatePassengerRating,
@@ -167,6 +169,33 @@ describe("trips", () => {
       const trips = [{ id: "b", createdAt: at(2) }, { id: "a", createdAt: at(1) }];
       sortOldestFirst(trips);
       expect(trips[0].id).toBe("b");
+    });
+  });
+
+  // AI-assisted: see docs/AI_LOG.md #32
+  describe("isRecentRequest", () => {
+    const at = (millis) => ({ toMillis: () => millis });
+    const NOW = Date.parse("2026-11-17T15:00:00Z");
+    const minutesAgo = (minutes) => at(NOW - minutes * 60_000);
+
+    it("shows a request of up to 2 minutes", () => {
+      expect(REQUEST_MAX_AGE_MS).toBe(2 * 60_000);
+      expect(isRecentRequest({ createdAt: minutesAgo(0) }, NOW)).toBe(true);
+      expect(isRecentRequest({ createdAt: minutesAgo(2) }, NOW)).toBe(true);
+    });
+
+    it("hides a request that waited longer, like after coming back from the background", () => {
+      expect(isRecentRequest({ createdAt: minutesAgo(2.1) }, NOW)).toBe(false);
+      expect(isRecentRequest({ createdAt: minutesAgo(10) }, NOW)).toBe(false);
+    });
+
+    it("shows a request whose server time hasn't arrived yet", () => {
+      expect(isRecentRequest({ createdAt: null }, NOW)).toBe(true);
+      expect(isRecentRequest({}, NOW)).toBe(true);
+    });
+
+    it("accepts another limit", () => {
+      expect(isRecentRequest({ createdAt: minutesAgo(4) }, NOW, 5 * 60_000)).toBe(true);
     });
   });
 

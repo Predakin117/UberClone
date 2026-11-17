@@ -1,6 +1,7 @@
-// AI-assisted: see docs/AI_LOG.md #21, #25, #31
+// AI-assisted: see docs/AI_LOG.md #21, #25, #31, #32
 // Simulador mínimo: crea UNA solicitud "requested" en trips para probar la app
-// mientras llega la API del pasajero de la profesora.
+// mientras llega la API del pasajero de la profesora, y envía la notificación
+// push a los conductores aprobados y disponibles (backend/src/notificaciones.js).
 //
 // Uso (desde backend/):  npm run simular -- [categoria] [metodoDePago] [ruta]
 //   categoria:    economy (por defecto), xl o premium
@@ -11,6 +12,7 @@
 // reglas de Firestore. La ruta sale de OpenRouteService (backend/src/rutas.js);
 // si falla, se usan la distancia y la duración de respaldo de cada ruta.
 const { calcularRuta } = require("../src/rutas");
+const { crearNotificacionesConApp } = require("../src/notificaciones");
 const {
   comprobarProyecto,
   iniciarFirebaseAdmin,
@@ -136,7 +138,7 @@ async function main() {
     fuente = "respaldo";
   }
 
-  iniciarFirebaseAdmin();
+  const app = iniciarFirebaseAdmin();
   const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
   const viaje = crearSolicitud({
@@ -153,6 +155,24 @@ async function main() {
   console.log(
     `  ${viaje.distanceKm} km, ${viaje.durationMin} min, ${categoria}, ${metodoDePago} (ruta: ${fuente})`,
   );
+
+  await avisarConductores(app, { id: documento.id, ...viaje });
+}
+
+// AI-assisted: see docs/AI_LOG.md #32
+// Notificación push de la solicitud (backend/src/notificaciones.js), con la
+// misma app de firebase-admin. La solicitud ya quedó creada: si el envío falla,
+// solo se avisa por consola.
+async function avisarConductores(app, viaje, crear = crearNotificacionesConApp) {
+  try {
+    const { enviadas, fallidas, tokensBorrados } =
+      await crear(app).notificarNuevaSolicitud(viaje);
+    console.log(
+      `  Notificaciones: ${enviadas} enviadas, ${fallidas} fallidas, ${tokensBorrados} tokens inválidos borrados`,
+    );
+  } catch (error) {
+    console.warn(`  No se enviaron notificaciones (${error.message}); la solicitud sí quedó creada.`);
+  }
 }
 
 if (require.main === module) {
@@ -163,6 +183,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  avisarConductores,
   crearSolicitud,
   leerVariableEnv,
   revisarProyecto,

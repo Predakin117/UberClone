@@ -26,6 +26,7 @@ import SearchingBar from "../../components/SearchingBar";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
+import { useAppIsActive } from "../../hooks/useAppIsActive";
 import { useDriverLocation } from "../../hooks/useDriverLocation";
 import { useEarnings } from "../../hooks/useEarnings";
 import { useEarningsTrips } from "../../hooks/useEarningsTrips";
@@ -80,12 +81,16 @@ export default function HomeScreen() {
   // New requests: only online, approved and without a current trip. This
   // home screen stays mounted under the trip, so without this condition it
   // would decline requests the driver can't see.
+  // AI-assisted: see docs/AI_LOG.md #32
+  // Also only in the foreground: in the background the push notification warns
+  // and the request shows with its 15 s when the driver comes back.
+  const isAppActive = useAppIsActive();
   const {
     request,
     timeLeft,
     error: requestsError,
   } = useTripRequests(
-    canReceiveRequests({ isActive, activeTrip }),
+    canReceiveRequests({ isActive, activeTrip, isAppActive }),
     driverState.status,
   );
 

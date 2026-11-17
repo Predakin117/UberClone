@@ -217,14 +217,54 @@ qué paso se crea.
     la parte del conductor. La app muestra la ganancia calculada con
     `calculateFare`, sin esa comisión.
 
+### 10. Notificaciones push (Firebase Cloud Messaging)
+
+- **Para qué:** avisar de solicitudes nuevas, sobre todo con la app en segundo
+  plano o cerrada.
+- **Dónde:**
+  - App: `src/services/pushNotifications.js` (el único módulo que usa
+    `expo-notifications`) y `src/hooks/usePushNotifications.js`, que corre en
+    `MainDrawer`, es decir, solo con sesión.
+  - Backend: `backend/src/notificaciones.js`, con FCM (API HTTP v1) desde
+    `firebase-admin` (`getMessaging().send()`). Hoy lo llama el simulador
+    (`backend/scripts/simular-solicitud.js`) con su misma app de
+    `firebase-admin`. El proyecto está en el plan Spark, así que no se usan
+    Cloud Functions: quien crea la solicitud envía la notificación.
+- **Variables:** ninguna. La app necesita `google-services.json` en la raíz
+  (`android.googleServicesFile` en `app.json`, package `com.uberclone.drivers`),
+  que está en `.gitignore`. El backend usa `backend/serviceAccountKey.json`.
+- **Reglas:**
+  - Solo funcionan en un development build en un celular Android
+    (`npx expo run:android`). En Expo Go, en el emulador o en iOS la app no hace
+    nada y no falla. `expo-notifications` tiene código nativo; el equipo lo
+    aprobó para esta tarea.
+  - La app guarda en `drivers/{uid}` los campos extra `fcmToken`,
+    `fcmTokenUpdatedAt` (hora del servidor) y `notificationLanguage` (`es` o
+    `en`, el idioma del texto), y los vuelve a guardar si FCM cambia el token o
+    el conductor cambia el idioma. `firestore.rules` ya lo permite: el dueño
+    cambia su documento mientras `status` siga igual.
+  - **A quién se notifica:** a los conductores `approved`, con
+    `isAvailable: true`, con `fcmToken` y con `locationUpdatedAt` de hace 10
+    minutos o menos. Es lo mismo que deja ver solicitudes en la app, pero con 10
+    minutos en vez del minuto del servicio 11, porque en segundo plano Android
+    deja de dar ubicaciones y la notificación es justo para ese caso. La
+    consulta usa dos filtros de igualdad, así que no necesita índice compuesto.
+  - El mensaje lleva en `data` el `type` (`trip_request`) y el `tripId`, y usa
+    el canal de Android `trip-requests`, que crea la app. Al tocarla se abre el
+    mapa del inicio, donde está la tarjeta de la solicitud.
+  - Si FCM responde `messaging/registration-token-not-registered`, el backend
+    borra `fcmToken` y `fcmTokenUpdatedAt` del conductor, solo si el token no ha
+    cambiado. Un envío que falla no detiene los demás, y si falla todo el
+    simulador igual deja creada la solicitud.
+  - Con la app en segundo plano, la app deja de escuchar solicitudes (avisa la
+    notificación). Así la cuenta de 15 segundos no corre sin que el conductor la
+    vea; al volver, la solicitud aparece con sus 15 segundos.
+  - Al volver solo se muestran las solicitudes que siguen en `requested` (si
+    otro conductor la tomó, ya no llega) y que tienen 2 minutos o menos desde
+    `createdAt` (`REQUEST_MAX_AGE_MS` e `isRecentRequest` en
+    `src/services/trips.js`).
+
 ## Pendientes
-
-### 10. Notificaciones push (servicio de Expo o FCM)
-
-- **Para qué:** avisar de solicitudes nuevas con la app en segundo plano.
-- **Dónde:** app y backend.
-- **Reglas:** no funcionan en Expo Go, porque requieren un development build. Se
-  hacen al final si alcanza el tiempo.
 
 ### 11. API del pasajero de la profesora
 
@@ -245,7 +285,8 @@ qué paso se crea.
     `src/services/driverLocation.js`.
   - Un conductor con `locationUpdatedAt` de hace más de 1 minuto se trata como
     desconectado, aunque diga `isAvailable: true`: si la app se cierra a la
-    fuerza, no alcanza a marcarse no disponible.
+    fuerza, no alcanza a marcarse no disponible. La excepción son las
+    notificaciones push (servicio 10), que aceptan hasta 10 minutos.
 
 ## En veremos
 

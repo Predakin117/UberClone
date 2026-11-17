@@ -23,10 +23,10 @@ Aplicación móvil para iOS y Android, inspirada en Uber, desde el lado del cond
   - el perfil del conductor (foto, nombre y correo de Mercado Pago editables; vehículo y documentos con aviso de vencimiento) y la configuración (idioma, comisión, versión y cierre de sesión);
   - calificar al pasajero al terminar el viaje;
   - detalles estilo Uber Driver: tiempo y distancia hasta la recogida en la solicitud, llamar o enviar un mensaje al pasajero, el carro que gira en el mapa, la ganancia de hoy en el inicio y el mapa oscuro de noche;
-  - un simulador de solicitudes en el backend (`npm run simular`) mientras llega la API del pasajero.
+  - un simulador de solicitudes en el backend (`npm run simular`) mientras llega la API del pasajero;
+  - las notificaciones push de solicitudes nuevas con Firebase Cloud Messaging: el simulador avisa a los conductores aprobados y disponibles, y al tocar la notificación se abre el mapa con la solicitud. Solo funcionan en un development build en un celular Android (`npx expo run:android`), no en Expo Go.
 - **En integración:** el pago con Mercado Pago (modo de prueba).
 - **Pendiente:**
-  - las notificaciones push de solicitudes nuevas (FCM, que requieren un development build);
   - el detalle del viaje con su ruta en el historial.
 
 ## Tecnologías
@@ -42,6 +42,7 @@ Aplicación móvil para iOS y Android, inspirada en Uber, desde el lado del cond
 - **Direcciones del simulador:** [Nominatim](https://nominatim.openstreetmap.org/). Se consultaron una sola vez y quedaron escritas en el código.
 - **Datos de mapas:** © OpenStreetMap contributors. OpenRouteService y Nominatim usan datos de [OpenStreetMap](https://www.openstreetmap.org/copyright).
 - **Pagos:** Mercado Pago Checkout Pro, en integración (modo de prueba).
+- **Notificaciones push:** `expo-notifications` en la app y Firebase Cloud Messaging desde el backend con `firebase-admin`, sin Cloud Functions. Necesitan un development build y el archivo `google-services.json` de Firebase en la raíz, que no se sube a git.
 - **Fechas:** `@react-native-community/datetimepicker`.
 - **Preferencias y sesión:** `@react-native-async-storage/async-storage`. No guarda datos sensibles.
 - **Pruebas:** Jest con `jest-expo`.
