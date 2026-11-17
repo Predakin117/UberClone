@@ -2,10 +2,21 @@
 // src/screens/trip/HomeScreen.js
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { DrawerActions, useNavigation } from "@react-navigation/native";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import MapView from "react-native-maps";
+import {
+  DrawerActions,
+  useIsFocused,
+  useNavigation,
+} from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import MapView, { Marker, Polyline } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CarMarker from "../../components/CarMarker";
 import GoButton from "../../components/GoButton";
@@ -26,6 +37,7 @@ import {
   canReceiveRequests,
   getAvailabilityBlock,
 } from "../../services/driverStatus";
+import { tripRoute } from "../../services/tripRoute";
 
 // RULE: AsyncStorage keeps the last availability state
 const AVAILABILITY_KEY = "@driver_availability";
@@ -43,7 +55,10 @@ export default function HomeScreen() {
   // AI-assisted: see docs/AI_LOG.md #31
   // Today's net earnings for the pill on top, the same as the earnings screen
   const { trips: earningsTrips } = useEarningsTrips();
-  const todayEarnings = useEarnings(earningsTrips).today.netEarnings;
+  const today = useEarnings(earningsTrips).today;
+  const todayEarnings = today.netEarnings;
+  const isFocused = useIsFocused();
+  const { height: screenHeight } = useWindowDimensions();
   // Dark map between 6 p.m. and 6 a.m.
   const nightMap = useNightMap();
 
@@ -104,9 +119,38 @@ export default function HomeScreen() {
     );
   }, [location]);
 
+  // While a request is on screen the map shows its route instead (below)
   useEffect(() => {
-    centerOnDriver();
-  }, [centerOnDriver]);
+    if (!request) centerOnDriver();
+  }, [centerOnDriver, request]);
+
+  // The request's route on the map behind the card, like Uber: the pickup,
+  // the destination and the saved line between them (no new route request).
+  // The map fits the route and the car in the space above the card.
+  const requestRoute = useMemo(
+    () => (request ? tripRoute(request) : null),
+    [request],
+  );
+  useEffect(() => {
+    if (!requestRoute || requestRoute.coordinates.length < 2) return;
+    const points = location
+      ? [...requestRoute.coordinates, location]
+      : requestRoute.coordinates;
+    mapRef.current?.fitToCoordinates(points, {
+      edgePadding: {
+        top: insets.top + 90,
+        right: 48,
+        bottom: screenHeight * REQUEST_CARD_SHARE,
+        left: 48,
+      },
+      animated: true,
+    });
+  }, [requestRoute, location, insets.top, screenHeight]);
+
+  const todayTrips =
+    today.tripCount === 1
+      ? t("history.tripsCountOne")
+      : t("history.tripsCount").replace("{count}", today.tripCount);
 
   const toggleOnline = () => {
     if (!canGoOnline) return;
@@ -136,7 +180,39 @@ export default function HomeScreen() {
       >
         {/* The car replaces the blue dot while the driver is online */}
         {isActive && <CarMarker position={location} />}
+        {requestRoute && (
+          <>
+            <Marker
+              coordinate={{
+                latitude: request.origin.lat,
+                longitude: request.origin.lng,
+              }}
+              title={t("request.origin")}
+              pinColor={colors.success}
+            />
+            <Marker
+              coordinate={{
+                latitude: request.destination.lat,
+                longitude: request.destination.lng,
+              }}
+              title={t("request.destination")}
+            />
+            <Polyline
+              coordinates={requestRoute.coordinates}
+              strokeWidth={4}
+              strokeColor={colors.black}
+              lineDashPattern={requestRoute.isReal ? undefined : [10, 10]}
+            />
+          </>
+        )}
       </MapView>
+
+      {/* Light status bar over the dark night map, dark over the day map */}
+      {isFocused && (
+        <StatusBar
+          style={nightMap.userInterfaceStyle === "dark" ? "light" : "dark"}
+        />
+      )}
 
       {/* Top bar: menu and status */}
       <View style={[styles.topBar, { top: insets.top + spacing.md }]}>
@@ -162,15 +238,24 @@ export default function HomeScreen() {
         <View style={styles.menuSpacer} />
       </View>
 
-      {/* Today's net earnings, under the status chip */}
-      <View
+      {/* Today's net earnings and trips, under the status chip; it opens
+          the earnings screen, like Uber's earnings pill */}
+      <TouchableOpacity
         style={[styles.earningsPill, { top: insets.top + spacing.md + 60 }]}
-        accessible
-        accessibilityLabel={`${t("home.todayEarnings")} ${formatCop(todayEarnings)}`}
+        onPress={() => navigation.navigate("Earnings")}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={`${t("home.todayEarnings")} ${formatCop(todayEarnings)}, ${todayTrips}`}
       >
         <Text style={styles.earningsLabel}>{t("home.todayEarnings")}</Text>
         <Text style={styles.earningsAmount}>{formatCop(todayEarnings)}</Text>
-      </View>
+        <Text style={styles.earningsTrips}>· {todayTrips}</Text>
+        <Ionicons
+          name="chevron-forward"
+          size={16}
+          color={colors.disabledText}
+        />
+      </TouchableOpacity>
 
       {/* Notices: account not approved, location and requests */}
       <View
@@ -283,6 +368,8 @@ export default function HomeScreen() {
 }
 
 const MENU_SIZE = 48;
+// Share of the screen the request card covers, to fit its route above it
+const REQUEST_CARD_SHARE = 0.62;
 // Height of the earnings pill plus the gap below it
 const EARNINGS_PILL_SPACE = 52;
 const TRACK_WIDTH = 60;
@@ -341,7 +428,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     alignSelf: "center",
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "center",
     gap: spacing.sm,
     backgroundColor: colors.black,
     borderRadius: radius.pill,
@@ -351,6 +438,7 @@ const styles = StyleSheet.create({
   },
   earningsLabel: { ...typography.label, color: colors.disabledText },
   earningsAmount: { fontSize: 18, fontWeight: "700", color: colors.white },
+  earningsTrips: { ...typography.label, color: colors.disabledText },
 
   notices: {
     position: "absolute",
