@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29, #31, #61, #62
+// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29, #31, #61, #62, #63
 // Payment and summary of the trip (section 3 of the assignment): final fare,
 // commission, net earnings and payment status. The amounts are the ones saved
 // when the trip was completed, calculated with calculateFare. The trip is
@@ -114,6 +114,10 @@ export default function TripSummaryScreen() {
           <Text style={styles.earnedLabel}>{t("tripDetail.earned")}</Text>
           <Text style={styles.earned}>{formatCop(trip.driverEarnings)}</Text>
           <PaymentStatusChip trip={trip} />
+          {/* Split payment: Mercado Pago already paid the driver's part */}
+          {trip.paymentSplit === true && (
+            <Text style={styles.caption}>{t("summary.paidSplit")}</Text>
+          )}
         </View>
 
         {canConfirmCash && (

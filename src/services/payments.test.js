@@ -4,9 +4,12 @@ import { strings } from "../i18n/strings";
 import {
   PAYMENT_ERROR_CODES,
   checkMercadoPagoPayment,
+  getMercadoPagoLink,
+  linkMercadoPagoAccount,
   markCashReceived,
   startMercadoPagoPayment,
   tripChargeAmount,
+  unlinkMercadoPagoAccount,
 } from "./payments";
 
 // Jest sube estos mocks antes de los imports: ni Firebase real ni .env
@@ -20,7 +23,11 @@ jest.mock("../config/firebase", () => ({
 }));
 
 const respuesta = (status, body) =>
-  Promise.resolve({ ok: status < 400, status, json: () => Promise.resolve(body) });
+  Promise.resolve({
+    ok: status < 400,
+    status,
+    json: () => Promise.resolve(body),
+  });
 
 const conductor = auth.currentUser;
 
@@ -121,7 +128,11 @@ describe("markCashReceived", () => {
 
   it("devuelve el código de error del backend sin lanzar", async () => {
     global.fetch.mockReturnValue(
-      respuesta(403, { ok: false, codigoError: "no_es_tu_viaje", error: "..." }),
+      respuesta(403, {
+        ok: false,
+        codigoError: "no_es_tu_viaje",
+        error: "...",
+      }),
     );
     await expect(markCashReceived("viaje-1")).resolves.toEqual({
       ok: false,
@@ -173,5 +184,53 @@ describe("PAYMENT_ERROR_CODES", () => {
       expect(strings.es[`payment.error.${code}`]).toBeDefined();
       expect(strings.en[`payment.error.${code}`]).toBeDefined();
     }
+  });
+});
+
+// AI-assisted: see docs/AI_LOG.md #63
+describe("Mercado Pago account link (split payments)", () => {
+  beforeEach(() => {
+    global.fetch = jest.fn();
+    env.backendApiUrl = "http://192.168.0.10:3000/api/v1";
+    auth.currentUser = conductor;
+  });
+
+  it("reads whether the account is linked", async () => {
+    global.fetch.mockReturnValue(
+      respuesta(200, { ok: true, available: true, linked: true }),
+    );
+    await expect(getMercadoPagoLink()).resolves.toEqual({
+      ok: true,
+      available: true,
+      linked: true,
+    });
+    expect(global.fetch.mock.calls[0][0]).toBe(
+      "http://192.168.0.10:3000/api/v1/pagos/mercadopago/vinculo",
+    );
+  });
+
+  it("gets the authorization page and unlinks", async () => {
+    global.fetch.mockReturnValue(
+      respuesta(200, { ok: true, url: "https://auth.mp.test/x" }),
+    );
+    await expect(linkMercadoPagoAccount()).resolves.toEqual({
+      ok: true,
+      url: "https://auth.mp.test/x",
+    });
+    global.fetch.mockReturnValue(respuesta(200, { ok: true }));
+    await expect(unlinkMercadoPagoAccount()).resolves.toEqual({ ok: true });
+    expect(global.fetch.mock.calls[1][0]).toBe(
+      "http://192.168.0.10:3000/api/v1/pagos/mercadopago/desvincular",
+    );
+  });
+
+  it("returns the error when the backend has no split payments", async () => {
+    global.fetch.mockReturnValue(
+      respuesta(503, { ok: false, codigoError: "vinculo_no_configurado" }),
+    );
+    await expect(linkMercadoPagoAccount()).resolves.toEqual({
+      ok: false,
+      codigoError: "vinculo_no_configurado",
+    });
   });
 });

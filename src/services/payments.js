@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #23, #26, #62
+// AI-assisted: see docs/AI_LOG.md #23, #26, #62, #63
 // Trip payments (section 4 of the assignment). It is the only module of the
 // app that talks to the payments backend: the screens only call these
 // functions. The app never writes paymentStatus, paymentId or the "paid"
@@ -11,6 +11,9 @@
 //   const res = await startMercadoPagoPayment(trip); // res.ok → open res.url
 //   const res = await checkMercadoPagoPayment(trip.id); // after the checkout
 //   const res = await markCashReceived(trip.id);       // res.ok → the trip is "paid"
+//   const res = await getMercadoPagoLink();            // split payments: linked?
+//   const res = await linkMercadoPagoAccount();        // res.ok → open res.url
+//   const res = await unlinkMercadoPagoAccount();
 import { env } from "../config/env";
 import { auth } from "../config/firebase";
 
@@ -31,6 +34,7 @@ export const PAYMENT_ERROR_CODES = [
   "ya_pagado", // the trip is already paid (Mercado Pago)
   "pasarela_no_disponible", // Mercado Pago did not answer
   "pagos_no_configurados", // the backend has no Mercado Pago or firebase-admin
+  "vinculo_no_configurado", // the backend has no split payments (MP_CLIENT_ID)
   "fallo", // any other error
 ];
 
@@ -110,5 +114,41 @@ export const checkMercadoPagoPayment = async (tripId) => {
  */
 export const markCashReceived = async (tripId) => {
   const result = await postWithSession("/pagos/efectivo", { tripId });
+  return result.ok ? { ok: true } : result;
+};
+
+// AI-assisted: see docs/AI_LOG.md #63
+// Split payments (optional bonus of section 4): the driver links their own
+// Mercado Pago account, and then Mercado Pago pays the driver's part of each
+// trip to that account and the commission to the platform. The tokens stay
+// in the backend; the app only knows whether the account is linked.
+
+/**
+ * Whether this backend has split payments and whether the driver linked an
+ * account. Returns { ok: true, available, linked } or { ok: false, codigoError }.
+ */
+export const getMercadoPagoLink = async () => {
+  const result = await postWithSession("/pagos/mercadopago/vinculo", {});
+  return result.ok
+    ? {
+        ok: true,
+        available: result.available === true,
+        linked: result.linked === true,
+      }
+    : result;
+};
+
+/**
+ * The Mercado Pago page where the driver authorizes the platform. Returns
+ * { ok: true, url } or { ok: false, codigoError }.
+ */
+export const linkMercadoPagoAccount = async () => {
+  const result = await postWithSession("/pagos/mercadopago/vincular", {});
+  return result.ok ? { ok: true, url: result.url } : result;
+};
+
+/** Removes the link. Returns { ok: true } or { ok: false, codigoError }. */
+export const unlinkMercadoPagoAccount = async () => {
+  const result = await postWithSession("/pagos/mercadopago/desvincular", {});
   return result.ok ? { ok: true } : result;
 };
