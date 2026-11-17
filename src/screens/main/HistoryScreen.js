@@ -4,11 +4,11 @@
 // this month or a date range, and the payment method. Trips are grouped by
 // day like Uber, and tapping one opens its details (TripDetailScreen).
 // While the first trips load, gray rows in the shape of the list.
-import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useMemo, useState } from "react";
 import {
   FlatList,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import DateField from "../../components/DateField";
+import EmptyState from "../../components/EmptyState";
 import PaymentStatusChip from "../../components/PaymentStatusChip";
 import RouteStops from "../../components/RouteStops";
 import Skeleton, { SkeletonBox } from "../../components/Skeleton";
@@ -98,7 +99,16 @@ const TripItem = ({ trip, onPress }) => {
 export default function HistoryScreen() {
   const navigation = useNavigation();
   const { t, language } = useLanguage();
-  const { trips, isLoading, error, hasMore, loadMore } = useTripHistory();
+  const { trips, isLoading, error, hasMore, loadMore, refresh } =
+    useTripHistory();
+  // Pull to refresh: the spinner shows a moment while the list goes back to
+  // the newest trips
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    refresh();
+    setTimeout(() => setIsRefreshing(false), 700);
+  };
   const [period, setPeriod] = useState("month");
   const [payment, setPayment] = useState("all");
   const [range, setRange] = useState(defaultRange);
@@ -141,7 +151,14 @@ export default function HistoryScreen() {
     option === "all" ? t("history.paymentAll") : t(`payment.${option}`);
 
   let emptyText = t("history.emptyFiltered");
-  if (trips.length === 0) emptyText = t("history.empty");
+  // Without any trip yet, a car; with trips but none in the filters, a search
+  const hasNoTrips = trips.length === 0;
+  const emptyTitle = hasNoTrips
+    ? t("history.emptyTitle")
+    : t("history.emptyFilteredTitle");
+  const emptyIcon = hasNoTrips ? "car-outline" : "search-outline";
+  const emptyBadge = hasNoTrips ? "time-outline" : "funnel-outline";
+  if (hasNoTrips) emptyText = t("history.empty");
   if (isLoading) emptyText = t("history.loading");
   if (error) emptyText = t(error);
 
@@ -223,6 +240,14 @@ export default function HistoryScreen() {
       keyExtractor={(row) => row.key}
       contentContainerStyle={styles.list}
       ListHeaderComponent={header}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          tintColor={colors.black}
+          colors={[colors.black]}
+        />
+      }
       renderItem={({ item }) =>
         item.type === "day" ? (
           <Text style={styles.dayTitle} accessibilityRole="header">
@@ -253,14 +278,13 @@ export default function HistoryScreen() {
             ))}
           </Skeleton>
         ) : (
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}>
-              <Ionicons name="car-outline" size={32} color={colors.black} />
-            </View>
-            <Text style={[styles.emptyText, error && styles.errorText]}>
-              {emptyText}
-            </Text>
-          </View>
+          <EmptyState
+            icon={error ? "cloud-offline-outline" : emptyIcon}
+            badge={error ? "alert" : emptyBadge}
+            title={error ? null : emptyTitle}
+            text={emptyText}
+            isError={Boolean(error)}
+          />
         )
       }
       // 20 more trips per load (section 6). The filters only see the trips
@@ -344,26 +368,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   caption: { ...typography.caption, flexShrink: 1 },
-  empty: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.md,
-    padding: spacing.xl,
-  },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyText: { ...typography.subtitle, textAlign: "center" },
   skeleton: { padding: spacing.lg, gap: spacing.lg },
   skeletonRow: { flexDirection: "row", gap: spacing.lg },
   skeletonTexts: { flex: 1, gap: spacing.sm },
-  errorText: { color: colors.error },
   loadMore: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.lg,
