@@ -47,7 +47,7 @@ Prompt: "analiza el proyecto uberclone-driver y no modifiques nada" / "aplica es
 Resumen de la respuesta: Se conectaron las pantallas reales en `TripStack` y `MainDrawer` (antes eran mocks). Se corrigió la llamada a `calculateFare` en `TripSummaryScreen` (recibía argumentos posicionales y leía `totalFare`, que no existe). `IncomingRequestScreen` ahora llama `acceptTrip` del `TripContext`. Se quitó un texto suelto `" "` dentro de un `<View>` en `DocumentsScreen` y se agregó la validación inline de la licencia. Se sacó el efecto secundario del updater de `setState` en `useTripRequests` y se corrigió la fuga de la suscripción en `useDriverLocation`, que ahora se usa en `HomeScreen`. La disponibilidad se guarda en AsyncStorage. Se eliminaron la plantilla de Expo Router y dependencias sin uso (`expo-router`, `dotenv`, `@expo/ui`, `expo-glass-effect`, `expo-symbols`). Se agregaron `app.config.js` (API key de Google Maps), `.env.example`, `src/config/env.js` con variables `EXPO_PUBLIC_*`, un botón de cerrar sesión, la validación de correo con regex y tests de `calculateFare`.
 Qué se usó / modificó / descartó: según el commit a2a6c86, se aplicaron todos los cambios del resumen en un solo commit. Se descartaron la plantilla de Expo Router (`src/app`, sus componentes, sus hooks, su tema y `scripts/reset-project.js`) y las dependencias `expo-router`, `dotenv`, `@expo/ui`, `expo-glass-effect` y `expo-symbols`. `AGENTS.md` se actualizó para decir que el proyecto usa React Navigation.
 Archivos y commit: `src/navigation/*.js`, `src/screens/**/*.js`, `src/hooks/*.js`, `src/contexts/*.js`, `src/config/*.js`, `app.json`, `app.config.js`, `package.json`, `tsconfig.json`, `AGENTS.md`, `.env.example` / a2a6c86
-Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar con la prueba en el emulador/dispositivo]
+Verificación: `npm test` (tests de `src/config/pricing.test.js`). Lo probé en el celular durante la semana (no el mismo 26 de octubre): la app abre, el menú lleva a las pantallas reales, el resumen muestra la tarifa bien calculada, al desconectarme deja de guardar la ubicación y cerrar sesión funciona. Lo usé muchas veces sin fallas.
 
 ### Entrada #5
 
@@ -60,7 +60,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Qué se usó / modificó / descartó: se usaron el plan de reparto, el prompt para Ximena y las ramas `tamiro/registro-base`, `tamiro/pestana-1`, `ximena/pestana-2` y `ximena/readme`, que siguen en el repositorio. Se modificó el nombre de las ramas para que lleven el nombre de cada integrante (último prompt). No hubo código.
 - Archivos y commit: Sin cambios de código; solo se crearon ramas desde a2a6c86.
 - Verificación: `npm test` (5 tests) y `npx tsc --noEmit` sin errores. Paquetes confirmados en la documentación de Expo 58.
-- Aprendizaje: [Completar]
+- Aprendizaje: Sirve para entender exactamente que problema debes resolver antes de escribir codigo, evitando perder tiempo en errores de lógica.
 
 ### Entrada #6
 
@@ -72,8 +72,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Resumen de la respuesta: según el mensaje del commit 029f6f5, se creó `TripContext` con los estados del viaje (idle, driver_arriving, in_progress, completed) y `TripProvider` envolvió la navegación en `App.js`. Se crearon `pricing.js`, `useDriverLocation`, `useTripRequests`, `HomeScreen` (botón conectado / desconectado y una solicitud simulada de 15 segundos que llama a `acceptTrip()`), `IncomingRequestScreen`, `ActiveTripScreen`, `TripSummaryScreen` y `EarningsScreen`. También se creó `VehicleScreen.js`, que faltaba en las pestañas del registro, se dieron medidas explícitas al `MapView`, se quitaron textos sueltos fuera de `<Text>` y se borró la carpeta `src/app` de la plantilla.
 - Qué se usó / modificó / descartó: se usó lo que describe el commit, con una excepción: el mensaje menciona un `babel.config.js` con el plugin de Reanimated, pero ese archivo no está en el commit ni en ningún otro del repositorio. Se modificó después: en a2a6c86 (entrada #4) se corrigieron la llamada a `calculateFare` de `TripSummaryScreen` y la suscripción de `useDriverLocation`, y en 9511707 (entrada #21) `TripContext` pasó a leer el viaje de Firestore. Se descartó después: `IncomingRequestScreen`, que en 9511707 se reemplazó por `IncomingRequestCard` sobre el mapa.
 - Archivos y commit: `src/config/pricing.js`, `src/contexts/TripContext.js`, `src/hooks/*.js`, `src/screens/auth/VehicleScreen.js`, `src/screens/main/EarningsScreen.js`, `src/screens/trip/*.js` — 029f6f5
-- Verificación: [Completar]
-- Aprendizaje: [Completar]
+- Verificación: Probado en el celular: la solicitud llega, la acepto, paso por Pasajero a bordo y Finalizar, y la app cambia de pantalla según el estado del viaje. El resumen muestra la tarifa, la comisión y la ganancia.
+- Aprendizaje: Sirve para mantener datos compartidos en la memoria de la app y distribuirlos directamente a las pantallas envueltas por su Provider (en nuestro caso, toda la navegacion dentro de TripProvider), evitando el desorden de pasarlos manualmente pantalla por pantalla (prop drilling) y sin confundirlo con el almacenamiento remoto en Firestore.
 
 ### Entrada #7
 
@@ -86,7 +86,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Qué se usó / modificó / descartó: según el commit db54e73, se usaron `FormField`, `SelectField`, `PhotoField`, `formStyles` y los validadores de `src/validation/` (`personalInfo`, `vehicle` y `documents`), con su primera prueba. Se modificó `RegistrationContext` para que calcule los errores a partir de los datos en vez de guardarlos. `vehicle.js` y `VehicleScreen.js` quedaron como versión temporal para que Ximena los completara en `ximena/pestana-2`, y ella los reemplazó en 7af215d.
 - Archivos y commit: `app.json`, `eslint.config.js`, `package.json`, `package-lock.json`, `src/components/*`, `src/contexts/RegistrationContext.js`, `src/validation/*`, `src/screens/auth/*.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js`, `docs/AI_LOG.md` — db54e73
 - Verificación: `npm test` pasa 8 tests y `npx tsc --noEmit` no da errores. `npx expo export --platform android` genera el bundle. ESLint solo reporta los problemas previos de `App.js`, `AuthContext.js` y `useTripRequests.js`. Tamiro probó la app y corre correctamente. `SelectField` y `PhotoField` aún no se usan en ninguna pantalla, así que no se han probado.
-- Aprendizaje: [Completar]
+- Aprendizaje: Sirve para desacoplar las reglas del registro (personalInfo, vehicle, documents) tanto de las pantallas como de RegistrationContext, evitando llenar la interfaz de if repetidos y centralizando en un solo lugar la lógica que calcula los errores e impide avanzar de pestaña o enviar datos inválidos a Firestore.
 
 ### Entrada #8
 
@@ -99,7 +99,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
 - Qué se usó / modificó / descartó: según el commit b8fcebf, se recuperaron las entradas #5 a #7, se agregó la #8, se repararon las rutas alteradas de la #4 y las marcas `AI-assisted` de 13 archivos volvieron a apuntar a esos números. El informe para Ximena no está en el repositorio: se publicó en el plan del equipo.
 - Archivos y commit: `docs/AI_LOG.md`, marcas `AI-assisted` en `src/components/*`, `src/contexts/RegistrationContext.js`, `src/validation/*`, `src/screens/auth/*.js`, `src/screens/trip/HomeScreen.js`, `src/screens/trip/ActiveTripScreen.js` — db54e73 y b8fcebf
 - Verificación: Se comparó la entrada #4 con la versión de `main` y se revisó que cada marca del código apunte a una entrada existente.
-- Aprendizaje: [Completar]
+- Aprendizaje: Aprendí a seguir un orden de trabajo constante para que mis compañeros entiendan fácilmente qué hice y en qué rama lo trabajé. Además, comprendí que separar las tareas en ramas evita retrasar el flujo del equipo y permite tener un respaldo de cada avance.
 
 ### Entrada #9
 
@@ -121,7 +121,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - En `tamiro/pestana-1`: `npx jest` pasa 29 tests, entre ellos la mayoría de edad (quien cumple 18 hoy pasa y quien los cumple mañana no) y que cada error tenga traducción en los dos idiomas. `npx tsc --noEmit` no da errores, `npx expo export --platform android` genera el bundle y ESLint solo reporta los 2 errores previos de `AuthContext.js` y `useTripRequests.js`.
   - Junto con `ximena/pestana-2`: las dos ramas se mezclan sin conflictos de código y pasan 38 tests.
   - [Pendiente: la prueba en el celular de los errores al tocar Siguiente con todo vacío, la cámara y la galería, el calendario que no deja elegir menores y el idioma guardado al cerrar y abrir la app]
-- Aprendizaje: [Completar]
+- Aprendizaje: Un `Alert` bloquea la pantalla, interrumpe la escritura y solo muestra un error a la vez; mostrar el mensaje debajo de cada campo permite ver y corregir todos los fallos juntos sin perder el contexto.
 
 ### Entrada #10
 
@@ -136,8 +136,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se modificó: las fotos se suben a Cloudinary con un `File` de `expo-file-system`, porque el `fetch` de Expo no acepta la forma `{ uri }` de React Native en un `FormData`.
   - Se descartó: f03905c reemplazó por error el `.env.example` con una plantilla de otro proyecto (variables de Next.js y Supabase). En ac07030 se restauró con las 11 variables que lee la app, sin valores.
 - Archivos y commit: `src/config/firebase.js`, `src/config/env.js`, `src/services/driverRepository.js`, `src/services/driverDocs.js`, `src/services/driverDocs.test.js`, `src/services/cloudinary.js`, `src/components/NextButton.js`, `src/contexts/RegistrationContext.js`, `src/screens/auth/*.js`, `src/i18n/strings.js`, `firestore.rules`, `.env.example`, `package.json`, `package-lock.json` — f03905c y ac07030 (Pull Request #6)
-- Verificación: [Completar]
-- Aprendizaje: [Completar]
+- Verificación: Probado: el registro de las pestañas quedó guardado en drivers/{uid} en Firestore y las fotos en Cloudinary; se ven en la consola y en mi perfil.
+- Aprendizaje: Firestore limita cada documento a 1 MB y cobra por almacenamiento y ancho de banda; Cloudinary optimiza, comprime y entrega las imágenes rápido por CDN, dejando en Firestore solo una URL de texto liviana.
 
 ### Entrada #11
 
@@ -153,7 +153,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se descartó: Express; el backend usa solo módulos de Node.
 - Archivos y commit: `backend/*`, `src/services/emailVerification.js`, `src/services/emailVerification.test.js`, `package.json`, `eslint.config.js` — 00cbadf (Pull Request #8); `backend/package-lock.json` — a9649e9
 - Verificación: `node --test` en `backend` pasa 13 pruebas y Jest pasa las 4 del servicio. El envío real se probó junto con la entrada #13.
-- Aprendizaje: [Completar]
+- Aprendizaje: El código se guarda en memoria del backend como hash unidireccional para no ser reversible, con una sal que evita tablas precalculadas; lo que realmente frena la fuerza bruta sobre 6 dígitos son el límite de 5 intentos y el vencimiento de 10 minutos.
 
 ### Entrada #12
 
@@ -169,7 +169,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se descartó: hacer la pestaña 3 como un formulario aparte; usa el mismo `RegistrationContext` que las pestañas 1 y 2.
 - Archivos y commit: `src/screens/auth/DocumentsScreen.js`, `src/components/CheckboxField.js`, `src/components/DateField.js`, `src/validation/documents.js`, `src/validation/documents.test.js`, `src/validation/dates.js`, `src/validation/dates.test.js`, `src/services/driverDocs.js`, `src/services/driverDocs.test.js`, `src/services/driverRepository.js`, `src/contexts/RegistrationContext.js`, `src/i18n/strings.js`, `src/i18n/strings.test.js`, `src/config/pricing.js` — defd95f (Pull Request #7)
 - Verificación: Jest pasa 73 pruebas, `npx tsc --noEmit` no da errores y `npx expo export --platform android` genera el bundle. En el celular se probaron los vencimientos desde mañana, la revisión técnico-mecánica según el año, la casilla de términos y el envío con estado `pending` en Firestore. Las fuentes no coinciden en si la primera revisión es al quinto o al sexto año (Sentencia C-745/12 y un documento del RUNT de 2023); se usó 5 en la constante `TECH_REVIEW_FIRST_YEAR`, pendiente de confirmar con la profesora.
-- Aprendizaje: [Completar]
+- Aprendizaje: En `requiresTechReview` se usa el año del modelo como aproximación del año de matrícula y se exige cuando el vehículo tiene 5 años o más (`TECH_REVIEW_FIRST_YEAR`), quedando pendiente confirmar con la profesora si aplica desde el quinto o el sexto año.
 
 ### Entrada #13
 
@@ -185,7 +185,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se descartó: hacerla una cuarta pestaña, porque se podría abrir antes de llenar las otras tres y pedir el código sin tener todo listo.
 - Archivos y commit: `src/screens/auth/VerifyEmailScreen.js`, `src/hooks/useEmailVerification.js`, `src/services/verificationErrors.js`, `src/services/verificationErrors.test.js`, `src/navigation/AuthTabs.js`, `src/screens/auth/DocumentsScreen.js`, `src/components/NextButton.js`, `src/i18n/strings.js`, `src/i18n/strings.test.js` — 8c595ba (Pull Request #9)
 - Verificación: Jest pasa 77 pruebas, `npx tsc --noEmit` no da errores y el bundle de Android se genera. En el celular, el primer envío falló porque Gmail rechazó la contraseña de aplicación (error 535); con una contraseña nueva y el backend reiniciado, el código llegó al correo y la confirmación funcionó.
-- Aprendizaje: [Completar]
+- Aprendizaje: Evita crear cuentas con correos falsos o mal escritos, impide llenar Firestore con registros `pending` basura y asegura un canal real de contacto antes de guardar el perfil del conductor.
 
 ### Entrada #14
 
@@ -200,8 +200,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se modificó: la pantalla de confirmación usa `loadingLabel` en vez de `busyLabel`, y oculta "Cambiar el correo" cuando el correo viene de la cuenta, porque en la pestaña 1 está bloqueado.
   - Se descartó: modificar la rama de Ximena directamente, por si tenía trabajo sin subir.
 - Archivos y commit: `src/navigation/AuthTabs.js`, `src/components/NextButton.js`, `src/screens/auth/DocumentsScreen.js`, `src/screens/auth/VerifyEmailScreen.js`, `src/i18n/strings.js` — 5a673ec y d7d932e (Pull Request #10)
-- Verificación: Jest pasa 119 pruebas, las 13 del backend pasan, `npx tsc --noEmit` no da errores, el bundle de Android se genera y no quedaron marcas de conflicto. En la consola de Firebase se activaron los proveedores Correo electrónico/contraseña y Anónimo, y se publicaron las reglas. [Completar con la prueba del flujo completo en el celular]
-- Aprendizaje: [Completar]
+- Verificación: Jest pasa 119 pruebas, las 13 del backend pasan, `npx tsc --noEmit` no da errores, el bundle de Android se genera y no quedaron marcas de conflicto. En la consola de Firebase se activaron los proveedores Correo electrónico/contraseña y Anónimo, y se publicaron las reglas. Probado en el celular: inicio sesión con correo y contraseña, recibo el código por correo y entro a la app sin errores.
+- Aprendizaje: Revisando manualmente las marcas de conflicto (`<<<<<<<`, `=======`, `>>>>>>>`) para fusionar el código útil de ambas ramas en lugar de sobrescribir una con otra, y probando que todo funcione antes de hacer el commit.
 
 ### Entrada #15
 
@@ -217,7 +217,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se descartó: seguir usando Económico cuando llega una categoría desconocida, porque escondía errores; ahora la función lanza un error.
 - Archivos y commit: `src/config/pricing.js`, `src/config/pricing.test.js`, `src/screens/main/EarningsScreen.js` — 63e3bcc
 - Verificación: Jest da el ejemplo del enunciado: Económico 19.200 (comisión 3.840, neto 15.360) y XL 26.900 (comisión 5.380, neto 21.520).
-- Aprendizaje: [Completar]
+- Aprendizaje: Redondear a múltiplos de 100 deja tarifas cerradas para el cobro al pasajero, y hacerlo antes de la comisión asegura que el 20 % de la plataforma y el 80 % del conductor se calculen sobre la tarifa final exacta.
 
 ### Entrada #16
 
@@ -232,8 +232,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se modificó: el rastreo de ubicación solo corre si el conductor está conectado y aprobado.
   - Se descartó: revisar el estado guardado en el celular al iniciar sesión, porque no se entera cuando se aprueba la cuenta en la consola.
 - Archivos y commit: `src/hooks/useDriverStatus.js`, `src/services/driverStatus.js`, `src/services/driverStatus.test.js`, `src/screens/trip/HomeScreen.js`, `src/i18n/strings.js` — 52a0683
-- Verificación: Jest pasa 126 pruebas, `npx tsc --noEmit` no da errores y el bundle de Android se genera. [Completar con la prueba en el celular: con el estado `pending` el interruptor está bloqueado y, al cambiarlo a `approved` en la consola, se habilita sin reiniciar la app]
-- Aprendizaje: [Completar]
+- Verificación: Jest pasa 126 pruebas, `npx tsc --noEmit` no da errores y el bundle de Android se genera. Probado en el celular: con status pending la app mostraba "Tu cuenta está pendiente de aprobación" y no me dejaba conectar; al cambiarlo a approved en la consola se habilitó sin reiniciar la app.
+- Aprendizaje: `onSnapshot` abre una escucha en tiempo real con Firestore para habilitar el interruptor apenas aprueben al conductor; se cancela (`unsubscribe`) al desmontar la pantalla para evitar fugas de memoria y lecturas innecesarias.
 
 ### Entrada #17
 
@@ -279,8 +279,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se usó: el cambio de traducción tal cual.
   - Se descartó: los pasos 1 y 2 (las entradas #50 a #54 son de Ximena) y la rama local `tamiro/viajes`.
 - Archivos y commit: `src/i18n/strings.js`, `src/screens/trip/HomeScreen.js` — 41568ea
-- Verificación: las pruebas de `src/i18n` pasan, incluida la que exige las mismas claves en los dos idiomas. [Completar con la prueba en el celular cambiando el idioma a inglés]
-- Aprendizaje: [Completar]
+- Verificación: las pruebas de `src/i18n` pasan, incluida la que exige las mismas claves en los dos idiomas. Probado en el celular: al cambiar el idioma a inglés, la app cambió de idioma, incluido el botón de conectar.
+- Aprendizaje: Centraliza todos los textos en `strings.js` (internacionalización), permitiendo cambiar toda la aplicación entre español e inglés dinámicamente sin duplicar cadenas ni dejar textos quemados en las pantallas.
 
 ### Entrada #18
 
@@ -351,8 +351,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se modificó: las reglas repiten los valores de `pricing.js` para recalcular la tarifa, y `pricing.js` tiene un comentario que avisa que hay que cambiarlos en los dos lugares.
   - Se descartó: pasar una solicitud rechazada al siguiente conductor; queda `rejected` para todos, que basta para la demostración con un conductor.
 - Archivos y commit: `firestore.rules`, `src/services/trips.js`, `src/services/trips.test.js`, `src/config/pricing.js` — abe1511
-- Verificación: Jest pasa 139 pruebas, con las nuevas de `trips.test.js` (orden de estados, conductor no aprobado, solicitud ya tomada, campos del pago y montos alterados), y `npx tsc --noEmit` no da errores. La cuenta de las reglas da el ejemplo del enunciado con aritmética de doble precisión (19.200, 26.900 y 34.600). [Completar: la consola de Firebase acepta las reglas al publicarlas]
-- Aprendizaje: [Completar]
+- Verificación: Jest pasa 139 pruebas, con las nuevas de `trips.test.js` (orden de estados, conductor no aprobado, solicitud ya tomada, campos del pago y montos alterados), y `npx tsc --noEmit` no da errores. La cuenta de las reglas da el ejemplo del enunciado con aritmética de doble precisión (19.200, 26.900 y 34.600). Las reglas se publicaron en uber-clone-ba0e2 con firebase-admin y Firebase las aceptó sin errores. En el celular hice viajes completos y en la consola el viaje cambió de estado; la app nunca marcó paid sola.
+- Aprendizaje: Por seguridad: el código de la app en el celular puede ser manipulado, por lo que las reglas de Firestore bloquean la escritura directa y dejan que solo el backend autorizado marque un viaje como `paid` tras validar el pago.
 
 ### Entrada #19
 
@@ -376,7 +376,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se descartó: cambiar el aviso del test, que es intencional.
 - Archivos y commit: `src/contexts/AuthContext.js` — dce30f5
 - Verificación: `npx expo lint` ya no reporta el error de `AuthContext.js`; Jest pasa 139 pruebas y `npx tsc --noEmit` no da errores.
-- Aprendizaje: [Completar]
+- Aprendizaje: Aunque en ejecución no fallaba porque `useEffect` corre después del render, el linter marcó el uso antes de declararla; moverla dentro del `useEffect` la deja definida antes de invocarse y evita incluirla en el arreglo de dependencias, sin cambiar su comportamiento.
 
 ### Entrada #20
 
@@ -479,7 +479,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se descartó: cambiar `.gitignore` en esta tarea; se hizo después en un commit aparte (4824141) para ignorar `docs/enunciado.pdf` y `CLAUDE.local.md`.
 - Archivos y commit: `docs/APIS.md`, `CLAUDE.md` — 66703e6
 - Verificación: se revisó que los nombres de las variables coincidan con `.env.example` y `backend/.env.example`, y que `backend/serviceAccountKey.json` esté en `.gitignore`.
-- Aprendizaje: [Completar]
+- Aprendizaje: Encapsula la comunicación con cada servicio externo en un único archivo, aislando URLs, llaves y formatos de respuesta para que las pantallas no dependan de la implementación y cualquier cambio se haga en un solo lugar.
 
 ### Entrada #21
 
@@ -680,12 +680,12 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Protección del simulador: `backend/scripts/simular-solicitud.js`, `backend/test/simular-solicitud.test.js` — 4c2963f
 - Verificación:
   - Parte 1: `npm test` en `backend/` pasa 22 pruebas (9 nuevas). El simulador se ejecutó una vez por ruta: OpenRouteService respondió con la llave en `Authorization` (8,3 km y 13 min; 11 km y 19 min; 3,3 km y 6 min, sin tráfico) y las polylines guardadas empiezan y terminan junto al origen y el destino. Un intento anterior, con la llave todavía sin guardar en `backend/.env`, creó 3 solicitudes con los valores de respaldo; la comprobación de la llave no detuvo el comando, y se corrigió para que se detenga.
-  - Parte 2: Jest pasa 143 pruebas (4 nuevas: orden por `createdAt` y textos de errores, categorías y métodos de pago en los dos idiomas), `npm test` en `backend/` pasa 22, `npx tsc --noEmit` no da errores, el bundle de Android se genera y `npx expo lint` queda sin errores (solo el aviso intencional de `emailVerification.test.js`). En el celular, con el conductor `approved`, la solicitud del simulador llegó en tiempo real y aceptarla llevó al viaje en curso. [Completar: el vencimiento de 15 s y el rechazo guardan `rejected`, y desconectado no se muestran solicitudes]
+  - Parte 2: Jest pasa 143 pruebas (4 nuevas: orden por `createdAt` y textos de errores, categorías y métodos de pago en los dos idiomas), `npm test` en `backend/` pasa 22, `npx tsc --noEmit` no da errores, el bundle de Android se genera y `npx expo lint` queda sin errores (solo el aviso intencional de `emailVerification.test.js`). En el celular, con el conductor `approved`, la solicitud del simulador llegó en tiempo real y aceptarla llevó al viaje en curso. Probado en el celular: la solicitud llega en tiempo real estando conectado y desconectado no aparecen solicitudes; se dibuja la ruta hasta el pasajero y luego hasta el destino, y el resumen de la ruta 2 da $21.500. No probé en el celular que el vencimiento de 15 s o el rechazo dejen el viaje en rejected.
   - Parte 3: Jest pasa 150 pruebas (7 nuevas: `canReceiveRequests` con el caso del bug, la ruta decodificada o en línea recta y el estado del pago), `npm test` en `backend/` pasa 22, `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. Con `firebase-admin` se comprobó que las consultas del viaje en curso y de las solicitudes no necesitan índice compuesto. En el celular, el viaje pasó por Aceptar, Pasajero a bordo y Finalizar siguiendo el `status` de Firestore, y el resumen de la ruta 2 en Económico mostró tarifa $21.500, comisión $4.300 y ganancia $17.200.
   - Parte 3b: Jest pasa 155 pruebas (5 nuevas: `fetchRoute` y la ruta de recogida real o en línea recta), `npm test` en `backend/` pasa 25 (3 nuevas: respuesta correcta, puntos inválidos sin llamar a ORS y error de ORS sin detalles), `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. `POST /api/v1/rutas` se probó con la llave real: respondió 200 con 3,5 km, 5 min y una polyline de 212 caracteres. En el celular se dibujó la ruta hasta el pasajero y después la ruta hasta el destino.
   - Corrección de las reglas: la fórmula nueva da lo mismo que `calculateFare` en 21 casos (las 7 distancias y duraciones del simulador y del enunciado, en las 3 categorías). Las reglas se publicaron en la consola y en el celular la ruta 2 en Económico se completó sin "permiso denegado", con tarifa $21.500, comisión $4.300 y ganancia $17.200: el redondeo de las reglas coincide con `calculateFare`.
   - Nota (corrección): las comprobaciones de la parte 1 que tocaron Firestore (las solicitudes creadas, las polylines guardadas) y la de la parte 3 sobre los índices se hicieron en `biblioteca-clase`, no en el proyecto de la app. Siguen siendo válidas las respuestas de OpenRouteService, que no dependen de Firebase, y la conclusión de los índices, que depende de la forma de la consulta y no del proyecto. La prueba en el celular de las partes 2, 3 y 3b debe hacerse con solicitudes creadas en `uber-clone-ba0e2`. La protección se probó con la clave equivocada: el simulador se negó antes de llamar a ORS y sin escribir nada; `npm test` en `backend/` pasa 27 pruebas (2 nuevas).
-- Aprendizaje: [Completar]
+- Aprendizaje: Siempre se deben verificar las credenciales y el proyecto activo en el entorno antes de ejecutar scripts de escritura, manteniendo separados los entornos de prueba para no contaminar bases de datos ajenas.
 
 ### Entrada #22
 
@@ -729,8 +729,8 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se usó: la opción `experimentalForceLongPolling`, que se confirmó en los tipos de Firebase 13.2.0 instalado.
   - Se descartó: pasar a datos móviles como solución, porque el celular dejaría de llegar al backend del PC (código por correo y ruta hasta el pasajero).
 - Archivos y commit: `src/config/firebase.js` — e6ecc93
-- Verificación: Jest pasa 155 pruebas, `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. Fast Refresh no aplica el cambio: hay que cerrar la app por completo o recargarla. [Completar con la prueba en el celular: el aviso "Could not reach Cloud Firestore backend" ya no aparece]
-- Aprendizaje: [Completar]
+- Verificación: Jest pasa 155 pruebas, `npx tsc --noEmit` no da errores, `npx expo lint` queda sin errores y el bundle de Android se genera. Fast Refresh no aplica el cambio: hay que cerrar la app por completo o recargarla. Probado en el celular: después del cambio a long polling el aviso "Could not reach Cloud Firestore backend" no volvió a aparecer.
+- Aprendizaje: El SDK web de Firebase usa por defecto WebChannel (una conexión HTTP que queda abierta recibiendo datos), y algunas redes, proxies o antivirus retienen esas respuestas largas; activar `experimentalForceLongPolling` fuerza peticiones HTTP más cortas que sí logran pasar.
 
 ### Entrada #23
 
@@ -790,7 +790,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se descartó: agregar los textos `payment.error.<código>` a `strings.js` en este commit, para no chocar con los cambios de Ximena en el frontend.
 - Archivos y commit: `src/services/payments.js`, `src/services/payments.test.js` — ddd385f
 - Verificación: Jest pasa 158 pruebas (3 nuevas en `payments.test.js`), las 27 del backend pasan, `npx expo lint .` queda sin errores (3 avisos que ya existían) y `npx tsc --noEmit` no da errores.
-- Aprendizaje: [Completar]
+- Aprendizaje: Define un contrato claro desde el inicio (parámetros, respuestas y códigos de error esperados), permitiendo construir la interfaz y manejar errores sin romper la futura integración con la pasarela o el backend.
 
 ### Entrada #24
 
@@ -820,7 +820,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se modificó: la primera versión solo agregaba OpenRouteService y Nominatim a Tecnologías; Tamiro pidió completar la lista y marcar Mercado Pago como en integración, no como hecho.
 - Archivos y commit: `README.md`, `backend/.env.example` — 877fc79
 - Verificación: Jest de la raíz y las pruebas del backend pasan, `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores. [Pendiente: revisar cómo se ve el README en GitHub]
-- Aprendizaje: [Completar]
+- Aprendizaje: Documenta qué variables de entorno necesita el proyecto para que cualquier compañero pueda configurarlo en local, sin exponer llaves privadas reales en el repositorio de Git.
 
 ### Entrada #25
 
@@ -847,7 +847,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Se descartó: pasar la clave de servicio como objeto en vez de ruta para quitar el aviso "keyFilename is deprecated", porque solo cambió por otro aviso igual ("fromJSON is deprecated"); los dos salen de dentro de `firebase-admin` y no afectan.
 - Archivos y commit: `backend/scripts/simular-historial.js`, `backend/scripts/limpiar-simulados.js`, `backend/scripts/proyecto.js`, `backend/scripts/simular-solicitud.js`, `backend/test/simular-historial.test.js`, `backend/package.json` — 632a7cf
 - Verificación: las pruebas del backend pasan 34 (7 nuevas: campos del enunciado, montos iguales a `calculateFare`, mezcla de pagos y categorías, fechas un miércoles, un lunes y el 1 de diciembre, y lotes de 500); Jest de la raíz pasa 158, `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores. `npm run simular-historial -- no-existe-prueba@example.com` comprobó el proyecto `uber-clone-ba0e2` y respondió "No hay ninguna cuenta con el correo…" sin escribir nada. Después se corrió con las cuentas de Tamiro (`tamirokrac@gmail.com`) y de Ximena (`ximerosa1307@gmail.com`) en `uber-clone-ba0e2`: cada una quedó con 10 viajes `paid`, confirmados con una consulta a Firestore. Ganancia neta esperada en cada cuenta: hoy 52.240 COP (3 viajes), semana desde el lunes 108.520 COP (6) y mes 182.680 COP (10). [Pendiente: ver los viajes en el historial y las ganancias de la app y luego `npm run limpiar-simulados` antes del video]
-- Aprendizaje: [Completar]
+- Aprendizaje: Permite generar en segundos escenarios completos y controlados (viajes de hoy, de la semana y del mes) sin recorrer rutas físicas reales, y borrarlos después sin alterar las métricas verdaderas.
 
 ### Entrada #26
 
@@ -874,7 +874,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Jest de la raíz pasa 162 (6 en `payments.test.js`, 5 nuevas para `markCashReceived`), `npx expo lint .` queda sin errores y `npx tsc --noEmit` no da errores.
   - Con el backend corriendo de verdad y conectado a `uber-clone-ba0e2`: sin token y con un token falso responde 401 `no_autorizado`, y el preflight de CORS permite `Authorization`. Con un token real de la cuenta de Tamiro (sacado con `createCustomToken` y `signInWithCustomToken`), sobre los viajes simulados de la entrada #25: el de efectivo ya pagado respondió 200 sin cambiar el documento (mismo `updateTime`), el de Mercado Pago 409 `metodo_invalido` y uno inexistente 404 `no_encontrado`.
   - [Pendiente: probar en el celular, con el botón de Ximena, un viaje real en efectivo que pase de `completed` a `paid`]
-- Aprendizaje: [Completar]
+- Aprendizaje: Autentica la identidad real de quien hace la petición mediante Firebase Auth, asegurando que ningún tercero ni otro conductor pueda marcar como pagado un viaje que no le pertenece.
 
 ### Entrada #27
 
@@ -912,7 +912,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - `docs/enunciado.pdf` no está en el repositorio; Tamiro confirmó que la guía no define los nombres de estos campos, así que quedan `location`, `locationUpdatedAt` e `isAvailable`.
   - En el celular, con el conductor `approved`: durante el viaje `drivers/{uid}` quedó con `isAvailable: false` y al finalizarlo volvió a `true`.
   - [Pendiente: ver en la consola que `location` cambia cada 10 s y que al desconectarse queda `isAvailable: false`]
-- Aprendizaje: [Completar]
+- Aprendizaje: `useDriverLocation` pide lecturas cada 5 segundos o cada 5 metros, pero guardar en Firestore como máximo cada 10 s reduce el costo de escrituras, el consumo de batería y los datos móviles sin afectar la fluidez visual del mapa local.
 
 ### Entrada #28
 
@@ -975,7 +975,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - `docs/enunciado.pdf` no está en el repositorio; se siguió `src/services/trips.js` (secciones 3 y 6).
   - En el celular, con la cuenta de Tamiro (`approved`), después de `npm run simular-historial`: Mis ganancias mostró Hoy, Esta semana y Este mes con sus totales y el saldo; el Historial mostró los viajes del más reciente al más antiguo y el filtro Hoy funcionó. Con un viaje real (`simular economy cash 2`) finalizado, "Recibí efectivo" cambió el resumen a "Efectivo recibido" en tiempo real y el viaje apareció en el historial.
   - La aprobación del conductor sigue siendo manual en la consola de Firebase, como pide la sección 2.
-- Aprendizaje: [Completar]
+- Aprendizaje: La consulta combina un filtro de igualdad por conductor (`where`) con un ordenamiento por fecha (`orderBy`) sobre campos distintos, y Firestore exige índices compuestos preconstruidos para resolver esa combinación rápido.
 
 ### Entrada #29
 
@@ -1013,7 +1013,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Jest de la raíz pasa 212 (3 nuevas en `tripRoute.test.js` para `navigationUrl`: recogida en `driver_arriving`, destino en `in_progress`, y `null` en otros estados o sin coordenadas). `npx expo lint` queda sin errores y `npx tsc --noEmit` no da errores.
   - Se revisó que no quedara ningún color escrito a mano en los tres archivos.
   - [Pendiente: revisar en el celular la barra de 15 s, la X de rechazar, los colores y que "Navegar" abra Google Maps hacia la recogida y hacia el destino]
-- Aprendizaje: [Completar]
+- Aprendizaje: Mantiene la consistencia visual en toda la aplicación (sistema de diseño) y permite ajustar colores, espacios o tipografías desde un solo archivo sin buscar valores repetidos pantalla por pantalla.
 
 ### Entrada #30
 
@@ -1053,7 +1053,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Jest de la raíz pasa 226 (4 en `profile.test.js`, que comprueban que el nombre y el correo de Mercado Pago dan los mismos errores que en las pestañas 1 y 3; 10 en `driverProfile.test.js`: promedio con un decimal y sin calificaciones, vencido, vence hoy, a 29 y a 30 días, fecha inválida, y que la actualización solo tenga los campos cambiados y nunca `status`). Las 90 pruebas de `src/validation/` del registro siguen pasando. `npx expo lint` queda sin errores y `npx tsc --noEmit` no da errores.
   - `firestore.rules` ya permite que el dueño actualice `drivers/{uid}` si `status` queda igual. Se comprobó con las reglas publicadas en `uber-clone-ba0e2`: con un token real de la cuenta de Tamiro y la API REST de Firestore se escribieron `personal.name` y `documents.mercadoPagoEmail` con los mismos valores que ya tenían; respondió 200 y `status` siguió en `approved`.
   - [Pendiente: probar en el celular editar el nombre, la foto y el correo de Mercado Pago, los errores debajo de cada campo, el aviso de vencimiento, el cambio de idioma y cerrar sesión]
-- Aprendizaje: [Completar]
+- Aprendizaje: Funcionan como credenciales únicas de identidad vinculadas a la autenticación y a la verificación del registro; permitir editarlos libremente desincronizaría el inicio de sesión y comprometería la seguridad de la cuenta.
 
 ### Entrada #31
 
@@ -1135,7 +1135,7 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). [Completar co
   - Antes de cada commit: Jest de la raíz (al final 256 pruebas, 30 nuevas: Haversine y estimación de recogida, decimales por idioma, `validatePassengerRating`, `weeklyEarnings` incluso con la semana empezando en el mes anterior, `passengerContact`, `nextHeading` e `isNightTime`), las 42 del backend (con la prueba de campos del simulador actualizada), `npx expo lint` sin errores y `npx tsc --noEmit` sin errores.
   - Reglas: antes de cambiarlas se comparó lo publicado en `uber-clone-ba0e2` con `firestore.rules` (solo cambiaban los comentarios). Con el sí de Tamiro se publicaron con `releaseFirestoreRulesetFromSource` de firebase-admin, y `getFirestoreRuleset` confirmó que lo publicado es igual al archivo. Con un token real de la cuenta de Tamiro y la API REST de Firestore, sobre viajes simulados ya pagados: `passengerRating` 5 respondió 200; una segunda calificación, escribir `rating` y un `passengerRating` de 6 respondieron 403; `rating` y `status` no cambiaron.
   - [Pendiente: probar en el celular los puntos 1 a 7]
-- Aprendizaje: [Completar]
+- Aprendizaje: La fórmula de Haversine es un cálculo matemático local instantáneo y gratuito, ideal para mostrar una referencia rápida de cercanía antes de aceptar el viaje sin consumir cuota ni latencia de OpenRouteService.
 
 ### Entrada #50
 
