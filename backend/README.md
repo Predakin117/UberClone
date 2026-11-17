@@ -13,7 +13,7 @@ npm start
 
 Al arrancar muestra la línea `EXPO_PUBLIC_BACKEND_API_URL=...` con la IP de tu PC: esa va en el `.env` de la raíz. El celular y el PC deben estar en el mismo WiFi. Necesita Node 20.6 o superior.
 
-Pruebas: `npm test` (no envían correos de verdad).
+Pruebas: `npm test` (no envían correos ni notificaciones de verdad).
 
 ## Rutas (`/api/v1`)
 
@@ -76,6 +76,18 @@ Si el conductor vinculó su cuenta de Mercado Pago, la preferencia se crea con *
 3. Abre el túnel, pon la URL en `PUBLIC_BACKEND_URL` y registra en la aplicación ("URLs de redireccionamiento") la URL que el backend muestra al arrancar: `<PUBLIC_BACKEND_URL>/api/v1/pagos/mercadopago/oauth`.
 4. En la app, entra a Mi perfil, toca **Vincular Mercado Pago** e inicia sesión con la cuenta de prueba del **conductor**.
 5. Cobra un viaje `mercadopago` y paga con el comprador. En la cuenta del conductor debe llegar la tarifa + propina − comisión, y en la de la plataforma la comisión. En el resumen sale "Mercado Pago ya envió tu parte a tu cuenta".
+
+## Notificaciones push de solicitudes nuevas
+
+`npm run simular` crea la solicitud y luego envía "Nueva solicitud de viaje" con Firebase Cloud Messaging (`src/notificaciones.js`), con la misma app de `firebase-admin` del simulador. No usa Cloud Functions (el proyecto está en el plan Spark) ni variables nuevas: basta `serviceAccountKey.json`.
+
+Se notifica a los conductores de `drivers` con `status: "approved"`, `isAvailable: true`, `fcmToken` y `locationUpdatedAt` de hace 10 minutos o menos. El título y el texto van en el idioma que la app guardó en `notificationLanguage`, y en `data` van `type: "trip_request"` y el `tripId`. Si FCM responde `messaging/registration-token-not-registered`, se borra el token de ese conductor. El simulador muestra `Notificaciones: N enviadas, N fallidas, N tokens inválidos borrados`; si el envío falla, solo avisa por consola y la solicitud igual queda creada.
+
+Cómo probarlo:
+
+1. En la raíz, con `google-services.json` en su lugar, instala la app en el celular Android con `npx expo run:android` (Expo Go no recibe notificaciones push).
+2. Inicia sesión con un conductor `approved`, acepta el permiso de notificaciones y ponte Disponible. En Firestore, `drivers/{uid}` debe tener `fcmToken`.
+3. Deja la app en segundo plano y corre `npm run simular` aquí. Llega la notificación; al tocarla se abre el mapa con la solicitud y sus 15 segundos.
 
 ## Reglas
 
