@@ -34,6 +34,7 @@ import { usePhotoPicker } from "../../hooks/usePhotoPicker";
 import { formatMonthYear } from "../../i18n/format";
 import { updateDriverProfile } from "../../services/driverRepository";
 import {
+  documentsSummary,
   expiryStatus,
   profileUpdate,
   profileValues,
@@ -252,6 +253,7 @@ export default function ProfileScreen() {
   const photoMessage = t(photoError) || fieldError("profilePhoto");
   const memberSince = formatMonthYear(submittedAtMillis(driver), language);
   const vehicleName = [vehicle.make, vehicle.model].filter(Boolean).join(" ");
+  const docs = documentsSummary(documents);
 
   return (
     <KeyboardAvoidingView
@@ -378,6 +380,25 @@ export default function ProfileScreen() {
           icon="folder-open-outline"
           title={t("profile.documentsSection")}
         >
+          {/* How many documents are valid, with a progress bar */}
+          <View style={styles.docsSummary}>
+            <Text style={styles.docsSummaryText}>
+              {t("profile.docsValid")
+                .replace("{valid}", docs.valid)
+                .replace("{total}", docs.total)}
+            </Text>
+            <View style={styles.docsTrack}>
+              <View
+                style={[
+                  styles.docsFill,
+                  {
+                    width: `${docs.total ? (docs.valid / docs.total) * 100 : 0}%`,
+                  },
+                  docs.valid < docs.total && styles.docsFillWarning,
+                ]}
+              />
+            </View>
+          </View>
           <DocumentRow
             title={t("documents.licenseSection")}
             expiry={documents.license?.expiry}
@@ -542,6 +563,20 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     textAlign: "right",
   },
+  docsSummary: { gap: spacing.xs, marginBottom: spacing.xs },
+  docsSummaryText: { ...typography.label, fontSize: 14 },
+  docsTrack: {
+    height: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    overflow: "hidden",
+  },
+  docsFill: {
+    height: "100%",
+    borderRadius: radius.pill,
+    backgroundColor: colors.success,
+  },
+  docsFillWarning: { backgroundColor: colors.warning },
   documentRow: {
     flexDirection: "row",
     alignItems: "center",
