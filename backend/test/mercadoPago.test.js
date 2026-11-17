@@ -282,3 +282,61 @@ test("an error answer of Mercado Pago becomes an exception", async () => {
   const mp = createMercadoPago({ accessToken: "bad", fetchFn });
   await assert.rejects(mp.getPayment("1"), { message: "invalid access token", status: 401 });
 });
+
+test("with the app link, the return page opens the app by itself", async (t) => {
+  const { app, base } = await start();
+  t.after(() => app.close());
+
+  const appLink = "exp://192.168.0.10:8081/--/mercadopago";
+  const res = await fetch(
+    `${base}/retorno?payment_id=555&app=${encodeURIComponent(appLink)}`,
+  );
+  const html = await res.text();
+  assert.match(html, /Pago aprobado/);
+  assert.ok(html.includes(`url=${appLink}?status=approved`));
+  assert.ok(html.includes(`href="${appLink}?status=approved"`));
+});
+
+test("the return page never sends people to a website", async (t) => {
+  const { app, base } = await start();
+  t.after(() => app.close());
+
+  for (const link of ["https://evil.test", 'exp://x"><script>', "javascript:alert(1)"]) {
+    const res = await fetch(`${base}/retorno?payment_id=555&app=${encodeURIComponent(link)}`);
+    const html = await res.text();
+    assert.ok(!html.includes("http-equiv"), link);
+    assert.ok(!html.includes("<script>"), link);
+  }
+});
+
+test("the checkout gets the app link only when it is an app link", async (t) => {
+  const { app, post, mp } = await start();
+  t.after(() => app.close());
+
+  await post("", { tripId: "card", amount: 21200, returnUrl: "exp://192.168.0.10:8081/--/mercadopago" }, "token-ana");
+  await post("", { tripId: "card", amount: 21200, returnUrl: "https://evil.test" }, "token-ana");
+  assert.equal(mp.preferences[0].appReturnUrl, "exp://192.168.0.10:8081/--/mercadopago");
+  assert.equal(mp.preferences[1].appReturnUrl, undefined);
+});
+
+test("the return page of the preference carries the app link", async () => {
+  let sent = null;
+  const client = createMercadoPago({
+    accessToken: "APP_USR-test",
+    publicUrl: "https://abc.trycloudflare.com",
+    fetchFn: async (url, options) => {
+      sent = JSON.parse(options.body);
+      return { ok: true, json: async () => ({ id: "p", init_point: "https://mp/c" }) };
+    },
+  });
+  await client.createPreference({
+    tripId: "t1",
+    amount: 6000,
+    title: "Viaje",
+    appReturnUrl: "exp://192.168.0.10:8081/--/mercadopago",
+  });
+  assert.equal(
+    sent.back_urls.success,
+    "https://abc.trycloudflare.com/api/v1/pagos/mercadopago/retorno?app=exp%3A%2F%2F192.168.0.10%3A8081%2F--%2Fmercadopago",
+  );
+});

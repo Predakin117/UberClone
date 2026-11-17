@@ -84,12 +84,14 @@ export const tripChargeAmount = (trip) =>
  * "mercadopago"). Section 4: the app sends the tripId and the amount; the
  * backend checks the amount and creates the preference with the secret token.
  * Returns { ok: true, url } with the Checkout Pro link the app opens in the
- * browser, or { ok: false, codigoError }.
+ * browser, or { ok: false, codigoError }. returnUrl is the app's own link:
+ * after paying, the backend's return page opens the app with it.
  */
-export const startMercadoPagoPayment = async (trip) => {
+export const startMercadoPagoPayment = async (trip, returnUrl) => {
   const result = await postWithSession("/pagos/mercadopago", {
     tripId: trip.id,
     amount: tripChargeAmount(trip),
+    ...(returnUrl ? { returnUrl } : {}),
   });
   return result.ok ? { ok: true, url: result.url } : result;
 };

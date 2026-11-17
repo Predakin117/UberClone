@@ -2,15 +2,13 @@
 // Split payments on the profile (optional bonus of section 4): the driver
 // links their own Mercado Pago account. Then Mercado Pago pays the driver's
 // part of each trip straight to that account and the commission to the
-// platform. Linking opens the Mercado Pago page in the browser; when the app
-// comes back to the front (AppState), the state is read again. If the backend
-// has no split payments, nothing is shown.
+// platform. Linking opens the Mercado Pago page inside the app
+// (MercadoPagoWebView); when it closes, the state is read again. If the
+// backend has no split payments, nothing is shown.
 import { Ionicons } from "@expo/vector-icons";
-import * as WebBrowser from "expo-web-browser";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  AppState,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -30,6 +28,10 @@ import {
   unlinkMercadoPagoAccount,
 } from "../services/payments";
 import FieldMessage from "./FieldMessage";
+import MercadoPagoWebView from "./MercadoPagoWebView";
+
+// The backend's page after the driver authorizes (the OAuth redirect URL)
+const RETURN_PATH = "/pagos/mercadopago/oauth";
 
 export default function MercadoPagoLink() {
   const { t } = useLanguage();
@@ -37,8 +39,8 @@ export default function MercadoPagoLink() {
   const [isLoading, setIsLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState(null);
-  // true while the Mercado Pago page is open, to read the state on return
-  const waitingReturn = useRef(false);
+  // The Mercado Pago authorization page while it is open inside the app
+  const [linkUrl, setLinkUrl] = useState(null);
 
   const refresh = useCallback(async () => {
     const result = await getMercadoPagoLink();
@@ -68,41 +70,22 @@ export default function MercadoPagoLink() {
     };
   }, []);
 
-  // Cleanup: stop listening to the app state when the profile closes
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active" && waitingReturn.current) {
-        waitingReturn.current = false;
-        refresh();
-      }
-    });
-    return () => subscription.remove();
-  }, [refresh]);
-
   const connect = async () => {
     setError(null);
     setIsBusy(true);
     const result = await linkMercadoPagoAccount();
+    setIsBusy(false);
     if (!result.ok) {
-      setIsBusy(false);
       setError(`payment.error.${result.codigoError}`);
       return;
     }
-    try {
-      waitingReturn.current = true;
-      const browser = await WebBrowser.openBrowserAsync(result.url);
-      // iOS: the browser already closed, read the state now
-      if (browser.type !== "opened") {
-        waitingReturn.current = false;
-        await refresh();
-      }
-    } catch (browserError) {
-      console.error("Error opening Mercado Pago:", browserError);
-      waitingReturn.current = false;
-      setError("payment.error.fallo");
-    } finally {
-      setIsBusy(false);
-    }
+    setLinkUrl(result.url);
+  };
+
+  // Mercado Pago came back, or the driver closed it: read the state again
+  const closeLink = () => {
+    setLinkUrl(null);
+    refresh();
   };
 
   const disconnect = async () => {
@@ -169,6 +152,14 @@ export default function MercadoPagoLink() {
         </TouchableOpacity>
       )}
       <FieldMessage error={error ? t(error) : null} />
+      {linkUrl && (
+        <MercadoPagoWebView
+          key={linkUrl}
+          url={linkUrl}
+          returnPath={RETURN_PATH}
+          onClose={closeLink}
+        />
+      )}
     </View>
   );
 }

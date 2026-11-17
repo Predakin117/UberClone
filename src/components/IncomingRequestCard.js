@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Animated,
   Easing,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -63,6 +64,31 @@ export default function IncomingRequestCard({
     return () => animation.stop();
   }, [timeLeft, progress]);
 
+  // The card slides up from the bottom and the map darkens behind it, like
+  // Uber's request
+  const [appear] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    const animation = Animated.spring(appear, {
+      toValue: 1,
+      bounciness: 4,
+      speed: 14,
+      useNativeDriver: true,
+    });
+    animation.start();
+    // Cleanup: stop the animation if the card goes away first
+    return () => animation.stop();
+  }, [appear]);
+  const cardSlide = {
+    transform: [
+      {
+        translateY: appear.interpolate({
+          inputRange: [0, 1],
+          outputRange: [SLIDE_DISTANCE, 0],
+        }),
+      },
+    ],
+  };
+
   // AI-assisted: see docs/AI_LOG.md #59
   // HomeScreen gives the card the trip id as key, so it mounts again with
   // each new request and vibrates once per request. If the card goes away
@@ -100,7 +126,10 @@ export default function IncomingRequestCard({
     try {
       await respondToRequest(trip.id, TRIP_STATUS.ACCEPTED, driverStatus);
     } catch (acceptError) {
-      console.error("Error accepting the request:", acceptError.cause ?? acceptError);
+      console.error(
+        "Error accepting the request:",
+        acceptError.cause ?? acceptError,
+      );
       setError(acceptError.code ?? "trip.error.failed");
       setIsSending(false);
     }
@@ -113,7 +142,10 @@ export default function IncomingRequestCard({
     try {
       await respondToRequest(trip.id, TRIP_STATUS.REJECTED, driverStatus);
     } catch (rejectError) {
-      console.error("Error declining the request:", rejectError.cause ?? rejectError);
+      console.error(
+        "Error declining the request:",
+        rejectError.cause ?? rejectError,
+      );
       setError(rejectError.code ?? "trip.error.failed");
       setIsSending(false);
     }
@@ -125,140 +157,181 @@ export default function IncomingRequestCard({
   // with the time left as a ring around it. Every field of section 3 is still
   // here: origin, destination, distance, duration, category, payment method,
   // estimated fare and net earnings, and the 15-second timer.
+  // Decline and Accept sit together at the bottom, within reach of the thumb;
+  // the details scroll if the phone is small, so Accept is always on screen.
   return (
     <View style={styles.container}>
-      <View
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.backdrop, { opacity: appear }]}
+      />
+      <Animated.View
         style={[
           styles.card,
           { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.sm },
+          cardSlide,
         ]}
       >
-        <View style={styles.topRow}>
-          <View style={styles.categoryTag}>
-            <Ionicons name="car" size={14} color={colors.white} />
-            <Text style={styles.categoryText}>
-              {t(`category.${trip.category}`)}
-            </Text>
+        <View style={styles.handle} />
+        <ScrollView
+          style={styles.details}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.topRow}>
+            <View style={styles.categoryTag}>
+              <Ionicons name="car" size={14} color={colors.white} />
+              <Text style={styles.categoryText}>
+                {t(`category.${trip.category}`)}
+              </Text>
+            </View>
+            <View style={styles.paymentTag}>
+              <Ionicons
+                name={
+                  trip.paymentMethod === "cash"
+                    ? "cash-outline"
+                    : "card-outline"
+                }
+                size={14}
+                color={colors.black}
+              />
+              <Text style={styles.paymentText}>
+                {t(`payment.${trip.paymentMethod}`)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.paymentTag}>
-            <Ionicons
-              name={trip.paymentMethod === "cash" ? "cash-outline" : "card-outline"}
-              size={14}
-              color={colors.black}
+
+          <Text style={styles.title}>{t("request.title")}</Text>
+          {estimate && (
+            <>
+              <Text
+                style={styles.fare}
+                accessibilityLabel={`${t("request.fare")} ${formatCop(estimate.fare)}`}
+              >
+                {formatCop(estimate.fare)}
+              </Text>
+              <Text style={styles.earnings}>
+                {t("request.earnings")}: {formatCop(estimate.driverEarnings)}
+              </Text>
+            </>
+          )}
+
+          {toPickup && (
+            <View style={styles.pickupRow}>
+              <Ionicons name="person-outline" size={16} color={colors.black} />
+              <Text style={styles.pickupText}>
+                {t("request.pickupEstimate")
+                  .replace("{minutes}", toPickup.minutes)
+                  .replace("{km}", formatDecimal(toPickup.km, language))}
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.route}>
+            <RouteStops
+              origin={trip.origin?.address}
+              destination={trip.destination?.address}
+              originLabel={t("request.origin")}
+              destinationLabel={t("request.destination")}
             />
-            <Text style={styles.paymentText}>
-              {t(`payment.${trip.paymentMethod}`)}
-            </Text>
           </View>
+
+          <View style={styles.stats}>
+            <View style={styles.stat}>
+              <Ionicons
+                name="navigate-outline"
+                size={16}
+                color={colors.black}
+              />
+              <Text style={styles.statText}>
+                {t("request.distance")}:{" "}
+                {t("request.km").replace("{km}", trip.distanceKm)}
+              </Text>
+            </View>
+            <View style={styles.stat}>
+              <Ionicons name="time-outline" size={16} color={colors.black} />
+              <Text style={styles.statText}>
+                {t("request.duration")}:{" "}
+                {t("request.minutes").replace("{minutes}", trip.durationMin)}
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+
+        {error && <Text style={styles.errorText}>{t(error)}</Text>}
+
+        {/* The round Accept in the middle with the time left as a ring
+            around it, and a wide Decline button right under it */}
+        <View style={styles.actions}>
+          <View
+            accessibilityRole="progressbar"
+            accessibilityValue={{ min: 0, max: REQUEST_SECONDS, now: timeLeft }}
+          >
+            <CountdownRing progress={progress} size={RING_SIZE} strokeWidth={6}>
+              <TouchableOpacity
+                style={[styles.acceptButton, isSending && styles.disabled]}
+                onPress={handleAccept}
+                disabled={isSending}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+              >
+                <Text style={styles.acceptText}>{t("request.accept")}</Text>
+                <Text style={styles.secondsText}>
+                  {t("request.seconds").replace("{seconds}", timeLeft)}
+                </Text>
+              </TouchableOpacity>
+            </CountdownRing>
+          </View>
+
           <TouchableOpacity
             style={[styles.rejectButton, isSending && styles.disabled]}
             onPress={handleReject}
             disabled={isSending}
-            hitSlop={spacing.md}
+            activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel={t("request.reject")}
           >
             <Ionicons name="close" size={22} color={colors.black} />
+            <Text style={styles.rejectText}>{t("request.reject")}</Text>
           </TouchableOpacity>
         </View>
-
-        <Text style={styles.title}>{t("request.title")}</Text>
-        {estimate && (
-          <>
-            <Text
-              style={styles.fare}
-              accessibilityLabel={`${t("request.fare")} ${formatCop(estimate.fare)}`}
-            >
-              {formatCop(estimate.fare)}
-            </Text>
-            <Text style={styles.earnings}>
-              {t("request.earnings")}: {formatCop(estimate.driverEarnings)}
-            </Text>
-          </>
-        )}
-
-        {toPickup && (
-          <View style={styles.pickupRow}>
-            <Ionicons name="person-outline" size={16} color={colors.black} />
-            <Text style={styles.pickupText}>
-              {t("request.pickupEstimate")
-                .replace("{minutes}", toPickup.minutes)
-                .replace("{km}", formatDecimal(toPickup.km, language))}
-            </Text>
-          </View>
-        )}
-
-        <View style={styles.route}>
-          <RouteStops
-            origin={trip.origin?.address}
-            destination={trip.destination?.address}
-            originLabel={t("request.origin")}
-            destinationLabel={t("request.destination")}
-          />
-        </View>
-
-        <View style={styles.stats}>
-          <View style={styles.stat}>
-            <Ionicons name="navigate-outline" size={16} color={colors.black} />
-            <Text style={styles.statText}>
-              {t("request.distance")}:{" "}
-              {t("request.km").replace("{km}", trip.distanceKm)}
-            </Text>
-          </View>
-          <View style={styles.stat}>
-            <Ionicons name="time-outline" size={16} color={colors.black} />
-            <Text style={styles.statText}>
-              {t("request.duration")}:{" "}
-              {t("request.minutes").replace("{minutes}", trip.durationMin)}
-            </Text>
-          </View>
-        </View>
-
-        {error && <Text style={styles.errorText}>{t(error)}</Text>}
-
-        {/* Round Accept button; the ring around it is the time left */}
-        <View
-          style={styles.acceptArea}
-          accessibilityRole="progressbar"
-          accessibilityValue={{ min: 0, max: REQUEST_SECONDS, now: timeLeft }}
-        >
-          <CountdownRing progress={progress} size={RING_SIZE} strokeWidth={6}>
-            <TouchableOpacity
-              style={[styles.acceptButton, isSending && styles.disabled]}
-              onPress={handleAccept}
-              disabled={isSending}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-            >
-              <Text style={styles.acceptText}>{t("request.accept")}</Text>
-              <Text style={styles.secondsText}>
-                {t("request.seconds").replace("{seconds}", timeLeft)}
-              </Text>
-            </TouchableOpacity>
-          </CountdownRing>
-        </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
 
-const RING_SIZE = 124;
-const ACCEPT_SIZE = RING_SIZE - 24;
+const RING_SIZE = 116;
+const ACCEPT_SIZE = RING_SIZE - 22;
+// How far below its place the card starts its slide up
+const SLIDE_DISTANCE = 500;
 
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.backdrop,
     justifyContent: "flex-end",
   },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.backdrop,
+  },
   card: {
+    maxHeight: "92%",
     backgroundColor: colors.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: spacing.xl - 4,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.sm,
     elevation: 10,
   },
+  handle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.border,
+    marginBottom: spacing.md,
+  },
+  // The details shrink and scroll; the actions below never move
+  details: { flexGrow: 0, flexShrink: 1 },
   topRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   categoryTag: {
     flexDirection: "row",
@@ -280,16 +353,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs + 1,
   },
   paymentText: { ...typography.label, fontSize: 13 },
-  // Decline: a discreet X on the right
-  rejectButton: {
-    marginLeft: "auto",
-    width: 36,
-    height: 36,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   title: { ...typography.caption, fontSize: 14, marginTop: spacing.md },
   fare: {
     fontSize: 40,
@@ -332,8 +395,27 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.error,
     marginTop: spacing.md,
+    textAlign: "center",
   },
-  acceptArea: { alignItems: "center", marginTop: spacing.lg },
+  actions: {
+    alignItems: "center",
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
+  // Decline: a wide outlined button, easy to find but apart from Accept
+  rejectButton: {
+    alignSelf: "stretch",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    minHeight: 52,
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+  },
+  rejectText: { ...typography.label, fontSize: 16 },
   acceptButton: {
     width: ACCEPT_SIZE,
     height: ACCEPT_SIZE,

@@ -33,6 +33,8 @@ export const colors = {
   plate: "#FFD400",
   // "Charge with Mercado Pago" button, in the Mercado Pago blue
   mercadoPago: "#009EE3",
+  // Trail behind the circle of the swipe button, over its color
+  swipeTrail: "rgba(255, 255, 255, 0.18)",
 };
 
 export const radius = { sm: 8, md: 12, lg: 16, pill: 999 };

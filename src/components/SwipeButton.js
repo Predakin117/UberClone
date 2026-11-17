@@ -1,9 +1,11 @@
 // AI-assisted: see docs/AI_LOG.md #60
 // "Swipe to start / end the trip" button, like Uber: the driver drags the
-// white square to the right end to confirm, so a tap by accident does
+// white circle to the right end to confirm, so a tap by accident does
 // nothing. Released before the end, it slides back. Screen readers get a
 // regular button instead ("activate" action), because they can't drag.
 // Built with PanResponder and Animated from React Native (no new library).
+// A pill as wide as the sheet; a lighter trail follows the circle while it
+// moves, and the label is centered in the space right of the circle.
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -16,9 +18,10 @@ import {
 import { colors, radius } from "../config/theme";
 import { useLanguage } from "../contexts/LanguageContext";
 
-const THUMB_SIZE = 52;
-const PADDING = 4;
-// Share of the track the square must reach to confirm
+const THUMB_SIZE = 56;
+const PADDING = 5;
+const HEIGHT = THUMB_SIZE + PADDING * 2;
+// Share of the track the circle must reach to confirm
 const CONFIRM_AT = 0.85;
 
 export default function SwipeButton({
@@ -77,12 +80,14 @@ export default function SwipeButton({
     if (!isLoading) slideBack();
   }, [isLoading, label, slideBack]);
 
-  // The label fades while the square covers it
+  // The label fades while the circle covers it
   const labelOpacity = offset.interpolate({
-    inputRange: [0, Math.max(maxOffset, 1)],
+    inputRange: [0, Math.max(maxOffset * 0.6, 1)],
     outputRange: [1, 0],
     extrapolate: "clamp",
   });
+  // The trail behind the circle grows with it
+  const trailWidth = Animated.add(offset, THUMB_SIZE);
 
   return (
     <View
@@ -108,17 +113,25 @@ export default function SwipeButton({
         <ActivityIndicator color={colors.white} />
       ) : (
         <>
-          <Animated.Text
-            style={[styles.label, { opacity: labelOpacity }]}
-            numberOfLines={1}
-          >
-            {label}
-          </Animated.Text>
+          {/* Centered with a View, so the text sits in the middle on Android too */}
+          <View style={styles.labelBox} pointerEvents="none">
+            <Animated.Text
+              style={[styles.label, { opacity: labelOpacity }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {label}
+            </Animated.Text>
+          </View>
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.trail, { width: trailWidth }]}
+          />
           <Animated.View
             style={[styles.thumb, { transform: [{ translateX: offset }] }]}
             {...panResponder.panHandlers}
           >
-            <Ionicons name="arrow-forward" size={24} color={color} />
+            <Ionicons name="chevron-forward" size={26} color={color} />
           </Animated.View>
         </>
       )}
@@ -128,26 +141,37 @@ export default function SwipeButton({
 
 const styles = StyleSheet.create({
   track: {
-    height: THUMB_SIZE + PADDING * 2,
-    borderRadius: radius.sm,
+    height: HEIGHT,
+    borderRadius: radius.pill,
     padding: PADDING,
     justifyContent: "center",
+    overflow: "hidden",
   },
   disabled: { opacity: 0.5 },
-  label: {
+  labelBox: {
     ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    paddingLeft: THUMB_SIZE + PADDING * 2,
+    paddingRight: PADDING * 4,
+  },
+  label: {
     textAlign: "center",
-    textAlignVertical: "center",
-    lineHeight: THUMB_SIZE + PADDING * 2,
-    paddingLeft: THUMB_SIZE,
     color: colors.white,
     fontSize: 17,
     fontWeight: "700",
   },
+  trail: {
+    position: "absolute",
+    left: PADDING,
+    top: PADDING,
+    height: THUMB_SIZE,
+    borderRadius: THUMB_SIZE / 2,
+    backgroundColor: colors.swipeTrail,
+  },
   thumb: {
     width: THUMB_SIZE,
     height: THUMB_SIZE,
-    borderRadius: radius.sm - 2,
+    borderRadius: THUMB_SIZE / 2,
     backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",

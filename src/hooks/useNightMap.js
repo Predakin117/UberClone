@@ -1,9 +1,14 @@
 // AI-assisted: see docs/AI_LOG.md #31
-// Props for MapView that turn the map dark between 6 p.m. and 6 a.m. The hour
+// Props for MapView that turn the map dark between 6 p.m. and 6 a.m., and use
+// a clean light style during the day. The hour
 // is checked every minute, so the map changes on its own at 6.
 // Usage: <MapView {...useNightMap()} />
 import { useEffect, useState } from "react";
-import { DARK_MAP_STYLE, isNightTime } from "../config/mapStyle";
+import {
+  DARK_MAP_STYLE,
+  LIGHT_MAP_STYLE,
+  isNightTime,
+} from "../config/mapStyle";
 
 const CHECK_EVERY_MS = 60 * 1000;
 
@@ -18,7 +23,8 @@ export const useNightMap = () => {
 
   return {
     // Android (Google Maps); Apple Maps ignores it without failing
-    customMapStyle: isNight ? DARK_MAP_STYLE : [],
+    // Day: the clean gray style, like Uber; night: the dark one
+    customMapStyle: isNight ? DARK_MAP_STYLE : LIGHT_MAP_STYLE,
     // iOS (Apple Maps)
     userInterfaceStyle: isNight ? "dark" : "light",
   };

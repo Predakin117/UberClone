@@ -1,14 +1,16 @@
 // AI-assisted: see docs/AI_LOG.md #6, #4, #16, #17, #21, #27, #57, #31
 // src/screens/trip/HomeScreen.js
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CarMarker from "../../components/CarMarker";
 import GoButton from "../../components/GoButton";
 import IncomingRequestCard from "../../components/IncomingRequestCard";
+import RecenterButton from "../../components/RecenterButton";
 import SearchingBar from "../../components/SearchingBar";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -89,7 +91,7 @@ export default function HomeScreen() {
   }, []);
 
   // Centers the map on the driver without blocking manual scrolling
-  useEffect(() => {
+  const centerOnDriver = useCallback(() => {
     if (!location) return;
     mapRef.current?.animateToRegion(
       {
@@ -101,6 +103,10 @@ export default function HomeScreen() {
       500,
     );
   }, [location]);
+
+  useEffect(() => {
+    centerOnDriver();
+  }, [centerOnDriver]);
 
   const toggleOnline = () => {
     if (!canGoOnline) return;
@@ -140,9 +146,7 @@ export default function HomeScreen() {
           accessibilityRole="button"
           accessibilityLabel={t("home.openMenu")}
         >
-          <View style={styles.menuLine} />
-          <View style={styles.menuLine} />
-          <View style={styles.menuLine} />
+          <Ionicons name="menu" size={24} color={colors.black} />
         </TouchableOpacity>
 
         <View style={styles.statusChip}>
@@ -204,6 +208,14 @@ export default function HomeScreen() {
         </View>
       )}
 
+      {/* Round button to center the map on the driver, on the right */}
+      {!request && sheetHeight > 0 && location && (
+        <RecenterButton
+          onPress={centerOnDriver}
+          style={[styles.recenter, { bottom: sheetHeight + spacing.lg }]}
+        />
+      )}
+
       {/* Bottom sheet with the Available / Unavailable switch */}
       <View
         style={[
@@ -221,7 +233,9 @@ export default function HomeScreen() {
             onPress={() => navigation.navigate("ActiveTrip")}
             accessibilityRole="button"
           >
+            <Ionicons name="navigate" size={20} color={colors.white} />
             <Text style={styles.backToTripText}>{t("home.backToTrip")}</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.white} />
           </TouchableOpacity>
         )}
 
@@ -301,14 +315,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
     ...shadow,
-  },
-  menuLine: {
-    width: 18,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: colors.black,
   },
   menuSpacer: { width: MENU_SIZE },
   statusChip: {
@@ -367,6 +374,7 @@ const styles = StyleSheet.create({
   noticeError: { borderLeftColor: colors.error, color: colors.error },
 
   goButton: { position: "absolute", alignSelf: "center" },
+  recenter: { right: spacing.lg },
   sheet: {
     position: "absolute",
     left: 0,
@@ -388,13 +396,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   backToTrip: {
+    flexDirection: "row",
+    gap: spacing.md,
     backgroundColor: colors.black,
-    borderRadius: radius.sm,
-    minHeight: 52,
+    borderRadius: radius.md,
+    minHeight: 56,
+    paddingHorizontal: spacing.lg,
     alignItems: "center",
-    justifyContent: "center",
   },
-  backToTripText: { color: colors.white, fontSize: 16, fontWeight: "600" },
+  backToTripText: {
+    flex: 1,
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: "700",
+  },
   switchRow: {
     flexDirection: "row",
     alignItems: "center",

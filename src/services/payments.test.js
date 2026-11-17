@@ -67,6 +67,21 @@ describe("startMercadoPagoPayment", () => {
       codigoError: "monto_invalido",
     });
   });
+
+  it("sends the app's link so the return page opens the app", async () => {
+    global.fetch.mockReturnValue(
+      respuesta(200, { ok: true, url: "https://mp.test/checkout" }),
+    );
+    await startMercadoPagoPayment(
+      trip,
+      "exp://192.168.0.10:8081/--/mercadopago",
+    );
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
+      tripId: "viaje-1",
+      amount: 21200,
+      returnUrl: "exp://192.168.0.10:8081/--/mercadopago",
+    });
+  });
 });
 
 describe("checkMercadoPagoPayment", () => {

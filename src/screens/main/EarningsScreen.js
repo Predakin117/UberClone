@@ -166,8 +166,11 @@ export default function EarningsScreen() {
         selectedIndex={selectedDay}
         onSelectDay={setSelectedDay}
       />
+      {/* Without trips this week the chart is empty: say so instead */}
       <Text style={[styles.caption, styles.centerText]}>
-        {t("earnings.tapDay")}
+        {week.total.tripCount === 0
+          ? t("earnings.noTripsWeek")
+          : t("earnings.tapDay")}
       </Text>
 
       <Text style={styles.sectionTitle}>{t("earnings.summary")}</Text>

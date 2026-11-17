@@ -46,7 +46,9 @@ Necesita `backend/serviceAccountKey.json` y `MP_ACCESS_TOKEN` en `backend/.env` 
 
 - `POST /pagos/mercadopago` revisa que el viaje sea del conductor, esté `completed`, sea `mercadopago` y que `amount` sea la tarifa más la propina. Después crea la preferencia con `external_reference = tripId` y responde la `url` del checkout.
 - El pago siempre se lee de Mercado Pago (`GET /v1/payments/...`), nunca del aviso. Si está aprobado, en COP y por el monto del viaje, el viaje queda con `paymentStatus: "approved"`, `paymentId` y `status: "paid"`. Si está rechazado queda `rejected`, y si está en proceso, `pending`.
-- Con `PUBLIC_BACKEND_URL` (el túnel https, sin `/api/v1`), la preferencia lleva el webhook y la página de regreso. Sin él, la app llama a `/pagos/mercadopago/verificar` al volver del navegador.
+- Con `PUBLIC_BACKEND_URL` (el túnel https, sin `/api/v1`), la preferencia lleva el webhook y la página de regreso. Sin él, la app llama a `/pagos/mercadopago/verificar` al cerrar el checkout.
+- La app abre el checkout dentro de ella, con `react-native-webview`, y lo cierra sola cuando Mercado Pago llega a la página de regreso.
+- Opcional: `POST /pagos/mercadopago` acepta `returnUrl`, un enlace de la app (`exp://…` o `uberclonedriver://…`). Si llega, la página de regreso abre ese enlace, por si algún día el checkout se abre en el navegador del celular. Solo se aceptan enlaces que empiecen por `exp://`, `exps://` o `uberclonedriver://`, para que la página no pueda mandar a nadie a otro sitio web.
 
 Valores de `codigoError`: los del efectivo, más `monto_invalido` y `ya_pagado` (409) y `pasarela_no_disponible` (502).
 
