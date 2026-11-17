@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #64
 // Empty screen with a simple drawing instead of a blank list (section 6): a
 // big gray circle with an icon and a small black badge with a second icon,
 // a title and a line of text. Drawn with icons, no images.

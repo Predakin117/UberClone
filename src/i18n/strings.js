@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56, #58, #59, #60, #61, #62, #63
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56, #58, #59, #60, #61, #62, #63, #64
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -386,6 +386,13 @@ export const strings = {
     "history.emptyTitle": "Aún no tienes viajes",
     "history.emptyFilteredTitle": "Sin resultados",
     "earnings.noTripsWeek": "No tienes viajes en esta semana.",
+    "tripSteps.pickup": "Recoger",
+    "tripSteps.ride": "En viaje",
+    "tripSteps.collect": "Cobrar",
+    "tripSteps.label": "Paso {step} de {total}: {name}",
+    "earnings.vsLastWeek": "{change} % vs. la semana anterior",
+    "profile.docsValid": "{valid} de {total} documentos vigentes",
+    "push.channelName": "Solicitudes de viaje",
     "summary.paidSplit": "Mercado Pago ya envió tu parte a tu cuenta.",
     "summary.checkingPayment": "Revisando el pago…",
     "summary.mercadoPagoHint":
@@ -1001,6 +1008,13 @@ export const strings = {
     "history.emptyTitle": "No trips yet",
     "history.emptyFilteredTitle": "No results",
     "earnings.noTripsWeek": "You have no trips this week.",
+    "tripSteps.pickup": "Pick up",
+    "tripSteps.ride": "On trip",
+    "tripSteps.collect": "Collect",
+    "tripSteps.label": "Step {step} of {total}: {name}",
+    "earnings.vsLastWeek": "{change}% vs. last week",
+    "profile.docsValid": "{valid} of {total} documents valid",
+    "push.channelName": "Trip requests",
     "summary.paidSplit": "Mercado Pago already sent your part to your account.",
     "summary.checkingPayment": "Checking the payment…",
     "summary.mercadoPagoHint":

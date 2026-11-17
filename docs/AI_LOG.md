@@ -1499,6 +1499,14 @@ Colaboración en código compartido y estándares de equipo: Intervenir pantalla
     - Que Ganancias muestre el saldo a favor después de un pago aprobado.
 - Aprendizaje:
 
+Validación del lado del servidor y prevención de manipulación: Nunca se debe confiar ciegamente en los montos enviados por el cliente ni en los parámetros crudos de un webhook; el backend debe calcular el total real del viaje (tarifa base más propina), verificar la moneda (COP) y consultar directamente la API oficial de Mercado Pago antes de cambiar el estado del documento a paid.
+
+Resiliencia en entornos móviles y desarrollo local (AppState vs. Webhooks): Dado que en entornos locales sin túnel público los webhooks externos no alcanzan el servidor y en Android openBrowserAsync resuelve inmediatamente al abrir el navegador, combinar la escucha de webhooks con una verificación activa apoyada en el ciclo de vida de la app (AppState al volver a primer plano) garantiza que el estado del pago se sincronice de forma fiable.
+
+Integraciones limpias sin dependencias innecesarias: Utilizar capacidades nativas del entorno como el fetch integrado de Node.js y módulos ya presentes en Expo (expo-web-browser) permite construir integraciones completas con pasarelas de pago sin inflar el árbol de dependencias ni comprometer la compatibilidad con Expo Go.
+
+Sincronización entre arquitectura, documentación y pruebas aisladas: Acompañar la implementación de nuevas rutas y reglas de negocio con simulaciones unitarias (mercadoPago.test.js sin llamadas reales de red) y actualizar la documentación técnica (docs/APIS.md, backend/README.md) facilita que el resto del equipo comprenda y pruebe los flujos de extremo a extremo.
+
 ### Entrada #63
 
 - Fecha: 2026-11-16
@@ -1532,4 +1540,59 @@ Colaboración en código compartido y estándares de equipo: Intervenir pantalla
     - Vincular la cuenta del conductor desde Mi perfil y desvincularla.
     - Cobrar un viaje y revisar que la parte del conductor llegue a su cuenta y la comisión a la de la plataforma.
     - Revisar si Mercado Pago pide el parámetro `test_token` al cambiar el código con cuentas de prueba (la documentación lo menciona, pero no queda claro con las cuentas de prueba).
+- Aprendizaje: Arquitectura de pagos distribuidos (Split Payments): Implementar pagos divididos con pasarelas como Mercado Pago requiere integrar flujos de autorización OAuth para conectar cuentas externas de vendedores (conductores), utilizando parámetros como marketplace_fee para repartir de forma atómica la tarifa entre la cuenta del conductor y la comisión de la plataforma en una sola transacción.
+
+Seguridad en el almacenamiento de credenciales de terceros: Gestionar los tokens de acceso y actualización de OAuth exclusivamente en el servidor backend (mercadoPagoAccounts/{uid}) impide que la aplicación móvil exponga información financiera sensible o que el cliente tenga acceso a las credenciales de los conductores.
+
+Estrategia de degradación elegante (Fallback): Diseñar flujos de pago avanzados con mecanismos de respaldo —como permitir que la plataforma cobre de la forma tradicional si el conductor aún no ha vinculado su cuenta de Mercado Pago— evita bloqueos operativos y garantiza que el servicio continúe sin interrupciones.
+
+Consistencia financiera y contable: Ajustar las reglas de cálculo de saldos en los servicios de ganancias (calculateBalance) para excluir los viajes procesados mediante pago dividido evita duplicar registros contables o mostrar saldos pendientes erróneos en la aplicación, reflejando con precisión que dichos fondos ya fueron transferidos directamente a la cuenta externa del conductor.
+
+
+### Entrada #64
+
+- Fecha: 2026-11-16
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Mejorar la interfaz para que se parezca más a Uber sin cambiar la lógica: ubicar bien el botón de deslizar del viaje en curso y los botones de la solicitud nueva, abrir Mercado Pago dentro de la app para no salir de ella, juntar el cobro en efectivo y con Mercado Pago en un solo bloque y agregar detalles visuales (mapa, animaciones, avisos y pantallas vacías). Fueron varios prompts seguidos en la misma conversación, en la rama `ximena/ui-polish`.
+- Prompt (cinco mensajes, en orden):
+  1. "Quiero hacer otros cambios en el frontend y es que en la parte de aceptar viaje el deslizador está mal colocado, no quedó muy UX; por favor mejóralo y además mejora otros aspectos del frontend sin tocar la lógica, y lo que ya está perfecto no lo toques; mejora las cosas visuales que se puedan mejorar para que quede igual a Uber." A la pregunta de cuál deslizador, respondió: "Las dos primeras, las dos ideas están bien, solo falta ubicarlas bien."
+
+  2. "Sí, por favor ayúdame a implementar estos nuevos detalles sin alterar nada del backend y que queden bien acomodados. Además, borramos la parte de pagar por efectivo, ese botón debe estar junto al de Mercado Pago. Me gustan mucho estas ideas para mejorar la interfaz, porque la app ya está completa. Muchas gracias." A la pregunta de qué hacer con el efectivo, respondió: "Según el documento y lo que pide la profe, ¿cuál es lo que más se apega a lo que la profesora quiere?"
+- Resumen de la respuesta:
+  - Viaje en curso: el botón de deslizar es una píldora a todo lo ancho, con el texto centrado, y es lo último de la hoja de abajo. "Cancelar viaje" pasó a ser una pastilla roja junto al tiempo y los km.
+  - Solicitud nueva: "Aceptar" con el anillo del tiempo y un botón ancho "Rechazar" quedan juntos abajo, y los datos se desplazan en celulares pequeños. La tarjeta sube desde abajo con animación.
+  - Mercado Pago: primero se probó volver a la app con un enlace (`exp://`), pero en Expo Go eso recargaba la app. Se cambió por `react-native-webview` (aprobado por Tamiro y Ximena): el checkout y la vinculación de la cuenta se abren dentro de la app y se cierran solos al terminar. El botón "atrás" nunca cierra la app.
+  - Cobro: se respondió con el enunciado (sección 1, "opción de pago en efectivo", y sección 3, estado "Efectivo") que el efectivo no se debe quitar. Quedó un solo bloque "Cobro" con el total y el botón del método que eligió el pasajero.
+  - Detalles: botón para centrar el mapa, mapa de día en grises, "8 min · 3,2 km · llegas a las 3:45 p. m." en la franja negra, avisos flotantes ("Pago aprobado", "Cambios guardados"), deslizar para actualizar el historial y dibujos en las pantallas vacías.
+  - Se explicó que "ui-polish" significa "pulir la interfaz" (UI = interfaz de usuario).
+- Qué se usó / modificó / descartó:
+  - Se usó: `react-native-webview` 14.0.1 (instalado con `npx expo install`, viene incluido en Expo Go); `Animated` y `PanResponder` de React Native; `pickupEstimate` de Tamiro para el tiempo hasta el pasajero; `markCashReceived`, `checkMercadoPagoPayment` y los componentes de las entradas #60 a #63.
+  - Se modificó:
+    - Componentes nuevos: `MercadoPagoWebView`, `CashCharge` (la misma lógica del efectivo, sacada del resumen), `RecenterButton`, `Toast` y `EmptyState`.
+    - Pantallas y componentes: `SwipeButton`, `ActiveTripScreen`, `IncomingRequestCard`, `HomeScreen`, `TripSummaryScreen`, `MercadoPagoCharge`, `MercadoPagoLink`, `HistoryScreen`, `EarningsScreen` y `ProfileScreen` (solo la vista).
+    - Mapa: `LIGHT_MAP_STYLE` en `src/config/mapStyle.js` (con prueba) y `useNightMap` lo usa de día.
+    - `useTripHistory` tiene `refresh()`, que vuelve a los 20 viajes más recientes al deslizar hacia abajo.
+    - Backend: `POST /pagos/mercadopago` acepta `returnUrl` (solo enlaces `exp://`, `exps://` o `uberclonedriver://`) y la página de regreso abre la app con él. La app ya no lo usa desde que el pago se abre en el WebView; queda como opción si el checkout se abre en el navegador.
+    - `package-lock.json` se armó a mano a partir del anterior para agregar solo `react-native-webview`, sin el ruido local (`libc`).
+    - Documentación: `docs/APIS.md` y `backend/README.md` explican el checkout dentro de la app y el regreso con `returnUrl`.
+  - Se descartó:
+    - `openAuthSessionAsync` con el enlace `exp://`, porque en Expo Go recargaba la app.
+    - Quitar el pago en efectivo o mostrar los dos botones a la vez: el enunciado pide la opción de efectivo, y el backend no deja cobrar en efectivo un viaje de Mercado Pago.
+    - Las etiquetas de elogio al pasajero, porque necesitaban un campo nuevo en el backend; y la fuente parecida a la de Uber, la vibración al deslizar y el sonido de alerta, porque necesitan librerías nuevas.
+- Archivos y commit: `src/components/SwipeButton.js`, `src/screens/trip/ActiveTripScreen.js`, `src/config/theme.js` — 4fed05f; `src/components/IncomingRequestCard.js` — b340c4a, 9687bf3 y 33023d4; `src/screens/trip/HomeScreen.js` — b40e010 y 827d633; `backend/src/mercadoPago.js`, `backend/src/pagos.js`, `backend/test/mercadoPago.test.js`, `src/services/payments.js`, `src/services/payments.test.js` — 113e4ad; `package.json`, `package-lock.json`, `src/components/MercadoPagoWebView.js`, `src/components/MercadoPagoCharge.js`, `src/components/MercadoPagoLink.js`, `src/i18n/strings.js` — 76be739; `docs/APIS.md`, `backend/README.md` — 049306a; `src/config/mapStyle.js`, `src/config/mapStyle.test.js`, `src/hooks/useNightMap.js`, `src/components/RecenterButton.js` — 827d633; `src/components/CashCharge.js`, `src/components/Toast.js`, `src/screens/trip/TripSummaryScreen.js`, `src/screens/main/ProfileScreen.js` — 4cbc610; `src/components/EmptyState.js`, `src/hooks/useTripHistory.js`, `src/screens/main/HistoryScreen.js`, `src/screens/main/EarningsScreen.js` — 4ec2d38; las marcas `#64` en el código y `docs/AI_LOG.md` — los commits siguientes
+- Verificación: `npx jest` pasa 294 pruebas (2 nuevas: el estilo de día del mapa y el enlace de regreso), `npm test` en `backend/` pasa 69 (4 nuevas: la página de regreso abre la app, nunca manda a otro sitio web y la preferencia lleva el enlace), `npx tsc --noEmit` no da errores, `npx expo lint` no reporta errores (solo el aviso que ya existía) y `npx expo export --platform android` genera el bundle.
+    - Viaje en curso: deslizar para iniciar y finalizar, "Cancelar viaje", el botón para centrar y el tiempo de llegada.
+    - Solicitud nueva: la animación, "Aceptar", "Rechazar" y que se vean en un celular pequeño.
+    - Mercado Pago: pagar dentro de la app, que se cierre sola al terminar y que el botón "atrás" no cierre la app; también "Vincular Mercado Pago".
+    - Cobro en efectivo con el aviso "Efectivo registrado", los avisos del perfil, deslizar para actualizar el historial y las pantallas vacías.
+    - El mapa de día y de noche.
 - Aprendizaje:
+
+Experiencia de usuario in-app vs. redirección externa: Reemplazar la apertura de navegadores externos por componentes nativos integrados dentro de la aplicación (react-native-webview) para flujos complejos como pasarelas de pago (Checkout Pro) y autorizaciones OAuth (vinculación de cuentas) evita recargas indeseadas del entorno de desarrollo (como ocurría en Expo Go con enlaces profundos exp://), manteniendo al usuario dentro de la app con una navegación fluida y controlada.
+
+Coherencia con los requerimientos académicos del proyecto: Equilibrar las mejoras visuales inspiradas en la interfaz de Uber con las directrices estrictas del enunciado (mantener la opción de pago en efectivo frente a pasarelas digitales) exige consolidar bloques lógicos complementarios en un único componente de cobro unificado (CashCharge / MercadoPagoCharge), respetando la lógica transaccional del backend.
+
+Resiliencia en navegación y control de gestos: Asegurar que los botones de retroceso físico o en pantalla dentro de un WebView no cierren accidentalmente la aplicación principal, sino que naveguen correctamente dentro del historial de la pasarela o cierren el modal al finalizar la operación, es clave para evitar frustraciones en el flujo operativo del conductor.
+
+Detalles estéticos y usabilidad móvil: Incorporar microinteracciones nativas (como animaciones de entrada, toast notifications para avisos flotantes, pull-to-refresh en historiales, botones de recentrado en mapas y estados vacíos ilustrados) eleva la calidad del producto final y garantiza su correcta visualización incluso en pantallas de menor formato.

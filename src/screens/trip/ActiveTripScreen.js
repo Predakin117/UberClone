@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #6, #4, #21, #29, #31
+// AI-assisted: see docs/AI_LOG.md #6, #4, #21, #29, #31, #64
 // Current trip (section 3 of the project statement). The trip comes from
 // Firestore through TripContext and its status decides what is shown: the
 // route to the pickup point (driver_arriving) or to the destination
@@ -6,7 +6,8 @@
 // "Navigate" opens Google Maps towards the point of the current step. If the
 // trip has passengerPhone, the passenger can be called or texted.
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -21,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CarMarker from "../../components/CarMarker";
 import RecenterButton from "../../components/RecenterButton";
 import SwipeButton from "../../components/SwipeButton";
+import TripSteps from "../../components/TripSteps";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
@@ -45,6 +47,7 @@ export default function ActiveTripScreen() {
   const carPosition = useCarPosition();
   // Dark map between 6 p.m. and 6 a.m.
   const nightMap = useNightMap();
+  const isFocused = useIsFocused();
   const mapRef = useRef(null);
   // Keeps it from going back home while the summary of the finished trip opens
   const isFinishing = useRef(false);
@@ -247,6 +250,13 @@ export default function ActiveTripScreen() {
         <CarMarker position={carPosition} />
       </MapView>
 
+      {/* Light status bar over the dark night map, dark over the day map */}
+      {isFocused && (
+        <StatusBar
+          style={nightMap.userInterfaceStyle === "dark" ? "light" : "dark"}
+        />
+      )}
+
       {/* Black banner: where to go now, and Navigate */}
       <View style={[styles.banner, { top: insets.top + spacing.sm }]}>
         <View style={styles.bannerIcon}>
@@ -296,6 +306,9 @@ export default function ActiveTripScreen() {
         onLayout={(event) => setSheetHeight(event.nativeEvent.layout.height)}
       >
         <View style={styles.handle} />
+
+        {/* Where the trip is: Pick up → On trip → Collect */}
+        <TripSteps current={isInProgress ? 1 : 0} />
 
         {/* The passenger, with round call and message buttons */}
         <View style={styles.passengerRow}>

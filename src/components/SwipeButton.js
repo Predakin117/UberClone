@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #60
+// AI-assisted: see docs/AI_LOG.md #60, #64
 // "Swipe to start / end the trip" button, like Uber: the driver drags the
 // white circle to the right end to confirm, so a tap by accident does
 // nothing. Released before the end, it slides back. Screen readers get a

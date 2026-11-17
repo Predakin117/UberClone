@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #62
+// AI-assisted: see docs/AI_LOG.md #62, #64
 // Mercado Pago Checkout Pro with fake firebase-admin and a fake Mercado Pago:
 // no real request leaves the tests.
 const test = require("node:test");

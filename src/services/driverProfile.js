@@ -84,3 +84,21 @@ export const submittedAtMillis = (driver) => {
   if (typeof value === "number") return value;
   return null;
 };
+
+/**
+ * How many of the driver's documents are valid, for the summary on the
+ * profile: the license, the SOAT and the technical inspection when the
+ * vehicle has one. A document is valid until it expires (expiryStatus
+ * "ok" or "soon"). Returns { valid, total }.
+ */
+export const documentsSummary = (documents = {}, today = new Date()) => {
+  const expiries = [
+    documents.license?.expiry,
+    documents.soat?.expiry,
+    ...(documents.techReview ? [documents.techReview.expiry] : []),
+  ];
+  const valid = expiries.filter((expiry) =>
+    ["ok", "soon"].includes(expiryStatus(expiry, today).state),
+  ).length;
+  return { valid, total: expiries.length };
+};

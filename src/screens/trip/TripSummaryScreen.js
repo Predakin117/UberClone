@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29, #31, #61, #62, #63
+// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29, #31, #61, #62, #63, #64
 // Payment and summary of the trip (section 3 of the assignment): final fare,
 // commission, net earnings and payment status. The amounts are the ones saved
 // when the trip was completed, calculated with calculateFare. The trip is
@@ -10,6 +10,7 @@
 // numbers, the route, duration, distance and payment, and the breakdown.
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
 import {
   ScrollView,
@@ -27,6 +28,7 @@ import PaymentStatusChip from "../../components/PaymentStatusChip";
 import RouteStops from "../../components/RouteStops";
 import Toast from "../../components/Toast";
 import TripStats from "../../components/TripStats";
+import TripSteps from "../../components/TripSteps";
 import {
   CONTROL_HEIGHT,
   colors,
@@ -91,12 +93,16 @@ export default function TripSummaryScreen() {
 
   return (
     <View style={styles.screen}>
+      <StatusBar style="dark" />
       <ScrollView
         contentContainerStyle={[
           styles.content,
           { paddingTop: insets.top + spacing.xl },
         ]}
       >
+        {/* The last step of the trip: Collect */}
+        <TripSteps current={2} />
+
         <View style={styles.header}>
           <View style={styles.check}>
             <Ionicons name="checkmark" size={36} color={colors.success} />

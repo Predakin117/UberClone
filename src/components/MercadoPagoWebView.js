@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #64
 // Mercado Pago inside the app (section 4 allows react-native-webview or the
 // browser): a full screen with a close button on top and the Mercado Pago
 // page below, so the driver never leaves the app. When the page reaches
@@ -9,6 +10,7 @@
 // The parent mounts it with key={url} for each new page and calls onClose
 // with "returned" (Mercado Pago came back) or "closed" (the driver closed it).
 import { Ionicons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
 import { useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -57,6 +59,7 @@ export default function MercadoPagoWebView({ url, returnPath, onClose }) {
       statusBarTranslucent
     >
       <View style={[styles.screen, { paddingTop: insets.top }]}>
+        <StatusBar style="dark" />
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.close}

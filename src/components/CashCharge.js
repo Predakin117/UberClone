@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #64
 // Cash payment on the trip summary (section 4): the passenger pays the
 // driver, and the driver confirms with "I received the cash". The backend
 // leaves the trip "paid"; the commission comes out of the driver's balance.

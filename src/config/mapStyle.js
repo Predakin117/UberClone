@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #31
+// AI-assisted: see docs/AI_LOG.md #31, #64
 // Night look of the maps: between 6 p.m. and 6 a.m. (phone's time) the maps
 // use a dark Google Maps style. These hex values are map style colors (the
 // Google Maps JSON format), not app UI colors, so they live here and not in

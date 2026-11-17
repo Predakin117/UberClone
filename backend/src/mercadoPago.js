@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #62, #63
+// AI-assisted: see docs/AI_LOG.md #62, #63, #64
 // Mercado Pago Checkout Pro client (section 4 of the assignment). It is the
 // only file that talks to the Mercado Pago API (docs/APIS.md), with the
 // built-in fetch of Node: no SDK is installed. The access token

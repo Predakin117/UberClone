@@ -1,6 +1,7 @@
 // AI-assisted: see docs/AI_LOG.md #30, #61
 import {
   averageRating,
+  documentsSummary,
   expiryStatus,
   profileUpdate,
   profileValues,
@@ -117,5 +118,26 @@ describe("submittedAtMillis", () => {
   it("is null without a registration date", () => {
     expect(submittedAtMillis({})).toBeNull();
     expect(submittedAtMillis(null)).toBeNull();
+  });
+});
+
+describe("documentsSummary", () => {
+  it("counts the valid documents, with the inspection only when it exists", () => {
+    const documents = {
+      license: { expiry: "2027-05-01" },
+      soat: { expiry: "2026-11-20" },
+      techReview: { expiry: "2026-01-01" },
+    };
+    expect(documentsSummary(documents, TODAY)).toEqual({ valid: 2, total: 3 });
+    expect(
+      documentsSummary(
+        { license: documents.license, soat: documents.soat },
+        TODAY,
+      ),
+    ).toEqual({ valid: 2, total: 2 });
+  });
+
+  it("a missing date does not count as valid", () => {
+    expect(documentsSummary({}, TODAY)).toEqual({ valid: 0, total: 2 });
   });
 });

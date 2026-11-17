@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #64
 // Round white button over the map that centers it again on the driver, like
 // the "locate" button of Uber. The screen decides where to put it and what
 // centering means (the driver's position, or the whole route).

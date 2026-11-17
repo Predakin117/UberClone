@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #26, #62, #63
+// AI-assisted: see docs/AI_LOG.md #26, #62, #63, #64
 // Pagos del viaje (sección 4 del enunciado). El backend es el único que escribe
 // paymentStatus y el estado "paid": las reglas de Firestore no se lo permiten a
 // la app. auth y db son los de firebase-admin; las pruebas pasan unos simulados.
