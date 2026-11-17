@@ -3,6 +3,7 @@ import { calculateFare } from "../config/pricing";
 import {
   MAX_WEEKS_BACK,
   earningsSince,
+  weekChange,
   weekEarnings,
   weekStart,
 } from "./earningsWeeks";
@@ -77,5 +78,17 @@ describe("weekEarnings", () => {
     const week = weekEarnings([], 3, NOW);
     expect(week.total.netEarnings).toBe(0);
     expect(week.days.every((day) => day.netEarnings === 0)).toBe(true);
+  });
+});
+
+describe("weekChange", () => {
+  it("is the change in whole percent against the week before", () => {
+    expect(weekChange(112000, 100000)).toBe(12);
+    expect(weekChange(75000, 100000)).toBe(-25);
+    expect(weekChange(100000, 100000)).toBe(0);
+  });
+
+  it("is null when the week before had no earnings", () => {
+    expect(weekChange(50000, 0)).toBeNull();
   });
 });

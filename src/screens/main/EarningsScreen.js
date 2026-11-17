@@ -27,7 +27,11 @@ import {
   formatSignedCop,
 } from "../../i18n/format";
 import { PERIODS } from "../../services/earnings";
-import { MAX_WEEKS_BACK, weekEarnings } from "../../services/earningsWeeks";
+import {
+  MAX_WEEKS_BACK,
+  weekChange,
+  weekEarnings,
+} from "../../services/earningsWeeks";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -80,11 +84,21 @@ export default function EarningsScreen() {
   const [oldestWeek, setOldestWeek] = useState(0);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState("today");
-  const { trips, isLoading, error } = useEarningsTrips(oldestWeek);
+  // One week more than the oldest opened, to compare with the week before
+  const { trips, isLoading, error } = useEarningsTrips(oldestWeek + 1);
   const earnings = useEarnings(trips);
   const week = useMemo(
     () => weekEarnings(trips, weekOffset),
     [trips, weekOffset],
+  );
+  // "+12 % vs. last week", like Uber; null when there is nothing to compare
+  const change = useMemo(
+    () =>
+      weekChange(
+        week.total.netEarnings,
+        weekEarnings(trips, weekOffset + 1).total.netEarnings,
+      ),
+    [week, trips, weekOffset],
   );
 
   if (isLoading) {
@@ -159,6 +173,45 @@ export default function EarningsScreen() {
           {day ? formatDay(day.start, language) : t("earnings.weekChart")} ·{" "}
           {tripsText}
         </Text>
+        {!day && change !== null && (
+          <View
+            style={[
+              styles.changeChip,
+              change > 0 && styles.changeUp,
+              change < 0 && styles.changeDown,
+            ]}
+          >
+            <Ionicons
+              name={
+                change > 0
+                  ? "trending-up"
+                  : change < 0
+                    ? "trending-down"
+                    : "remove"
+              }
+              size={16}
+              color={
+                change > 0
+                  ? colors.success
+                  : change < 0
+                    ? colors.error
+                    : colors.textSecondary
+              }
+            />
+            <Text
+              style={[
+                styles.changeText,
+                change > 0 && styles.changeTextUp,
+                change < 0 && styles.changeTextDown,
+              ]}
+            >
+              {t("earnings.vsLastWeek").replace(
+                "{change}",
+                `${change > 0 ? "+" : ""}${change}`,
+              )}
+            </Text>
+          </View>
+        )}
       </View>
 
       <WeekEarningsChart
@@ -286,6 +339,25 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   heroCaption: { ...typography.caption, fontSize: 14 },
+  changeChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  changeUp: { backgroundColor: colors.successBackground },
+  changeDown: { backgroundColor: colors.errorBackground },
+  changeText: {
+    ...typography.label,
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  changeTextUp: { color: colors.success },
+  changeTextDown: { color: colors.error },
   sectionTitle: { ...typography.section, fontSize: 18, marginTop: spacing.lg },
   tiles: { flexDirection: "row", gap: spacing.sm },
   tile: {

@@ -73,3 +73,13 @@ export const weekEarnings = (trips, weeksBack = 0, now = new Date()) => {
 
   return { start, end, total: summarizeTrips(weekTrips), days };
 };
+
+/**
+ * Change of a week's net earnings against the week before, in whole
+ * percent (12 means +12 %), for the "vs. last week" label. null when the
+ * week before had no earnings, because there is nothing to compare with.
+ */
+export const weekChange = (current, previous) => {
+  if (!(previous > 0)) return null;
+  return Math.round(((current - previous) / previous) * 100);
+};
