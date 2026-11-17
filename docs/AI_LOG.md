@@ -1460,3 +1460,38 @@ Optimización de consultas en tiempo real y procesamiento en cliente: En la secc
 Percepción de rendimiento con Skeleton Screens nativos: Implementar estados de carga con bloques grises animados (Skeleton) que imitan la estructura de cada pantalla mediante la API Animated de React Native mejora drásticamente la experiencia de usuario ante conexiones lentas sin agregar el peso ni los conflictos de dependencias externas.
 
 Colaboración en código compartido y estándares de equipo: Intervenir pantallas desarrolladas previamente por compañeros requiere acuerdo previo, validación con pruebas unitarias sobre las nuevas utilidades (earningsWeeks.test.js, driverProfile.test.js) y disciplina para estandarizar comentarios al inglés, manteniendo intacta la lógica del backend.
+
+### Entrada #62
+
+- Fecha: 2026-11-12
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Implementar el cobro con Mercado Pago Checkout Pro en modo de prueba (sección 4 del enunciado), que en `docs/APIS.md` estaba pendiente y asignado a Ximena, y entender esa parte de `APIS.md`.
+- Prompt: "Sí, sigamos con Mercado Pago y me explicas la parte de las APIS.md."
+- Resumen de la respuesta:
+  - Backend: tiene cuatro rutas nuevas. `POST /pagos/mercadopago` crea la preferencia, `POST /pagos/mercadopago/verificar` busca el pago del viaje, `POST /pagos/mercadopago/webhook` recibe el aviso de Mercado Pago y `GET /pagos/mercadopago/retorno` es la página a la que vuelve el pasajero. En todos los casos el pago se consulta a Mercado Pago y el backend guarda `paymentStatus`, `paymentId` y, si se aprobó, `status: "paid"` (paso 5 de la sección 4).
+  - App: en el resumen de un viaje con Mercado Pago está el botón "Cobrar con Mercado Pago". La app manda el `tripId` y el monto (paso 2), abre el checkout en el navegador (paso 4) y, al volver, le pide al backend que revise el pago. El resumen ya escuchaba el viaje en tiempo real (paso 6).
+  - Documentación: Mercado Pago pasó a "Activas" en `docs/APIS.md`, con las rutas, el flujo y las reglas. El README del backend explica cómo probarlo con las cuentas y tarjetas de prueba.
+- Qué se usó / modificó / descartó:
+  - Se usó:
+    - De Tamiro: `verificarConductor` y `leerToken` de `backend/src/pagos.js` (el pago en efectivo), la manera de responder `{ ok: false, codigoError }` y el simulador de firebase-admin de las pruebas.
+    - De la app: `postWithSession` (antes `llamarConSesion`) de `src/services/payments.js` y `expo-web-browser`, que ya estaba instalado y funciona en Expo Go.
+    - De Node: el `fetch` que ya trae, para llamar a la API de Mercado Pago sin instalar el SDK.
+  - Se modificó:
+    - Backend: `backend/src/mercadoPago.js` es el único archivo que habla con Mercado Pago (crear preferencia, leer un pago y buscar los pagos de un viaje). En `backend/src/pagos.js` están `createMercadoPagoPayments` y `paymentChanges`, que solo marca pagado un pago aprobado, en COP y por el monto del viaje. Además cambiaron `backend/src/app.js` (rutas y la página HTML) y `backend/src/server.js` (lee `MP_ACCESS_TOKEN` y `PUBLIC_BACKEND_URL`), y `backend/.env.example` tiene las dos variables sin valor.
+    - App: `startMercadoPagoPayment` recibe el viaje y manda el monto con `tripChargeAmount` (tarifa más propina), y `checkMercadoPagoPayment` es nueva. `MercadoPagoCharge` es el botón con el aviso de la tarjeta de prueba y "Revisar el pago". En Android, `openBrowserAsync` responde apenas se abre el navegador, así que el pago se revisa con `AppState` cuando la app vuelve.
+    - Textos y tema: hay errores nuevos (`monto_invalido`, `ya_pagado`, `pasarela_no_disponible` y `pagos_no_configurados`) y se quitó `no_implementado`. El tema tiene el color `mercadoPago`.
+    - Comentarios: se tradujeron al inglés los de `src/services/payments.js`.
+    - Pruebas: 10 nuevas en `backend/test/mercadoPago.test.js` (con Mercado Pago simulado, sin llamadas reales) y 5 en `src/services/payments.test.js`, que reemplazan la prueba de "todavía no implementada".
+  - Se descartó:
+    - Instalar el SDK `mercadopago` o `react-native-webview`, porque serían librerías nuevas: se usan `fetch` y `expo-web-browser`.
+    - Confiar en los datos del aviso o en el monto que manda la app: el backend lee el pago de Mercado Pago y calcula el monto del viaje.
+    - Depender solo del webhook: sin el túnel, Mercado Pago no puede llegar al backend, y por eso la app pregunta al volver del navegador.
+- Archivos y commit: `backend/src/mercadoPago.js`, `backend/src/pagos.js`, `backend/src/app.js`, `backend/src/server.js`, `backend/.env.example`, `backend/test/mercadoPago.test.js`, `backend/README.md`, `src/services/payments.js`, `src/services/payments.test.js`, `src/components/MercadoPagoCharge.js`, `src/screens/trip/TripSummaryScreen.js`, `src/config/theme.js`, `src/i18n/strings.js`, `docs/APIS.md`, `docs/AI_LOG.md` — los commits siguientes
+- Verificación: `npm test` en `backend/` pasa 52 pruebas (10 nuevas), `npx jest` pasa 288 (5 nuevas), `npx tsc --noEmit` no da errores, `npx expo lint` no reporta errores (solo el aviso que ya existía) y `npx expo export --platform android` genera el bundle.
+  - [Pendiente la prueba real con Mercado Pago]
+    - Crear la aplicación y las cuentas de prueba (vendedor y comprador) y poner el Access Token de prueba en `backend/.env`.
+    - Un viaje `mercadopago` (`npm run simular -- economy mercadopago`): cobrar con la tarjeta de prueba con el titular `APRO` (debe quedar Aprobado y `paid`) y con `OTHE` (Rechazado, y luego "Intentar el cobro de nuevo").
+    - Con el túnel y `PUBLIC_BACKEND_URL`: ver llegar el webhook y la página "Pago aprobado".
+    - Que Ganancias muestre el saldo a favor después de un pago aprobado.
+- Aprendizaje:
