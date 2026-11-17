@@ -1,10 +1,11 @@
-// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29, #31, #61
+// AI-assisted: see docs/AI_LOG.md #4, #21, #28, #29, #31, #61, #62, #63
 // Payment and summary of the trip (section 3 of the assignment): final fare,
 // commission, net earnings and payment status. The amounts are the ones saved
 // when the trip was completed, calculated with calculateFare. The trip is
 // listened to in real time so the payment status changes on screen when the
-// backend writes it. The driver can also rate the passenger once
-// (PassengerRating).
+// backend writes it. A cash trip is confirmed with "I received the cash"; a
+// Mercado Pago trip is charged with Checkout Pro (MercadoPagoCharge). The
+// driver can also rate the passenger once (PassengerRating).
 // It looks like an Uber receipt: a green check, the net earnings in big
 // numbers, the route, duration, distance and payment, and the breakdown.
 import { Ionicons } from "@expo/vector-icons";
@@ -21,6 +22,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FareBreakdown from "../../components/FareBreakdown";
 import FieldMessage from "../../components/FieldMessage";
+import MercadoPagoCharge from "../../components/MercadoPagoCharge";
 import PassengerRating from "../../components/PassengerRating";
 import PaymentStatusChip from "../../components/PaymentStatusChip";
 import RouteStops from "../../components/RouteStops";
@@ -73,6 +75,8 @@ export default function TripSummaryScreen() {
   const completedDate = formatDateTime(completedAtMillis(trip), language);
   const canConfirmCash =
     trip.paymentMethod === "cash" && trip.status !== TRIP_STATUS.PAID;
+  const canChargeMercadoPago =
+    trip.paymentMethod === "mercadopago" && trip.status !== TRIP_STATUS.PAID;
 
   const confirmCash = async () => {
     setCashError(null);
@@ -110,6 +114,10 @@ export default function TripSummaryScreen() {
           <Text style={styles.earnedLabel}>{t("tripDetail.earned")}</Text>
           <Text style={styles.earned}>{formatCop(trip.driverEarnings)}</Text>
           <PaymentStatusChip trip={trip} />
+          {/* Split payment: Mercado Pago already paid the driver's part */}
+          {trip.paymentSplit === true && (
+            <Text style={styles.caption}>{t("summary.paidSplit")}</Text>
+          )}
         </View>
 
         {canConfirmCash && (
@@ -147,6 +155,8 @@ export default function TripSummaryScreen() {
             <FieldMessage error={cashError ? t(cashError) : null} />
           </View>
         )}
+
+        {canChargeMercadoPago && <MercadoPagoCharge trip={trip} />}
 
         <View style={styles.receipt}>
           <RouteStops

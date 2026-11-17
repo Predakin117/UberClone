@@ -169,6 +169,16 @@ describe("calculateBalance", () => {
     );
   });
 
+  // AI-assisted: see docs/AI_LOG.md #63
+  it("a split payment doesn't count: the driver already got their part", () => {
+    const split = {
+      ...makeTrip({ id: "split", completedAt: NOW, paymentMethod: "mercadopago" }),
+      paymentSplit: true,
+    };
+    const cash = makeTrip({ id: "cash", completedAt: NOW });
+    expect(calculateBalance([split, cash])).toBe(-cash.commission);
+  });
+
   it("only counts Mercado Pago trips that are already paid", () => {
     const unpaid = makeTrip({
       id: "card",

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #56, #59, #60, #61
+// AI-assisted: see docs/AI_LOG.md #56, #59, #60, #61, #62
 // Visual theme of the app: black and white with light gray surfaces, bold
 // type and pill-shaped secondary buttons. Screens and components take their
 // colors, sizes and spacing from here instead of writing them by hand.
@@ -31,6 +31,8 @@ export const colors = {
   textOnDark: "#B3B3B3",
   // Vehicle plate on the profile: Colombian plates are yellow
   plate: "#FFD400",
+  // "Charge with Mercado Pago" button, in the Mercado Pago blue
+  mercadoPago: "#009EE3",
 };
 
 export const radius = { sm: 8, md: 12, lg: 16, pill: 999 };

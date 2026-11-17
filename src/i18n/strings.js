@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56, #58, #59, #60, #61
+// AI-assisted: see docs/AI_LOG.md #9, #12, #13, #16, #17, #21, #54, #56, #58, #59, #60, #61, #62, #63
 // Textos de la app en español e inglés. Las claves son iguales en los dos idiomas
 // (lo comprueba strings.test.js). Los validadores devuelven claves "errors.*".
 import { MAX_PASSWORD_LENGTH } from "../validation/account";
@@ -335,8 +335,6 @@ export const strings = {
     "summary.starLabel": "{stars} de 5 estrellas",
 
     // Errores de pago (códigos de PAYMENT_ERROR_CODES en services/payments.js)
-    "payment.error.no_implementado":
-      "Este método de pago todavía no está disponible.",
     "payment.error.sin_backend":
       "Falta configurar el servidor de pagos en el archivo .env.",
     "payment.error.sin_conexion":
@@ -350,6 +348,33 @@ export const strings = {
     "payment.error.metodo_invalido":
       "El método de pago de este viaje no corresponde.",
     "payment.error.fallo": "No se pudo confirmar el pago. Inténtalo de nuevo.",
+    // AI-assisted: see docs/AI_LOG.md #62
+    "payment.error.monto_invalido":
+      "El monto no coincide con el del viaje. Vuelve a abrir el resumen.",
+    "payment.error.ya_pagado": "Este viaje ya está pagado.",
+    "payment.error.pasarela_no_disponible":
+      "Mercado Pago no respondió. Inténtalo de nuevo en un momento.",
+    "payment.error.pagos_no_configurados":
+      "El servidor todavía no tiene Mercado Pago configurado.",
+    "summary.chargeMercadoPago": "Cobrar con Mercado Pago",
+    "summary.retryMercadoPago": "Intentar el cobro de nuevo",
+    "summary.openingCheckout": "Abriendo Mercado Pago…",
+    "summary.checkPayment": "Revisar el pago",
+    // AI-assisted: see docs/AI_LOG.md #63
+    "payment.error.vinculo_no_configurado":
+      "El servidor todavía no tiene activo el pago dividido.",
+    "split.title": "Pago dividido con Mercado Pago",
+    "split.linked": "Vinculada",
+    "split.linkedText":
+      "Mercado Pago te envía tu parte de cada viaje directo a tu cuenta, y la comisión a la plataforma.",
+    "split.unlinkedText":
+      "Vincula tu cuenta de Mercado Pago para recibir tu parte de cada viaje directo, sin esperar la liquidación.",
+    "split.link": "Vincular Mercado Pago",
+    "split.unlink": "Desvincular la cuenta",
+    "summary.paidSplit": "Mercado Pago ya envió tu parte a tu cuenta.",
+    "summary.checkingPayment": "Revisando el pago…",
+    "summary.mercadoPagoHint":
+      "El pasajero paga en Mercado Pago con una tarjeta de prueba. El estado del pago se actualiza aquí solo.",
 
     // Periodos de ganancias e historial
     "period.today": "Hoy",
@@ -379,7 +404,7 @@ export const strings = {
     "weekday.sat": "S",
     "weekday.sun": "D",
     "earnings.balanceHint":
-      "Este mes: ganancias de viajes pagados con Mercado Pago menos la comisión de los viajes en efectivo.",
+      "Este mes: ganancias de viajes pagados con Mercado Pago menos la comisión de los viajes en efectivo. Los viajes con pago dividido no cuentan, porque ya recibiste tu parte.",
 
     // Historial de viajes
     "history.loading": "Cargando tu historial…",
@@ -910,8 +935,6 @@ export const strings = {
     "summary.ratedPassenger": "You rated the passenger {stars} out of 5",
     "summary.starLabel": "{stars} out of 5 stars",
 
-    "payment.error.no_implementado":
-      "This payment method is not available yet.",
     "payment.error.sin_backend":
       "The payment server is not set up in the .env file.",
     "payment.error.sin_conexion":
@@ -925,6 +948,33 @@ export const strings = {
     "payment.error.metodo_invalido":
       "The payment method of this trip does not match.",
     "payment.error.fallo": "The payment could not be confirmed. Try again.",
+    // AI-assisted: see docs/AI_LOG.md #62
+    "payment.error.monto_invalido":
+      "The amount does not match the trip. Open the summary again.",
+    "payment.error.ya_pagado": "This trip is already paid.",
+    "payment.error.pasarela_no_disponible":
+      "Mercado Pago did not answer. Try again in a moment.",
+    "payment.error.pagos_no_configurados":
+      "The server does not have Mercado Pago set up yet.",
+    "summary.chargeMercadoPago": "Charge with Mercado Pago",
+    "summary.retryMercadoPago": "Try the charge again",
+    "summary.openingCheckout": "Opening Mercado Pago…",
+    "summary.checkPayment": "Check the payment",
+    // AI-assisted: see docs/AI_LOG.md #63
+    "payment.error.vinculo_no_configurado":
+      "The server does not have split payments set up yet.",
+    "split.title": "Split payments with Mercado Pago",
+    "split.linked": "Linked",
+    "split.linkedText":
+      "Mercado Pago sends your part of each trip straight to your account, and the fee to the platform.",
+    "split.unlinkedText":
+      "Link your Mercado Pago account to get your part of each trip straight away, without waiting for the payout.",
+    "split.link": "Link Mercado Pago",
+    "split.unlink": "Unlink the account",
+    "summary.paidSplit": "Mercado Pago already sent your part to your account.",
+    "summary.checkingPayment": "Checking the payment…",
+    "summary.mercadoPagoHint":
+      "The passenger pays on Mercado Pago with a test card. The payment status updates here by itself.",
 
     "period.today": "Today",
     "period.week": "This week",
@@ -952,7 +1002,7 @@ export const strings = {
     "weekday.sat": "S",
     "weekday.sun": "S",
     "earnings.balanceHint":
-      "This month: earnings from trips paid with Mercado Pago minus the fee of cash trips.",
+      "This month: earnings from trips paid with Mercado Pago minus the fee of cash trips. Split payment trips don't count, because you already got your part.",
 
     "history.loading": "Loading your history…",
     "history.empty": "You have no trips in this period.",

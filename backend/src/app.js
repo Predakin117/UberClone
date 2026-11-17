@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #11, #21, #26
+// AI-assisted: see docs/AI_LOG.md #11, #21, #26, #62, #63
 // Servidor HTTP con el módulo nativo de Node (sin Express).
 // Rutas (bajo /api/v1):
 //   GET  /health
@@ -6,6 +6,15 @@
 //   POST /auth/verificar-codigo  { email, codigo }
 //   POST /rutas                  { origen: { lat, lng }, destino: { lat, lng } }
 //   POST /pagos/efectivo         { tripId }  con "Authorization: Bearer <token de Firebase>"
+//   POST /pagos/mercadopago            { tripId, amount }  with the driver's token
+//   POST /pagos/mercadopago/verificar  { tripId }          with the driver's token
+//   POST /pagos/mercadopago/webhook    notification from Mercado Pago (no token)
+//   GET  /pagos/mercadopago/retorno    page after the checkout (no token)
+// Split payments (driver's own Mercado Pago account):
+//   POST /pagos/mercadopago/vinculo      {}  with the driver's token
+//   POST /pagos/mercadopago/vincular     {}  with the driver's token
+//   POST /pagos/mercadopago/desvincular  {}  with the driver's token
+//   GET  /pagos/mercadopago/oauth        Mercado Pago comes back after linking
 const http = require("node:http");
 const { renderCorreo } = require("./mailer");
 const { calcularRuta: calcularRutaOrs } = require("./rutas");
@@ -66,6 +75,9 @@ function createApp({
   calcularRuta = calcularRutaOrs,
   // crearPagos(...) de ./pagos, o null si firebase-admin no está configurado
   pagos = null,
+  // createMercadoPagoPayments(...) of ./pagos, or null without MP_ACCESS_TOKEN
+  // or firebase-admin
+  mercadoPago = null,
   basePath = "/api/v1",
   logger = console,
 }) {
@@ -157,12 +169,72 @@ function createApp({
     return responder(res, status, cuerpo);
   }
 
+  // AI-assisted: see docs/AI_LOG.md #62
+  // Mercado Pago Checkout Pro (backend/src/pagos.js). Without MP_ACCESS_TOKEN
+  // or the service account they answer 503, like the cash payment.
+  const mercadoPagoOff = {
+    ok: false,
+    codigoError: "pagos_no_configurados",
+    error: "Missing MP_ACCESS_TOKEN or backend/serviceAccountKey.json",
+  };
+  const withMercadoPago = (handler) => async (req, res, body, query) => {
+    if (!mercadoPago) return responder(res, 503, mercadoPagoOff);
+    const { status, cuerpo } = await handler(req, body, query);
+    return responder(res, status, cuerpo);
+  };
+  const startMercadoPago = withMercadoPago((req, body) =>
+    mercadoPago.startPayment(req.headers.authorization, body),
+  );
+  const checkMercadoPago = withMercadoPago((req, body) =>
+    mercadoPago.checkPayment(req.headers.authorization, body),
+  );
+  const mercadoPagoWebhook = withMercadoPago((req, body, query) =>
+    mercadoPago.webhook(query, body),
+  );
+  // AI-assisted: see docs/AI_LOG.md #63
+  // Split payments: the driver links their own Mercado Pago account
+  const linkStatus = withMercadoPago((req) =>
+    mercadoPago.linkStatus(req.headers.authorization),
+  );
+  const startLink = withMercadoPago((req) =>
+    mercadoPago.startLink(req.headers.authorization),
+  );
+  const unlink = withMercadoPago((req) =>
+    mercadoPago.unlink(req.headers.authorization),
+  );
+
+  // The pages after the checkout and after linking are HTML: they are seen
+  // in the browser
+  const htmlPages = {
+    [`${basePath}/pagos/mercadopago/retorno`]: (query) =>
+      mercadoPago.returnPage(query),
+    [`${basePath}/pagos/mercadopago/oauth`]: (query) =>
+      mercadoPago.oauthReturn(query),
+  };
+  async function sendHtmlPage(res, page, query) {
+    const { status, html } = mercadoPago
+      ? await page(query)
+      : { status: 503, html: "<p>Mercado Pago no está configurado.</p>" };
+    res.writeHead(status, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(html);
+  }
+
   return http.createServer(async (req, res) => {
-    const ruta = (req.url || "").split("?")[0];
+    const url = new URL(req.url || "/", "http://localhost");
+    const ruta = url.pathname;
+    const query = Object.fromEntries(url.searchParams);
 
     if (req.method === "OPTIONS") return responder(res, 204, {});
     if (req.method === "GET" && ruta === `${basePath}/health`) {
       return responder(res, 200, { ok: true });
+    }
+    if (req.method === "GET" && htmlPages[ruta]) {
+      try {
+        return await sendHtmlPage(res, htmlPages[ruta], query);
+      } catch (error) {
+        logger.error(error);
+        return responder(res, 500, { ok: false, error: "Error interno del servidor" });
+      }
     }
 
     const rutas = {
@@ -170,6 +242,12 @@ function createApp({
       [`${basePath}/auth/verificar-codigo`]: verificarCodigo,
       [`${basePath}/rutas`]: calcularRutaHandler,
       [`${basePath}/pagos/efectivo`]: pagoEnEfectivo,
+      [`${basePath}/pagos/mercadopago`]: startMercadoPago,
+      [`${basePath}/pagos/mercadopago/verificar`]: checkMercadoPago,
+      [`${basePath}/pagos/mercadopago/webhook`]: mercadoPagoWebhook,
+      [`${basePath}/pagos/mercadopago/vinculo`]: linkStatus,
+      [`${basePath}/pagos/mercadopago/vincular`]: startLink,
+      [`${basePath}/pagos/mercadopago/desvincular`]: unlink,
     };
     const manejador = rutas[ruta];
     if (!manejador) return responder(res, 404, { ok: false, error: "Ruta no encontrada" });
@@ -185,7 +263,7 @@ function createApp({
     }
 
     try {
-      await manejador(req, res, body);
+      await manejador(req, res, body, query);
     } catch (error) {
       logger.error(error);
       responder(res, 500, { ok: false, error: "Error interno del servidor" });

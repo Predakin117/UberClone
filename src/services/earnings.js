@@ -105,9 +105,15 @@ export const summarizeTrips = (trips) => {
  * with Mercado Pago (driverEarnings of those trips with status "paid") minus
  * what the driver owes for cash trips (their commission, because the driver
  * kept the whole fare). Positive: the platform owes the driver.
+ *
+ * AI-assisted: see docs/AI_LOG.md #63
+ * A split payment (paymentSplit, written by the backend) doesn't count:
+ * Mercado Pago already paid the driver's part to the driver's account and the
+ * commission to the platform, so nobody owes anything for that trip.
  */
 export const calculateBalance = (trips) =>
   trips.reduce((balance, trip) => {
+    if (trip.paymentSplit === true) return balance;
     if (trip.paymentMethod === "mercadopago" && trip.status === "paid") {
       return balance + amount(trip.driverEarnings);
     }

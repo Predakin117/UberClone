@@ -1463,3 +1463,73 @@ Optimización de consultas en tiempo real y procesamiento en cliente: En la secc
 Percepción de rendimiento con Skeleton Screens nativos: Implementar estados de carga con bloques grises animados (Skeleton) que imitan la estructura de cada pantalla mediante la API Animated de React Native mejora drásticamente la experiencia de usuario ante conexiones lentas sin agregar el peso ni los conflictos de dependencias externas.
 
 Colaboración en código compartido y estándares de equipo: Intervenir pantallas desarrolladas previamente por compañeros requiere acuerdo previo, validación con pruebas unitarias sobre las nuevas utilidades (earningsWeeks.test.js, driverProfile.test.js) y disciplina para estandarizar comentarios al inglés, manteniendo intacta la lógica del backend.
+
+### Entrada #62
+
+- Fecha: 2026-11-12
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Implementar el cobro con Mercado Pago Checkout Pro en modo de prueba (sección 4 del enunciado), que en `docs/APIS.md` estaba pendiente y asignado a Ximena, y entender esa parte de `APIS.md`.
+- Prompt: "Sí, sigamos con Mercado Pago y me explicas la parte de las APIS.md."
+- Resumen de la respuesta:
+  - Backend: tiene cuatro rutas nuevas. `POST /pagos/mercadopago` crea la preferencia, `POST /pagos/mercadopago/verificar` busca el pago del viaje, `POST /pagos/mercadopago/webhook` recibe el aviso de Mercado Pago y `GET /pagos/mercadopago/retorno` es la página a la que vuelve el pasajero. En todos los casos el pago se consulta a Mercado Pago y el backend guarda `paymentStatus`, `paymentId` y, si se aprobó, `status: "paid"` (paso 5 de la sección 4).
+  - App: en el resumen de un viaje con Mercado Pago está el botón "Cobrar con Mercado Pago". La app manda el `tripId` y el monto (paso 2), abre el checkout en el navegador (paso 4) y, al volver, le pide al backend que revise el pago. El resumen ya escuchaba el viaje en tiempo real (paso 6).
+  - Documentación: Mercado Pago pasó a "Activas" en `docs/APIS.md`, con las rutas, el flujo y las reglas. El README del backend explica cómo probarlo con las cuentas y tarjetas de prueba.
+- Qué se usó / modificó / descartó:
+  - Se usó:
+    - De Tamiro: `verificarConductor` y `leerToken` de `backend/src/pagos.js` (el pago en efectivo), la manera de responder `{ ok: false, codigoError }` y el simulador de firebase-admin de las pruebas.
+    - De la app: `postWithSession` (antes `llamarConSesion`) de `src/services/payments.js` y `expo-web-browser`, que ya estaba instalado y funciona en Expo Go.
+    - De Node: el `fetch` que ya trae, para llamar a la API de Mercado Pago sin instalar el SDK.
+  - Se modificó:
+    - Backend: `backend/src/mercadoPago.js` es el único archivo que habla con Mercado Pago (crear preferencia, leer un pago y buscar los pagos de un viaje). En `backend/src/pagos.js` están `createMercadoPagoPayments` y `paymentChanges`, que solo marca pagado un pago aprobado, en COP y por el monto del viaje. Además cambiaron `backend/src/app.js` (rutas y la página HTML) y `backend/src/server.js` (lee `MP_ACCESS_TOKEN` y `PUBLIC_BACKEND_URL`), y `backend/.env.example` tiene las dos variables sin valor.
+    - App: `startMercadoPagoPayment` recibe el viaje y manda el monto con `tripChargeAmount` (tarifa más propina), y `checkMercadoPagoPayment` es nueva. `MercadoPagoCharge` es el botón con el aviso de la tarjeta de prueba y "Revisar el pago". En Android, `openBrowserAsync` responde apenas se abre el navegador, así que el pago se revisa con `AppState` cuando la app vuelve.
+    - Textos y tema: hay errores nuevos (`monto_invalido`, `ya_pagado`, `pasarela_no_disponible` y `pagos_no_configurados`) y se quitó `no_implementado`. El tema tiene el color `mercadoPago`.
+    - Comentarios: se tradujeron al inglés los de `src/services/payments.js`.
+    - Pruebas: 10 nuevas en `backend/test/mercadoPago.test.js` (con Mercado Pago simulado, sin llamadas reales) y 5 en `src/services/payments.test.js`, que reemplazan la prueba de "todavía no implementada".
+  - Se descartó:
+    - Instalar el SDK `mercadopago` o `react-native-webview`, porque serían librerías nuevas: se usan `fetch` y `expo-web-browser`.
+    - Confiar en los datos del aviso o en el monto que manda la app: el backend lee el pago de Mercado Pago y calcula el monto del viaje.
+    - Depender solo del webhook: sin el túnel, Mercado Pago no puede llegar al backend, y por eso la app pregunta al volver del navegador.
+- Archivos y commit: `backend/src/mercadoPago.js`, `backend/src/pagos.js`, `backend/src/app.js`, `backend/src/server.js`, `backend/.env.example`, `backend/test/mercadoPago.test.js`, `backend/README.md`, `src/services/payments.js`, `src/services/payments.test.js`, `src/components/MercadoPagoCharge.js`, `src/screens/trip/TripSummaryScreen.js`, `src/config/theme.js`, `src/i18n/strings.js`, `docs/APIS.md`, `docs/AI_LOG.md` — los commits siguientes
+- Verificación: `npm test` en `backend/` pasa 52 pruebas (10 nuevas), `npx jest` pasa 288 (5 nuevas), `npx tsc --noEmit` no da errores, `npx expo lint` no reporta errores (solo el aviso que ya existía) y `npx expo export --platform android` genera el bundle.
+  - [Pendiente la prueba real con Mercado Pago]
+    - Crear la aplicación y las cuentas de prueba (vendedor y comprador) y poner el Access Token de prueba en `backend/.env`.
+    - Un viaje `mercadopago` (`npm run simular -- economy mercadopago`): cobrar con la tarjeta de prueba con el titular `APRO` (debe quedar Aprobado y `paid`) y con `OTHE` (Rechazado, y luego "Intentar el cobro de nuevo").
+    - Con el túnel y `PUBLIC_BACKEND_URL`: ver llegar el webhook y la página "Pago aprobado".
+    - Que Ganancias muestre el saldo a favor después de un pago aprobado.
+- Aprendizaje:
+
+### Entrada #63
+
+- Fecha: 2026-11-16
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Hacer el reto opcional de bonificación de la sección 4: el pago dividido (split payments) entre la plataforma y el conductor con Mercado Pago, para que el dinero del viaje no entre entero a la plataforma.
+- Prompt: "Listo, ya creé la nueva rama con el nombre en inglés. Entonces debemos hacer lo siguiente: el pago dividido real entre plataforma y conductor (split payments) es un reto opcional de bonificación. En este reto, la idea es que la plata del viaje ya no entra entera a la plataforma: Mercado Pago la reparte de una, la parte del conductor a la cuenta del conductor y la comisión a la plataforma. Para eso cada conductor tiene que tener su propia cuenta de Mercado Pago vinculada. Es como creo que es."
+- Resumen de la respuesta:
+  - Se confirmó la idea con la documentación de Mercado Pago (OAuth y `marketplace_fee`). Cada conductor vincula su cuenta y el backend guarda su token. Al cobrar, el backend crea el checkout con el token del conductor y la comisión como `marketplace_fee`, y Mercado Pago reparte el dinero.
+  - Backend: tiene la vinculación con OAuth, cuatro rutas nuevas (`vinculo`, `vincular`, `desvincular` y la página `oauth`) y el cobro dividido cuando el conductor tiene la cuenta vinculada. Si no la tiene, la plataforma cobra todo como antes.
+  - App: en Mi perfil, sección de pagos, está "Vincular Mercado Pago" con el estado de la cuenta y "Desvincular la cuenta". El resumen avisa "Mercado Pago ya envió tu parte a tu cuenta", y el saldo de Ganancias no cuenta los viajes con pago dividido.
+- Qué se usó / modificó / descartó:
+  - Se usó:
+    - Documentación de Mercado Pago, leída para este trabajo: la URL de autorización (`client_id`, `response_type=code`, `platform_id=mp`, `state`, `redirect_uri`), `POST /oauth/token` con `authorization_code` y `refresh_token`, el token de 180 días y `marketplace_fee`.
+    - De la entrada #62: `createMercadoPago`, `paymentChanges`, la página HTML de regreso, `postWithSession` y la forma de abrir el navegador y revisar al volver (`AppState`).
+    - De Tamiro: `verificarConductor` de `backend/src/pagos.js` y `calculateBalance` de `src/services/earnings.js`.
+  - Se modificó:
+    - Backend nuevo: `backend/src/mercadoPagoOAuth.js` (página de autorización, cambiar el código y renovar el token) y `backend/src/sellerAccounts.js` (guarda los tokens en `mercadoPagoAccounts/{uid}`, que la app no puede leer, y los renueva antes de que venzan).
+    - Backend: `backend/src/pagos.js` cobra con el token del conductor y `marketplace_fee` cuando hay vinculación, lee el pago primero en la cuenta del conductor y deja `paymentSplit: true` en el viaje aprobado. `mercadoPago.js` manda `marketplace_fee` y el conductor en el webhook. `app.js` y `server.js` tienen las rutas y las variables `MP_CLIENT_ID` y `MP_CLIENT_SECRET`.
+    - App: `getMercadoPagoLink`, `linkMercadoPagoAccount` y `unlinkMercadoPagoAccount` en `src/services/payments.js`, el componente `MercadoPagoLink` en `ProfileScreen`, el aviso en `TripSummaryScreen`, `calculateBalance` sin los viajes divididos y los textos nuevos.
+    - Documentación: `docs/APIS.md` (sección 9, "Pago dividido"), `backend/README.md` (cómo probarlo con tres cuentas de prueba) y `backend/.env.example`.
+    - Pruebas: 13 nuevas en `backend/test/splitPayments.test.js`, 3 en `src/services/payments.test.js` y 1 en `src/services/earnings.test.js`.
+  - Se descartó:
+    - PKCE en la vinculación, porque Mercado Pago lo deja opcional; el `state` de un solo uso evita que alguien vincule una cuenta ajena.
+    - Guardar si la cuenta está vinculada en `drivers/{uid}`: la app se lo pregunta al backend, sin tocar las reglas de Firestore.
+    - Que el pago dividido reemplace el cobro de la #62: si el conductor no vinculó su cuenta, la plataforma cobra el viaje completo.
+- Archivos y commit: `backend/src/mercadoPagoOAuth.js`, `backend/src/sellerAccounts.js`, `backend/src/pagos.js`, `backend/src/mercadoPago.js`, `backend/src/app.js`, `backend/src/server.js`, `backend/.env.example`, `backend/test/splitPayments.test.js`, `backend/test/mercadoPago.test.js`, `backend/README.md`, `src/services/payments.js`, `src/services/payments.test.js`, `src/components/MercadoPagoLink.js`, `src/screens/main/ProfileScreen.js`, `src/screens/trip/TripSummaryScreen.js`, `src/services/earnings.js`, `src/services/earnings.test.js`, `src/i18n/strings.js`, `docs/APIS.md`, `docs/AI_LOG.md` — los commits siguientes
+- Verificación: `npm test` en `backend/` pasa 65 pruebas (13 nuevas), `npx jest` pasa 292 (4 nuevas), `npx tsc --noEmit` no da errores, `npx expo lint` no reporta errores (solo el aviso que ya existía) y `npx expo export --platform android` genera el bundle.
+  - [Pendiente la prueba real con Mercado Pago]
+    - Crear las tres cuentas de prueba (plataforma, conductor y comprador), poner `MP_CLIENT_ID`, `MP_CLIENT_SECRET` y `PUBLIC_BACKEND_URL` y registrar la URL de redireccionamiento.
+    - Vincular la cuenta del conductor desde Mi perfil y desvincularla.
+    - Cobrar un viaje y revisar que la parte del conductor llegue a su cuenta y la comisión a la de la plataforma.
+    - Revisar si Mercado Pago pide el parámetro `test_token` al cambiar el código con cuentas de prueba (la documentación lo menciona, pero no queda claro con las cuentas de prueba).
+- Aprendizaje:
