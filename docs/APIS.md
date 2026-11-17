@@ -259,6 +259,10 @@ qué paso se crea.
   - Con la app en segundo plano, la app deja de escuchar solicitudes (avisa la
     notificación). Así la cuenta de 15 segundos no corre sin que el conductor la
     vea; al volver, la solicitud aparece con sus 15 segundos.
+  - Al volver solo se muestran las solicitudes que siguen en `requested` (si
+    otro conductor la tomó, ya no llega) y que tienen 2 minutos o menos desde
+    `createdAt` (`REQUEST_MAX_AGE_MS` e `isRecentRequest` en
+    `src/services/trips.js`).
 
 ## Pendientes
 
