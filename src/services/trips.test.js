@@ -164,6 +164,12 @@ describe("trips", () => {
         "nueva",
       ]);
     });
+
+    it("no modifica la lista original", () => {
+      const trips = [{ id: "b", createdAt: at(2) }, { id: "a", createdAt: at(1) }];
+      sortOldestFirst(trips);
+      expect(trips[0].id).toBe("b");
+    });
   });
 
   // AI-assisted: see docs/AI_LOG.md #32
@@ -190,12 +196,6 @@ describe("trips", () => {
 
     it("accepts another limit", () => {
       expect(isRecentRequest({ createdAt: minutesAgo(4) }, NOW, 5 * 60_000)).toBe(true);
-    });
-
-    it("no modifica la lista original", () => {
-      const trips = [{ id: "b", createdAt: at(2) }, { id: "a", createdAt: at(1) }];
-      sortOldestFirst(trips);
-      expect(trips[0].id).toBe("b");
     });
   });
 
