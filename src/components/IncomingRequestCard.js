@@ -64,6 +64,31 @@ export default function IncomingRequestCard({
     return () => animation.stop();
   }, [timeLeft, progress]);
 
+  // The card slides up from the bottom and the map darkens behind it, like
+  // Uber's request
+  const [appear] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    const animation = Animated.spring(appear, {
+      toValue: 1,
+      bounciness: 4,
+      speed: 14,
+      useNativeDriver: true,
+    });
+    animation.start();
+    // Cleanup: stop the animation if the card goes away first
+    return () => animation.stop();
+  }, [appear]);
+  const cardSlide = {
+    transform: [
+      {
+        translateY: appear.interpolate({
+          inputRange: [0, 1],
+          outputRange: [SLIDE_DISTANCE, 0],
+        }),
+      },
+    ],
+  };
+
   // AI-assisted: see docs/AI_LOG.md #59
   // HomeScreen gives the card the trip id as key, so it mounts again with
   // each new request and vibrates once per request. If the card goes away
@@ -136,10 +161,15 @@ export default function IncomingRequestCard({
   // the details scroll if the phone is small, so Accept is always on screen.
   return (
     <View style={styles.container}>
-      <View
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.backdrop, { opacity: appear }]}
+      />
+      <Animated.View
         style={[
           styles.card,
           { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.sm },
+          cardSlide,
         ]}
       >
         <View style={styles.handle} />
@@ -264,19 +294,24 @@ export default function IncomingRequestCard({
             <Text style={styles.rejectText}>{t("request.reject")}</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
 
 const RING_SIZE = 116;
 const ACCEPT_SIZE = RING_SIZE - 22;
+// How far below its place the card starts its slide up
+const SLIDE_DISTANCE = 500;
 
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.backdrop,
     justifyContent: "flex-end",
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.backdrop,
   },
   card: {
     maxHeight: "92%",
