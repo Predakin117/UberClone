@@ -10,6 +10,16 @@ describe("canReceiveRequests", () => {
     expect(canReceiveRequests({ isActive: true, activeTrip: noTrip })).toBe(true);
   });
 
+  // AI-assisted: see docs/AI_LOG.md #32
+  it("does not listen with the app in the background, so the 15 s don't run out of sight", () => {
+    expect(
+      canReceiveRequests({ isActive: true, activeTrip: noTrip, isAppActive: false }),
+    ).toBe(false);
+    expect(
+      canReceiveRequests({ isActive: true, activeTrip: noTrip, isAppActive: true }),
+    ).toBe(true);
+  });
+
   it("no recibe solicitudes durante un viaje en curso", () => {
     // El bug: el inicio sigue montado debajo del viaje y rechazaba solicitudes
     for (const status of ["accepted", "driver_arriving", "in_progress"]) {

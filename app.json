@@ -11,6 +11,8 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.uberclone.drivers",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -40,7 +42,14 @@
           "cameraPermission": "UberClone Conductor usa la cámara para tomar las fotos del registro."
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "color": "#000000",
+          "defaultChannel": "trip-requests"
+        }
+      ]
     ],
     "experiments": {
       "reactCompiler": true

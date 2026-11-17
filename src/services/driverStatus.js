@@ -23,6 +23,16 @@ export const getAvailabilityBlock = ({ status, isLoading, error }) => {
  * ({ trip, isLoading, error }). Mientras no se sepa si hay un viaje (cargando o
  * con error), no: así nunca corre la cuenta regresiva de una solicitud que no
  * se ve porque el conductor está en un viaje.
+ *
+ * AI-assisted: see docs/AI_LOG.md #32
+ * isAppActive: the app is in the foreground. In the background the push
+ * notification warns about the request instead; listening there would run the
+ * 15 s countdown out of sight and leave the request "rejected" for everyone
+ * before the driver could tap the notification.
  */
-export const canReceiveRequests = ({ isActive, activeTrip }) =>
-  isActive && !activeTrip.isLoading && !activeTrip.error && !activeTrip.trip;
+export const canReceiveRequests = ({ isActive, activeTrip, isAppActive = true }) =>
+  isActive &&
+  isAppActive &&
+  !activeTrip.isLoading &&
+  !activeTrip.error &&
+  !activeTrip.trip;

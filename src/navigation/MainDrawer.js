@@ -15,6 +15,7 @@ import { colors, radius, spacing, typography } from "../config/theme";
 import { AuthContext } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useDriverProfile } from "../hooks/useDriverProfile";
+import { usePushNotifications } from "../hooks/usePushNotifications";
 import EarningsScreen from "../screens/main/EarningsScreen";
 import ProfileScreen from "../screens/main/ProfileScreen";
 import SettingsScreen from "../screens/main/SettingsScreen";
@@ -95,6 +96,9 @@ const drawerIcon = (name) => {
 
 export const MainDrawer = () => {
   const { t } = useLanguage();
+  // AI-assisted: see docs/AI_LOG.md #32
+  // Only with a session: saves the notifications token and opens the request on tap
+  usePushNotifications();
 
   return (
     <Drawer.Navigator

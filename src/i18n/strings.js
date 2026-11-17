@@ -239,6 +239,11 @@ export const strings = {
     // Inicio: interruptor de disponibilidad y por qué todavía no puede conectarse
     "home.online": "CONECTADO",
     "home.offline": "DESCONECTADO",
+    // AI-assisted: see docs/AI_LOG.md #32
+    // Android notification channel (Settings → Apps → Notifications)
+    "notifications.channelName": "Solicitudes de viaje",
+    "notifications.channelDescription":
+      "Avisa cuando llega una solicitud de viaje nueva.",
     "home.checkingStatus": "Verificando el estado de tu cuenta…",
     "home.pendingApproval":
       "Tu cuenta está pendiente de aprobación. Podrás conectarte cuando sea aprobada.",
@@ -860,6 +865,10 @@ export const strings = {
 
     "home.online": "ONLINE",
     "home.offline": "OFFLINE",
+    // AI-assisted: see docs/AI_LOG.md #32
+    // Android notification channel (Settings → Apps → Notifications)
+    "notifications.channelName": "Trip requests",
+    "notifications.channelDescription": "Tells you when a new trip request arrives.",
     "home.checkingStatus": "Checking your account status…",
     "home.pendingApproval":
       "Your account is pending approval. You can go online once it is approved.",
