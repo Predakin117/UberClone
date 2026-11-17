@@ -1137,6 +1137,67 @@ Verificación: `npm test` (tests de `src/config/pricing.test.js`). Lo probé en 
   - [Pendiente: probar en el celular los puntos 1 a 7]
 - Aprendizaje: La fórmula de Haversine es un cálculo matemático local instantáneo y gratuito, ideal para mostrar una referencia rápida de cercanía antes de aceptar el viaje sin consumir cuota ni latencia de OpenRouteService.
 
+### Entrada #32
+
+- Fecha: 2026-11-17
+- Integrante: Tamiro José Solano Muriel
+- Herramienta: Claude Code (Claude Opus 5.5)
+- Objetivo: Notificaciones push de solicitudes nuevas (pendiente #10 de `docs/APIS.md`) con Firebase Cloud Messaging, sin Cloud Functions.
+- Prompt:
+
+  > Soy Tamiro. Vamos a implementar las notificaciones push de solicitudes nuevas (pendiente #10 de docs/APIS.md / README "Pendiente"). Sigue CLAUDE.md al pie de la letra.
+  >
+  > ## Lo que YA está listo (no lo rehagas)
+  > - FCM (API HTTP v1) habilitado en el proyecto Firebase uber-clone-ba0e2, plan Spark (sin facturación; NO uses Cloud Functions).
+  > - backend/serviceAccountKey.json existe y el backend ya inicia firebase-admin con ella en backend/src/server.js (iniciarPagos). Reutiliza esa misma app de firebase-admin; no la inicialices dos veces.
+  > - App Android registrada en Firebase con package com.uberclone.driver. google-services.json ya está en la raíz del proyecto y está en .gitignore. Nunca lo subas ni lo leas en voz alta.
+  >
+  > ## Tarea
+  > 1. Crea la rama tamiro/notificaciones desde main actualizado. Nada de commits en main.
+  > 2. App:
+  >    - Instala expo-notifications con `npx expo install` (expo-device ya está).
+  >    - En app.json: android.package = "com.uberclone.driver", android.googleServicesFile = "./google-services.json" y agrega el plugin expo-notifications. Respeta app.config.js (no lo rompas).
+  >    - Crea un servicio (ej. src/services/pushNotifications.js) que, con el conductor logueado y en dispositivo físico, pida permiso, cree el canal Android, obtenga el token nativo FCM con Notifications.getDevicePushTokenAsync() y lo guarde en drivers/{uid} (campo fcmToken y fcmTokenUpdatedAt). Si no hay permiso o es Expo Go, que falle en silencio sin romper la app.
+  >    - Llámalo en el punto donde ya se conoce el uid del conductor (revisa AuthContext / hooks). Escucha también el cambio de token.
+  >    - Configura cómo se muestra la notificación con la app abierta, y que al tocarla abra la pantalla donde se ve la solicitud.
+  >    - Todo texto visible va en src/i18n/strings.js (es y en) con t().
+  >    - Revisa firestore.rules: confirma que la regla de update de drivers/{driverId} permite escribir fcmToken. Si hace falta cambiar algo, explícame por qué antes.
+  > 3. Backend:
+  >    - Módulo nuevo backend/src/notificaciones.js que reciba la app de firebase-admin y exponga una función para enviar "Nueva solicitud de viaje" (con el tripId en data) a los conductores que deben recibirla, usando getMessaging().send(). Si un token es inválido (messaging/registration-token-not-registered), bórralo del documento del conductor.
+  >    - Decide a quién se notifica mirando cómo la app filtra las solicitudes (src/services/tripRequestsSource.js y las reglas de trips: conductor aprobado y disponible). Explícame el criterio antes de implementarlo.
+  >    - Engánchalo a backend/scripts/simular-solicitud.js para que al crear la solicitud se envíe la notificación, mientras llega la API de la profesora. Si no hay serviceAccountKey o falla el envío, que el simulador siga funcionando y solo avise por consola.
+  >    - Pruebas con node:test usando firebase-admin falso, como en backend/test/pagos.test.js.
+  > 4. Documentación: actualiza README (sacar notificaciones de "Pendiente"), docs/APIS.md y backend/README.md con cómo probarlo.
+  > 5. Bitácora: entrada #32 en docs/AI_LOG.md con el formato de las existentes, copiando este prompt tal cual. Marca cada bloque asistido con `// AI-assisted: see docs/AI_LOG.md #32`. No toques entradas de Ximena (#50 en adelante).
+  >
+  > ## Antes de terminar
+  > - npm test en la raíz y en backend/, npx expo lint y npx tsc --noEmit, todo en verde.
+  > - Muéstrame el diff antes de cada commit. Commits pequeños en inglés (feat:, fix:, docs:).
+  > - No hagas push hasta que yo lo diga.
+  > - Al final dime los pasos para probarlo: npx expo run:android en mi celular (Expo Go no sirve), iniciar sesión como conductor aprobado, y correr npm run simular en backend/.
+
+  Corrección de Tamiro durante la tarea: "Corrección al prompt: el package de Android es com.uberclone.drivers (con s), porque así quedó registrado en Firebase y así viene en google-services.json. Usa exactamente "com.uberclone.drivers" en android.package de app.json, no com.uberclone.driver."
+
+  Respuestas de Tamiro a las preguntas de Claude: a quién notificar, "Ubicación de hasta 10 min (Recomendado)"; idioma del texto, "Idioma del conductor (Recomendado)"; la cuenta de 15 s con la app en segundo plano, "Sí, pausar en segundo plano (Recomendado)".
+
+- Resumen de la respuesta:
+  - Antes de implementar, Claude explicó que `firestore.rules` no necesita cambios (la regla `update` de `drivers/{driverId}` deja al dueño escribir cualquier campo mientras `status` siga igual) y que la app muestra las solicitudes a cualquier conductor `approved`, conectado y sin viaje en curso. Como en segundo plano Android deja de dar ubicaciones, la regla de 1 minuto de `docs/APIS.md` dejaría sin notificación justo a esos conductores; Tamiro eligió 10 minutos. También avisó que con la app en segundo plano `HomeScreen` sigue montada y la cuenta de 15 s podía dejar la solicitud en `rejected` para todos antes de tocar la notificación.
+  - App: `expo-notifications` instalado con `npx expo install`. `app.json` tiene `android.package` `com.uberclone.drivers`, `android.googleServicesFile` y el plugin con el canal por defecto `trip-requests`; `app.config.js` no cambió. `src/services/pushNotifications.js` solo trabaja en un development build en un Android físico (no en Expo Go, el emulador ni iOS) y carga `expo-notifications` con `import()` solo ahí. Crea el canal, pide el permiso, toma el token con `getDevicePushTokenAsync` y guarda `fcmToken`, `fcmTokenUpdatedAt` y `notificationLanguage` en `drivers/{uid}`; también muestra la notificación con la app abierta y detecta el toque. `usePushNotifications` corre en `MainDrawer` (solo con sesión), espera el usuario con `onAuthStateChanged`, escucha el cambio de token y al tocar la notificación abre `Main → TripFlow → Home`. Los nombres del canal están en `strings.js` en los dos idiomas.
+  - `canReceiveRequests` recibe `isAppActive` (de `useAppIsActive`, con `AppState`): en segundo plano la app no escucha solicitudes, así que la cuenta de 15 s solo corre a la vista.
+  - Backend: `backend/src/notificaciones.js` busca en `drivers` los `approved` con `isAvailable: true` (dos filtros de igualdad, sin índice compuesto) y en memoria exige `fcmToken` y `locationUpdatedAt` de hace 10 minutos o menos. Envía con `getMessaging().send()` un mensaje con el título y el texto en el idioma del conductor, `data: { type: "trip_request", tripId }` y el canal `trip-requests`. Si FCM responde `messaging/registration-token-not-registered`, borra el token en una transacción, solo si no cambió. `simular-solicitud.js` lo llama después de crear la solicitud con la app de `firebase-admin` que devuelve `iniciarFirebaseAdmin`; si el envío falla, solo avisa por consola.
+- Qué se usó / modificó / descartó:
+  - Se usó: todo lo anterior.
+  - Se modificó: el package con s, por la corrección de Tamiro. No se tocó `backend/src/server.js`: el servidor no crea solicitudes, así que la app de `firebase-admin` que se reutiliza es la del simulador, el único que hoy las crea; cuando llegue la API del pasajero, quien cree la solicitud debe llamar a `crearNotificacionesConApp` con su app.
+  - Se descartó: Cloud Functions (plan Spark), el servicio de push de Expo (se envía directo a FCM) y un texto fijo en español en el backend (va en el idioma del conductor).
+- Archivos y commit:
+  - App: `package.json`, `package-lock.json`, `app.json`, `src/services/pushNotifications.js`, `src/services/pushNotifications.test.js`, `src/hooks/usePushNotifications.js`, `src/hooks/useAppIsActive.js`, `src/navigation/MainDrawer.js`, `src/screens/trip/HomeScreen.js`, `src/services/driverStatus.js`, `src/services/driverStatus.test.js`, `src/i18n/strings.js` — ef6a749
+  - Backend: `backend/src/notificaciones.js`, `backend/test/notificaciones.test.js`, `backend/scripts/simular-solicitud.js`, `backend/scripts/proyecto.js` — 7464910
+  - Documentación: `README.md`, `docs/APIS.md`, `backend/README.md` — cd9007f
+- Verificación:
+  - Jest de la raíz pasa 302 pruebas (8 nuevas: cuándo hay push, los campos del token, el `tripId` del toque desde `content.data` o desde el mensaje de FCM, que sin soporte no hace nada ni lanza, y que en segundo plano no se escuchan solicitudes). `npm test` en `backend/` pasa 76 (7 nuevas: a quién se notifica, el mensaje y su idioma, la ventana de 10 minutos, el borrado del token inválido solo con ese error y el simulador que sigue si falla el envío). `npx expo lint` queda sin errores (solo el aviso de siempre en `emailVerification.test.js`) y `npx tsc --noEmit` no da errores. `npx expo config` muestra el package y `googleServicesFile` con `app.config.js` aplicado.
+  - [Pendiente: la prueba en el celular con `npx expo run:android`]
+- Aprendizaje: [Completar]
+
 ### Entrada #50
 
 - Fecha: 2026-11-03
