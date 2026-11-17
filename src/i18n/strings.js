@@ -371,6 +371,10 @@ export const strings = {
       "Vincula tu cuenta de Mercado Pago para recibir tu parte de cada viaje directo, sin esperar la liquidación.",
     "split.link": "Vincular Mercado Pago",
     "split.unlink": "Desvincular la cuenta",
+    "mpWeb.title": "Mercado Pago",
+    "mpWeb.secure": "Conexión segura",
+    "mpWeb.close": "Cerrar Mercado Pago",
+    "mpWeb.loading": "Cargando Mercado Pago…",
     "summary.paidSplit": "Mercado Pago ya envió tu parte a tu cuenta.",
     "summary.checkingPayment": "Revisando el pago…",
     "summary.mercadoPagoHint":
@@ -971,6 +975,10 @@ export const strings = {
       "Link your Mercado Pago account to get your part of each trip straight away, without waiting for the payout.",
     "split.link": "Link Mercado Pago",
     "split.unlink": "Unlink the account",
+    "mpWeb.title": "Mercado Pago",
+    "mpWeb.secure": "Secure connection",
+    "mpWeb.close": "Close Mercado Pago",
+    "mpWeb.loading": "Loading Mercado Pago…",
     "summary.paidSplit": "Mercado Pago already sent your part to your account.",
     "summary.checkingPayment": "Checking the payment…",
     "summary.mercadoPagoHint":

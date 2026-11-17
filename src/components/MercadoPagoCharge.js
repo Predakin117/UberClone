@@ -1,19 +1,15 @@
 // AI-assisted: see docs/AI_LOG.md #62
 // Charge of a Mercado Pago trip on the trip summary (section 4): the backend
-// creates the Checkout Pro preference, the app opens it in the browser and the
-// passenger pays with a test card. The result reaches the trip from the
-// backend (webhook or check) and the summary sees it in real time; this
-// component never writes the payment.
+// creates the Checkout Pro preference, the app opens it and the passenger
+// pays with a test card. The result reaches the trip from the backend
+// (webhook or check) and the summary sees it in real time; this component
+// never writes the payment.
 //
-// The checkout opens in an auth session of the in-app browser with the app's
-// own link (exp://… in Expo Go, uberclonedriver://… in a build). After
-// paying, the backend's return page opens that link, so the browser closes
-// by itself and the driver is back in the summary without leaving the app.
-// When the session ends (back in the app, or the browser closed by hand),
-// the payment is checked.
+// The checkout opens inside the app (MercadoPagoWebView), so the driver never
+// leaves it. When Mercado Pago reaches the backend's return page, the screen
+// closes by itself; if the driver closes it, too. Either way the payment is
+// checked right after.
 import { Ionicons } from "@expo/vector-icons";
-import * as Linking from "expo-linking";
-import * as WebBrowser from "expo-web-browser";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -35,6 +31,10 @@ import {
   startMercadoPagoPayment,
 } from "../services/payments";
 import FieldMessage from "./FieldMessage";
+import MercadoPagoWebView from "./MercadoPagoWebView";
+
+// The backend's page after paying (back_urls of the preference)
+const RETURN_PATH = "/pagos/mercadopago/retorno";
 
 export default function MercadoPagoCharge({ trip }) {
   const { t } = useLanguage();
@@ -42,6 +42,8 @@ export default function MercadoPagoCharge({ trip }) {
   const [step, setStep] = useState(null);
   const [error, setError] = useState(null);
   const [checkoutOpened, setCheckoutOpened] = useState(false);
+  // The checkout link while it is open inside the app
+  const [checkoutUrl, setCheckoutUrl] = useState(null);
 
   const check = useCallback(async () => {
     setError(null);
@@ -54,25 +56,20 @@ export default function MercadoPagoCharge({ trip }) {
   const charge = async () => {
     setError(null);
     setStep("opening");
-    // The app's link: Mercado Pago's return page comes back to it
-    const returnUrl = Linking.createURL("mercadopago");
-    const result = await startMercadoPagoPayment(trip, returnUrl);
+    const result = await startMercadoPagoPayment(trip);
+    setStep(null);
     if (!result.ok) {
-      setStep(null);
       setError(`payment.error.${result.codigoError}`);
       return;
     }
     setCheckoutOpened(true);
-    try {
-      // Ends when the return page opens the app, or when the driver closes
-      // the browser; either way the payment is checked right after
-      await WebBrowser.openAuthSessionAsync(result.url, returnUrl);
-      await check();
-    } catch (browserError) {
-      console.error("Error opening Mercado Pago:", browserError);
-      setStep(null);
-      setError("payment.error.fallo");
-    }
+    setCheckoutUrl(result.url);
+  };
+
+  // Mercado Pago came back, or the driver closed it: check the payment
+  const closeCheckout = () => {
+    setCheckoutUrl(null);
+    check();
   };
 
   const isBusy = step !== null;
@@ -115,6 +112,14 @@ export default function MercadoPagoCharge({ trip }) {
             {t("summary.checkPayment")}
           </Text>
         </TouchableOpacity>
+      )}
+      {checkoutUrl && (
+        <MercadoPagoWebView
+          key={checkoutUrl}
+          url={checkoutUrl}
+          returnPath={RETURN_PATH}
+          onClose={closeCheckout}
+        />
       )}
     </View>
   );
