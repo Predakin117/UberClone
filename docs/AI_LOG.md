@@ -1498,3 +1498,38 @@ Colaboración en código compartido y estándares de equipo: Intervenir pantalla
     - Con el túnel y `PUBLIC_BACKEND_URL`: ver llegar el webhook y la página "Pago aprobado".
     - Que Ganancias muestre el saldo a favor después de un pago aprobado.
 - Aprendizaje:
+
+### Entrada #63
+
+- Fecha: 2026-11-16
+- Integrante: Ximena Rosales Lopez
+- Herramienta: Claude Code
+- Objetivo: Hacer el reto opcional de bonificación de la sección 4: el pago dividido (split payments) entre la plataforma y el conductor con Mercado Pago, para que el dinero del viaje no entre entero a la plataforma.
+- Prompt: "Listo, ya creé la nueva rama con el nombre en inglés. Entonces debemos hacer lo siguiente: el pago dividido real entre plataforma y conductor (split payments) es un reto opcional de bonificación. En este reto, la idea es que la plata del viaje ya no entra entera a la plataforma: Mercado Pago la reparte de una, la parte del conductor a la cuenta del conductor y la comisión a la plataforma. Para eso cada conductor tiene que tener su propia cuenta de Mercado Pago vinculada. Es como creo que es."
+- Resumen de la respuesta:
+  - Se confirmó la idea con la documentación de Mercado Pago (OAuth y `marketplace_fee`). Cada conductor vincula su cuenta y el backend guarda su token. Al cobrar, el backend crea el checkout con el token del conductor y la comisión como `marketplace_fee`, y Mercado Pago reparte el dinero.
+  - Backend: tiene la vinculación con OAuth, cuatro rutas nuevas (`vinculo`, `vincular`, `desvincular` y la página `oauth`) y el cobro dividido cuando el conductor tiene la cuenta vinculada. Si no la tiene, la plataforma cobra todo como antes.
+  - App: en Mi perfil, sección de pagos, está "Vincular Mercado Pago" con el estado de la cuenta y "Desvincular la cuenta". El resumen avisa "Mercado Pago ya envió tu parte a tu cuenta", y el saldo de Ganancias no cuenta los viajes con pago dividido.
+- Qué se usó / modificó / descartó:
+  - Se usó:
+    - Documentación de Mercado Pago, leída para este trabajo: la URL de autorización (`client_id`, `response_type=code`, `platform_id=mp`, `state`, `redirect_uri`), `POST /oauth/token` con `authorization_code` y `refresh_token`, el token de 180 días y `marketplace_fee`.
+    - De la entrada #62: `createMercadoPago`, `paymentChanges`, la página HTML de regreso, `postWithSession` y la forma de abrir el navegador y revisar al volver (`AppState`).
+    - De Tamiro: `verificarConductor` de `backend/src/pagos.js` y `calculateBalance` de `src/services/earnings.js`.
+  - Se modificó:
+    - Backend nuevo: `backend/src/mercadoPagoOAuth.js` (página de autorización, cambiar el código y renovar el token) y `backend/src/sellerAccounts.js` (guarda los tokens en `mercadoPagoAccounts/{uid}`, que la app no puede leer, y los renueva antes de que venzan).
+    - Backend: `backend/src/pagos.js` cobra con el token del conductor y `marketplace_fee` cuando hay vinculación, lee el pago primero en la cuenta del conductor y deja `paymentSplit: true` en el viaje aprobado. `mercadoPago.js` manda `marketplace_fee` y el conductor en el webhook. `app.js` y `server.js` tienen las rutas y las variables `MP_CLIENT_ID` y `MP_CLIENT_SECRET`.
+    - App: `getMercadoPagoLink`, `linkMercadoPagoAccount` y `unlinkMercadoPagoAccount` en `src/services/payments.js`, el componente `MercadoPagoLink` en `ProfileScreen`, el aviso en `TripSummaryScreen`, `calculateBalance` sin los viajes divididos y los textos nuevos.
+    - Documentación: `docs/APIS.md` (sección 9, "Pago dividido"), `backend/README.md` (cómo probarlo con tres cuentas de prueba) y `backend/.env.example`.
+    - Pruebas: 13 nuevas en `backend/test/splitPayments.test.js`, 3 en `src/services/payments.test.js` y 1 en `src/services/earnings.test.js`.
+  - Se descartó:
+    - PKCE en la vinculación, porque Mercado Pago lo deja opcional; el `state` de un solo uso evita que alguien vincule una cuenta ajena.
+    - Guardar si la cuenta está vinculada en `drivers/{uid}`: la app se lo pregunta al backend, sin tocar las reglas de Firestore.
+    - Que el pago dividido reemplace el cobro de la #62: si el conductor no vinculó su cuenta, la plataforma cobra el viaje completo.
+- Archivos y commit: `backend/src/mercadoPagoOAuth.js`, `backend/src/sellerAccounts.js`, `backend/src/pagos.js`, `backend/src/mercadoPago.js`, `backend/src/app.js`, `backend/src/server.js`, `backend/.env.example`, `backend/test/splitPayments.test.js`, `backend/test/mercadoPago.test.js`, `backend/README.md`, `src/services/payments.js`, `src/services/payments.test.js`, `src/components/MercadoPagoLink.js`, `src/screens/main/ProfileScreen.js`, `src/screens/trip/TripSummaryScreen.js`, `src/services/earnings.js`, `src/services/earnings.test.js`, `src/i18n/strings.js`, `docs/APIS.md`, `docs/AI_LOG.md` — los commits siguientes
+- Verificación: `npm test` en `backend/` pasa 65 pruebas (13 nuevas), `npx jest` pasa 292 (4 nuevas), `npx tsc --noEmit` no da errores, `npx expo lint` no reporta errores (solo el aviso que ya existía) y `npx expo export --platform android` genera el bundle.
+  - [Pendiente la prueba real con Mercado Pago]
+    - Crear las tres cuentas de prueba (plataforma, conductor y comprador), poner `MP_CLIENT_ID`, `MP_CLIENT_SECRET` y `PUBLIC_BACKEND_URL` y registrar la URL de redireccionamiento.
+    - Vincular la cuenta del conductor desde Mi perfil y desvincularla.
+    - Cobrar un viaje y revisar que la parte del conductor llegue a su cuenta y la comisión a la de la plataforma.
+    - Revisar si Mercado Pago pide el parámetro `test_token` al cambiar el código con cuentas de prueba (la documentación lo menciona, pero no queda claro con las cuentas de prueba).
+- Aprendizaje:
