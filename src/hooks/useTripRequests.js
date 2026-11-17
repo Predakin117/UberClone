@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { respondToRequest } from "../services/tripRepository";
 import { subscribeToNewRequests } from "../services/tripRequestsSource";
-import { TRIP_STATUS } from "../services/trips";
+import { isRecentRequest, TRIP_STATUS } from "../services/trips";
 
 export const REQUEST_SECONDS = 15;
 
@@ -23,7 +23,11 @@ export const useTripRequests = (isActive, driverStatus) => {
     if (!isActive) return;
     return subscribeToNewRequests(
       (list) => {
-        setRequests(list);
+        // AI-assisted: see docs/AI_LOG.md #32
+        // Only recent requests. One that another driver took is no longer
+        // "requested", so it doesn't even arrive here.
+        const now = Date.now();
+        setRequests(list.filter((trip) => isRecentRequest(trip, now)));
         setError(null);
       },
       (subscribeError) => {

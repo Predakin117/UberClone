@@ -113,6 +113,22 @@ export const sortOldestFirst = (trips) =>
     return first < second ? -1 : 1;
   });
 
+// AI-assisted: see docs/AI_LOG.md #32
+// A request older than this is no longer shown: when the driver comes back
+// from the background (push notification), a request that waited for minutes
+// is not offered with a fresh 15 s countdown.
+export const REQUEST_MAX_AGE_MS = 2 * 60 * 1000;
+
+/**
+ * If the request is recent enough to show at nowMs (ms). Without createdAt
+ * (the server time is still on its way) it was just created, so it shows.
+ */
+export const isRecentRequest = (trip, nowMs, maxAgeMs = REQUEST_MAX_AGE_MS) => {
+  const createdMs = trip.createdAt?.toMillis?.();
+  if (createdMs === undefined) return true;
+  return nowMs - createdMs <= maxAgeMs;
+};
+
 // Campos que el conductor puede escribir en cada cambio. Los del pago
 // (paymentStatus, paymentId) nunca están: son del backend.
 const COMPLETION_FIELDS = [
