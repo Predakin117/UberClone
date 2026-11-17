@@ -1,5 +1,5 @@
 // AI-assisted: see docs/AI_LOG.md #31
-import { DARK_MAP_STYLE, isNightTime } from "./mapStyle";
+import { DARK_MAP_STYLE, LIGHT_MAP_STYLE, isNightTime } from "./mapStyle";
 
 const at = (hour, minute = 0) => new Date(2026, 10, 12, hour, minute);
 
@@ -23,6 +23,17 @@ describe("DARK_MAP_STYLE", () => {
     expect(DARK_MAP_STYLE.length).toBeGreaterThan(0);
     for (const rule of DARK_MAP_STYLE) {
       expect(rule.stylers[0].color).toMatch(/^#[0-9a-f]{6}$/);
+    }
+  });
+});
+
+describe("LIGHT_MAP_STYLE", () => {
+  it("is a Google Maps style: each rule has a color or hides something", () => {
+    expect(LIGHT_MAP_STYLE.length).toBeGreaterThan(0);
+    for (const rule of LIGHT_MAP_STYLE) {
+      const [styler] = rule.stylers;
+      if (styler.color) expect(styler.color).toMatch(/^#[0-9a-f]{6}$/);
+      else expect(styler.visibility).toBe("off");
     }
   });
 });

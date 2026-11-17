@@ -27,3 +27,20 @@ export const DARK_MAP_STYLE = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#0e1626" }] },
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#4e5d6c" }] },
 ];
+
+// Day look, like Uber: light grays, white streets and no business or transit
+// icons, so the route and the car stand out
+export const LIGHT_MAP_STYLE = [
+  { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
+  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#eeeeee" }] },
+  { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#e3efe1" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road.arterial", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#dadada" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9d6e3" }] },
+];

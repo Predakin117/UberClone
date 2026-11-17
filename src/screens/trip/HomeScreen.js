@@ -3,13 +3,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CarMarker from "../../components/CarMarker";
 import GoButton from "../../components/GoButton";
 import IncomingRequestCard from "../../components/IncomingRequestCard";
+import RecenterButton from "../../components/RecenterButton";
 import SearchingBar from "../../components/SearchingBar";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -90,7 +91,7 @@ export default function HomeScreen() {
   }, []);
 
   // Centers the map on the driver without blocking manual scrolling
-  useEffect(() => {
+  const centerOnDriver = useCallback(() => {
     if (!location) return;
     mapRef.current?.animateToRegion(
       {
@@ -102,6 +103,10 @@ export default function HomeScreen() {
       500,
     );
   }, [location]);
+
+  useEffect(() => {
+    centerOnDriver();
+  }, [centerOnDriver]);
 
   const toggleOnline = () => {
     if (!canGoOnline) return;
@@ -201,6 +206,14 @@ export default function HomeScreen() {
             onPress={toggleOnline}
           />
         </View>
+      )}
+
+      {/* Round button to center the map on the driver, on the right */}
+      {!request && sheetHeight > 0 && location && (
+        <RecenterButton
+          onPress={centerOnDriver}
+          style={[styles.recenter, { bottom: sheetHeight + spacing.lg }]}
+        />
       )}
 
       {/* Bottom sheet with the Available / Unavailable switch */}
@@ -361,6 +374,7 @@ const styles = StyleSheet.create({
   noticeError: { borderLeftColor: colors.error, color: colors.error },
 
   goButton: { position: "absolute", alignSelf: "center" },
+  recenter: { right: spacing.lg },
   sheet: {
     position: "absolute",
     left: 0,

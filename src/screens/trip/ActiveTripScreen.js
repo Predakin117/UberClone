@@ -19,13 +19,16 @@ import {
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CarMarker from "../../components/CarMarker";
+import RecenterButton from "../../components/RecenterButton";
 import SwipeButton from "../../components/SwipeButton";
 import { colors, radius, spacing, typography } from "../../config/theme";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTrip } from "../../contexts/TripContext";
 import { useCarPosition } from "../../hooks/useCarPosition";
 import { useNightMap } from "../../hooks/useNightMap";
+import { formatDecimal, formatTime } from "../../i18n/format";
 import { passengerContact } from "../../services/passengerContact";
+import { pickupEstimate } from "../../services/pickupEstimate";
 import { advanceTrip, completeTrip } from "../../services/tripRepository";
 import { navigationUrl, tripRoute } from "../../services/tripRoute";
 import { completionFields, TRIP_STATUS } from "../../services/trips";
@@ -35,7 +38,7 @@ const MAP_PADDING = { top: 180, right: 50, bottom: 340, left: 50 };
 
 export default function ActiveTripScreen() {
   const navigation = useNavigation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { trip, isLoading, pickupRoute } = useTrip();
   const insets = useSafeAreaInsets();
   // The car on the map (read-only GPS; the home screen saves the location)
@@ -49,6 +52,10 @@ export default function ActiveTripScreen() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
+  // Height of the bottom sheet, to put the recenter button above it
+  const [sheetHeight, setSheetHeight] = useState(0);
+  // The clock for the arrival time, updated every 30 seconds
+  const [now, setNow] = useState(() => Date.now());
 
   const isInProgress = trip?.status === TRIP_STATUS.IN_PROGRESS;
 
@@ -60,14 +67,25 @@ export default function ActiveTripScreen() {
     return isInProgress ? tripRoute(trip) : pickupRoute;
   }, [trip, isInProgress, pickupRoute]);
 
-  // Fits the map to the route shown, and again when it changes
-  useEffect(() => {
+  // Fits the map to the route shown, and again when it changes or the driver
+  // taps the recenter button
+  const fitRoute = useCallback(() => {
     if (!isMapReady || !route || route.coordinates.length < 2) return;
     mapRef.current?.fitToCoordinates(route.coordinates, {
       edgePadding: MAP_PADDING,
       animated: true,
     });
   }, [isMapReady, route]);
+
+  useEffect(() => {
+    fitRoute();
+  }, [fitRoute]);
+
+  // Cleanup: stop the clock when the trip screen closes
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30 * 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Once accepted, the trip is "accepted": the driver is already on the way
   useEffect(() => {
@@ -169,6 +187,18 @@ export default function ActiveTripScreen() {
   const contact = passengerContact(trip);
   const passengerName = contact?.name ?? t("activeTrip.passenger");
 
+  // Time and distance left, like Uber: to the passenger in a straight line
+  // from the car (no new route request), or the trip's own values on board
+  const left = isInProgress
+    ? { minutes: trip.durationMin, km: trip.distanceKm }
+    : pickupEstimate(carPosition, trip.origin);
+  const etaText = left
+    ? t("activeTrip.eta")
+        .replace("{minutes}", left.minutes)
+        .replace("{km}", formatDecimal(left.km, language))
+        .replace("{time}", formatTime(now + left.minutes * 60 * 1000, language))
+    : null;
+
   // AI-assisted: see docs/AI_LOG.md #60
   // Only the look changes, like Uber: a black banner on top with the current
   // stop and "Navigate", and a bottom sheet with the passenger and a swipe
@@ -235,6 +265,7 @@ export default function ActiveTripScreen() {
           <Text style={styles.bannerAddress} numberOfLines={2}>
             {isInProgress ? trip.destination.address : trip.origin.address}
           </Text>
+          {etaText && <Text style={styles.bannerEta}>{etaText}</Text>}
         </View>
         {canAdvance && (
           <TouchableOpacity
@@ -249,11 +280,20 @@ export default function ActiveTripScreen() {
         )}
       </View>
 
+      {/* Fits the route again after moving the map by hand */}
+      {sheetHeight > 0 && (
+        <RecenterButton
+          onPress={fitRoute}
+          style={[styles.recenter, { bottom: sheetHeight + spacing.md }]}
+        />
+      )}
+
       <View
         style={[
           styles.sheet,
           { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.sm },
         ]}
+        onLayout={(event) => setSheetHeight(event.nativeEvent.layout.height)}
       >
         <View style={styles.handle} />
 
@@ -400,6 +440,13 @@ const styles = StyleSheet.create({
   bannerTexts: { flex: 1, gap: 2 },
   bannerStep: { fontSize: 13, color: colors.textOnDark },
   bannerAddress: { fontSize: 17, fontWeight: "700", color: colors.white },
+  bannerEta: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.textOnDark,
+    marginTop: 2,
+  },
+  recenter: { right: spacing.lg },
   navigateButton: {
     flexDirection: "row",
     alignItems: "center",
